@@ -1,0 +1,11 @@
+{
+  "__CORE__": {
+    "css": "img, svg, video { max-width: 100% !important; height: auto !important; flex-shrink: 1 !important; } .flex > * { min-width: 0 !important; } :focus, :focus-visible { outline: 5px solid #FFD700 !important; z-index: 99999 !important; } ::-webkit-scrollbar { display: none; }",
+    "js": "window.TizenUtils = { keepAwake: () => { const v = document.createElement('video'); v.src = 'https://raw.githubusercontent.com/anthonium/Gestures/master/blank.mp4'; v.loop = true; v.play().catch(()=>{}); document.body.appendChild(v); } }; window.TizenUtils.keepAwake(); setInterval(() => { const a = document.activeElement; if (!a || a === document.body) { const t = document.querySelector('.card, .item, button, input, [tabindex=\"0\"]'); if(t) t.focus(); } }, 2000);"
+  },
+  "abs": {
+    "name": "Audiobookshelf",
+    "css": ".flex, .flex-row, .flex-col { gap: 0 !important; } .flex > *:not(:last-child) { margin-right: 8px !important; }",
+    "js": "setInterval(() => { document.querySelectorAll('.library-item, .card, .series-card').forEach(e => e.setAttribute('tabindex', '0')); }, 1500);"
+  }
+}

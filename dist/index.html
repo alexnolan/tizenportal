@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { background: #0a0a0a; color: #fff; font-family: sans-serif; margin: 0; padding: 40px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 30px; }
+        .card { background: #222; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 3px solid transparent; border-radius: 12px; font-weight: bold; font-size: 20px; flex-direction: column; gap:10px; }
+        .card:focus { border-color: #FFD700; background: #333; outline: none; transform: scale(1.05); }
+        .add { border: 3px dashed #444; color: #666; background: transparent; }
+        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+        .box { background: #222; padding: 40px; width: 500px; display: flex; flex-direction: column; gap: 15px; border: 1px solid #444; }
+        input, select { padding: 15px; background: #111; color: white; border: 1px solid #555; width: 100%; box-sizing: border-box; }
+        button { padding: 15px; background: #FFD700; border: none; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1 style="margin-bottom: 40px;">TizenPortal <span style="font-size:14px; color:#666;">Local</span></h1>
+    <div id="grid" class="grid"></div>
+    <div id="modal">
+        <div class="box">
+            <h2>Config App</h2>
+            <input id="name" placeholder="Name">
+            <input id="url" placeholder="URL">
+            <select id="preset"><option value="">-- Preset --</option></select>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button onclick="document.getElementById('modal').style.display='none'" style="background:#444; color:white;">Cancel</button>
+                <button onclick="deleteApp()" style="background:#900; color:white;">Delete</button>
+                <button onclick="save()">Save</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        let apps = []; let presets = {};
+        async function init() {
+            apps = await (await fetch('/api/apps')).json();
+            presets = await (await fetch('/presets.json')).json();
+            const sel = document.getElementById('preset');
+            Object.keys(presets).forEach(k => { if(k!=='__CORE__') sel.innerHTML+=`<option value="${k}">${presets[k].name}</option>`; });
+            render();
+        }
+        function render() {
+            const g = document.getElementById('grid'); g.innerHTML = '';
+            apps.forEach(a => {
+                const d = document.createElement('div'); d.className='card'; d.tabIndex=0; d.innerHTML=`<span>${a.name}</span>`;
+                d.onclick=()=>window.location.href=a.url;
+                g.appendChild(d);
+            });
+            const add=document.createElement('div'); add.className='card add'; add.tabIndex=0; add.innerHTML='+'; add.onclick=()=>document.getElementById('modal').style.display='flex'; g.appendChild(add);
+            if(apps.length>0) document.querySelector('.card').focus();
+        }
+        async function save() {
+            const payload = { name:document.getElementById('name').value, url:document.getElementById('url').value, presetID:document.getElementById('preset').value };
+            await fetch('/api/save', { method:'POST', body:JSON.stringify(payload)}); location.reload();
+        }
+        async function deleteApp() {
+             await fetch('/api/save', { method:'POST', body:JSON.stringify({delete:true, url:document.getElementById('url').value})}); location.reload();
+        }
+        init();
+    </script>
+</body>
+</html>

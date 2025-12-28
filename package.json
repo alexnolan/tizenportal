@@ -1,0 +1,17 @@
+{
+  "name": "@alexnolan/tizenportal",
+  "appName": "TizenPortal",
+  "version": "1.0.0",
+  "description": "Local Web App Launcher & Patcher",
+  "packageType": "mods",
+  "websiteURL": "http://localhost:3333",
+  "main": "dist/userScript.js",
+  "serviceFile": "dist/service.js",
+  "author": "Alex Nolan",
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexnolan/tizenportal"
+  },
+  "keys": [ "MediaPlayPause", "MediaPlay", "MediaPause", "MediaStop", "MediaFastForward", "MediaRewind", "1" ]
+}

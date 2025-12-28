@@ -2,60 +2,163 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>TizenPortal v1.3</title>
     <style>
-        body { background: #0a0a0a; color: #fff; font-family: sans-serif; margin: 0; padding: 40px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 30px; }
-        .card { background: #222; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 3px solid transparent; border-radius: 12px; font-weight: bold; font-size: 20px; flex-direction: column; gap:10px; }
-        .card:focus { border-color: #FFD700; background: #333; outline: none; transform: scale(1.05); }
-        .add { border: 3px dashed #444; color: #666; background: transparent; }
-        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
-        .box { background: #222; padding: 40px; width: 500px; display: flex; flex-direction: column; gap: 15px; border: 1px solid #444; }
-        input, select { padding: 15px; background: #111; color: white; border: 1px solid #555; width: 100%; box-sizing: border-box; }
-        button { padding: 15px; background: #FFD700; border: none; font-weight: bold; cursor: pointer; }
+        body { background: #0a0a0a; color: #fff; font-family: "Segoe UI", sans-serif; margin: 0; padding: 40px; overflow: hidden; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+        h1 { margin: 0; font-weight: 300; letter-spacing: 2px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 30px; padding: 10px; }
+        .card { 
+            background: #1e1e1e; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; 
+            border: 3px solid transparent; border-radius: 8px; font-weight: bold; font-size: 20px; 
+            flex-direction: column; gap: 10px; cursor: pointer; position: relative;
+        }
+        .card img { width: 48px; height: 48px; object-fit: contain; }
+        .card i { font-size: 40px; color: #888; }
+        .card:focus, button:focus, input:focus, select:focus { 
+            border-color: #FFD700; background: #2a2a2a; outline: none; 
+            transform: scale(1.05); z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: white;
+        }
+        .add { border: 3px dashed #444; background: transparent; color: #666; }
+        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; z-index: 100; }
+        .box { background: #222; padding: 40px; width: 500px; display: flex; flex-direction: column; gap: 15px; border: 2px solid #444; }
+        input, select { padding: 15px; background: #111; color: white; border: 1px solid #444; width: 100%; box-sizing: border-box; font-size: 18px; }
+        .btn-row { display: flex; gap: 15px; justify-content: flex-end; margin-top: 10px; }
+        button { padding: 12px 20px; background: #333; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; }
+        button.primary { background: #FFD700; color: black; }
+        button.danger { background: #900; }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <h1 style="margin-bottom: 40px;">TizenPortal <span style="font-size:14px; color:#666;">Local</span></h1>
+
+    <header>
+        <h1>TizenPortal <span style="font-size:14px; color:#666;">v1.3</span></h1>
+        <button onclick="performUpdate()" tabindex="0" style="font-size: 14px;">
+            <i class="fas fa-download"></i> Check for Updates
+        </button>
+    </header>
+    
     <div id="grid" class="grid"></div>
+
     <div id="modal">
         <div class="box">
             <h2>Config App</h2>
-            <input id="name" placeholder="Name">
-            <input id="url" placeholder="URL">
+            <input type="text" id="name" placeholder="Name">
+            <input type="url" id="url" placeholder="http://192.168...">
             <select id="preset"><option value="">-- Preset --</option></select>
-            <div style="display:flex; gap:10px; justify-content:flex-end;">
-                <button onclick="document.getElementById('modal').style.display='none'" style="background:#444; color:white;">Cancel</button>
-                <button onclick="deleteApp()" style="background:#900; color:white;">Delete</button>
-                <button onclick="save()">Save</button>
+            <div class="btn-row">
+                <button onclick="deleteApp()" class="danger">Delete</button>
+                <button onclick="closeModal()">Cancel</button>
+                <button onclick="save()" class="primary">Save</button>
             </div>
         </div>
     </div>
+
     <script>
         let apps = []; let presets = {};
+
         async function init() {
-            apps = await (await fetch('/api/apps')).json();
-            presets = await (await fetch('/presets.json')).json();
-            const sel = document.getElementById('preset');
-            Object.keys(presets).forEach(k => { if(k!=='__CORE__') sel.innerHTML+=`<option value="${k}">${presets[k].name}</option>`; });
-            render();
+            try {
+                apps = await (await fetch('/api/apps')).json();
+                presets = await (await fetch('/presets.json')).json();
+                const sel = document.getElementById('preset');
+                Object.keys(presets).forEach(k => { if(k!=='__CORE__') sel.innerHTML+=`<option value="${k}">${presets[k].name}</option>`; });
+                render();
+            } catch(e) { console.error(e); }
         }
+
         function render() {
             const g = document.getElementById('grid'); g.innerHTML = '';
             apps.forEach(a => {
-                const d = document.createElement('div'); d.className='card'; d.tabIndex=0; d.innerHTML=`<span>${a.name}</span>`;
-                d.onclick=()=>window.location.href=a.url;
+                const d = document.createElement('div'); d.className = 'card'; d.tabIndex = 0;
+                let icon = `https://s2.googleusercontent.com/s2/favicons?domain_url=${encodeURIComponent(a.url)}&sz=64`;
+                d.innerHTML = `<img src="${icon}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><i class="fas fa-globe" style="display:none"></i><span>${a.name}</span>`;
+                d.onclick = () => window.location.href = a.url;
                 g.appendChild(d);
             });
-            const add=document.createElement('div'); add.className='card add'; add.tabIndex=0; add.innerHTML='+'; add.onclick=()=>document.getElementById('modal').style.display='flex'; g.appendChild(add);
-            if(apps.length>0) document.querySelector('.card').focus();
+            const add = document.createElement('div'); add.className = 'card add'; add.tabIndex = 0;
+            add.innerHTML = `<i class="fas fa-plus"></i><span>Add</span>`;
+            add.onclick = () => openModal();
+            g.appendChild(add);
+            if(apps.length>0) setTimeout(()=>document.querySelector('.card').focus(), 100);
         }
+
+        function openModal() { document.getElementById('modal').style.display='flex'; document.getElementById('name').focus(); }
+        function closeModal() { document.getElementById('modal').style.display='none'; document.querySelector('.add').focus(); }
+
         async function save() {
             const payload = { name:document.getElementById('name').value, url:document.getElementById('url').value, presetID:document.getElementById('preset').value };
             await fetch('/api/save', { method:'POST', body:JSON.stringify(payload)}); location.reload();
         }
         async function deleteApp() {
-             await fetch('/api/save', { method:'POST', body:JSON.stringify({delete:true, url:document.getElementById('url').value})}); location.reload();
+            if(confirm("Delete?")) { await fetch('/api/save', { method:'POST', body:JSON.stringify({delete:true, url:document.getElementById('url').value})}); location.reload(); }
         }
+
+        async function performUpdate() {
+            if(!confirm("Force Update from GitHub?")) return;
+            const btn = document.activeElement; btn.innerText="Updating...";
+            try {
+                const res = await fetch('/api/update', {method:'POST'});
+                const d = await res.json();
+                alert(d.message); if(d.status==='ok') window.location.reload();
+            } catch(e) { alert("Error: "+e.message); } 
+            btn.innerText="Check for Updates";
+        }
+
+        // --- SPATIAL NAV ENGINE v2 ---
+        document.addEventListener('keydown', (e) => {
+            // Ignore nav if modal is open (except Escape)
+            if(document.getElementById('modal').style.display==='flex') {
+                if(e.keyCode===10009 || e.keyCode===27) closeModal();
+                return;
+            }
+
+            if([37,38,39,40].includes(e.keyCode)) {
+                e.preventDefault();
+                navigate(e.keyCode);
+            }
+        });
+
+        function navigate(k) {
+            const all = Array.from(document.querySelectorAll('.card'));
+            const cur = document.activeElement;
+            const rect = cur.getBoundingClientRect();
+            const cx = rect.x + rect.width/2; const cy = rect.y + rect.height/2;
+            
+            let best = null;
+            let minScore = Infinity;
+
+            all.forEach(el => {
+                if(el === cur) return;
+                const r = el.getBoundingClientRect();
+                const ex = r.x + r.width/2; const ey = r.y + r.height/2;
+                
+                // Vector Logic
+                const dx = ex - cx;
+                const dy = ey - cy;
+                const dist = Math.hypot(dx, dy);
+
+                let isCandidate = false;
+                // Angle filtering: Ensure we aren't jumping backwards
+                if (k===37 && dx < 0 && Math.abs(dy) < Math.abs(dx)) isCandidate = true; // Left
+                if (k===39 && dx > 0 && Math.abs(dy) < Math.abs(dx)) isCandidate = true; // Right
+                if (k===38 && dy < 0 && Math.abs(dx) < Math.abs(dy)) isCandidate = true; // Up
+                if (k===40 && dy > 0 && Math.abs(dx) < Math.abs(dy)) isCandidate = true; // Down
+
+                if (isCandidate) {
+                    // Score = Distance, penalized heavily if not aligned on primary axis
+                    let score = dist;
+                    if (score < minScore) {
+                        minScore = score;
+                        best = el;
+                    }
+                }
+            });
+
+            if(best) best.focus();
+        }
+
         init();
     </script>
 </body>

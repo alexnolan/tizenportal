@@ -1,17 +1,15 @@
 {
   "name": "@alexnolan/tizenportal",
   "appName": "TizenPortal",
-  "version": "1.2.0",
-  "description": "Local Web App Launcher & Patcher",
+  "version": "0.1.0",
+  "description": "Universal Tizen Launcher (Alpha)",
   "packageType": "mods",
-  "websiteURL": "http://localhost:3333",
+  "websiteURL": "https://alexnolan.github.io/tizenportal/dist/index.html",
   "main": "dist/userScript.js",
-  "serviceFile": "dist/service.js",
   "author": "Alex Nolan",
-  "license": "GPL-3.0-only",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/alexnolan/tizenportal"
-  },
-  "keys": [ "MediaPlayPause", "MediaPlay", "MediaPause", "MediaStop", "MediaFastForward", "MediaRewind", "1", "2", "3", "4", "Return", "Enter" ]
+  }
 }

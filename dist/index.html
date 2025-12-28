@@ -2,12 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal v1.3</title>
+    <title>TizenPortal v0.1.0</title>
     <style>
         body { background: #0a0a0a; color: #fff; font-family: "Segoe UI", sans-serif; margin: 0; padding: 40px; overflow: hidden; }
+        
+        /* HEADER */
         header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
         h1 { margin: 0; font-weight: 300; letter-spacing: 2px; }
+        
+        /* GRID */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 30px; padding: 10px; }
+        
+        /* CARDS */
         .card { 
             background: #1e1e1e; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; 
             border: 3px solid transparent; border-radius: 8px; font-weight: bold; font-size: 20px; 
@@ -15,13 +21,20 @@
         }
         .card img { width: 48px; height: 48px; object-fit: contain; }
         .card i { font-size: 40px; color: #888; }
+        
+        /* FOCUS */
         .card:focus, button:focus, input:focus, select:focus { 
             border-color: #FFD700; background: #2a2a2a; outline: none; 
             transform: scale(1.05); z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: white;
         }
+        
+        /* ADD BUTTON */
         .add { border: 3px dashed #444; background: transparent; color: #666; }
+        
+        /* MODAL */
         #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; z-index: 100; }
         .box { background: #222; padding: 40px; width: 500px; display: flex; flex-direction: column; gap: 15px; border: 2px solid #444; }
+        
         input, select { padding: 15px; background: #111; color: white; border: 1px solid #444; width: 100%; box-sizing: border-box; font-size: 18px; }
         .btn-row { display: flex; gap: 15px; justify-content: flex-end; margin-top: 10px; }
         button { padding: 12px 20px; background: #333; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; }
@@ -33,9 +46,9 @@
 <body>
 
     <header>
-        <h1>TizenPortal <span style="font-size:14px; color:#666;">v1.3</span></h1>
-        <button onclick="performUpdate()" tabindex="0" style="font-size: 14px;">
-            <i class="fas fa-download"></i> Check for Updates
+        <h1>TizenPortal <span style="font-size:14px; color:#666;">v0.1.0</span></h1>
+        <button onclick="location.reload()" tabindex="0" style="font-size: 14px;">
+            <i class="fas fa-sync"></i> Reload
         </button>
     </header>
     
@@ -56,16 +69,32 @@
     </div>
 
     <script>
-        let apps = []; let presets = {};
+        // --- 1. THE LIBRARY (Presets) ---
+        const PRESETS = {
+            "__CORE__": {
+                "css": "img, svg, video { max-width: 100% !important; height: auto !important; flex-shrink: 1 !important; } .flex > * { min-width: 0 !important; } :focus, :focus-visible { outline: 5px solid #FFD700 !important; box-shadow: 0 0 20px rgba(255,0,0,0.8) !important; z-index: 99999 !important; } ::-webkit-scrollbar { display: none; }",
+                "js": "window.TizenUtils={keepAwake:()=>{const v=document.createElement('video');v.src='https://raw.githubusercontent.com/anthonium/Gestures/master/blank.mp4';v.loop=true;v.play().catch(()=>{});document.body.appendChild(v);}};window.TizenUtils.keepAwake();setInterval(()=>{const a=document.activeElement;if(!a||a===document.body){const t=document.querySelector('.card, .item, button, input, [tabindex=\"0\"]');if(t)t.focus();}},2000);"
+            },
+            "abs": {
+                "name": "Audiobookshelf",
+                "css": ".flex, .flex-row, .flex-col { gap: 0 !important; } .flex > *:not(:last-child) { margin-right: 8px !important; }",
+                "js": "setInterval(() => { document.querySelectorAll('.library-item, .card, .series-card').forEach(e => e.setAttribute('tabindex', '0')); }, 1500);"
+            },
+            "jellyfin": {
+                "name": "Jellyfin",
+                "css": ":focus-visible { outline: 4px solid #FFD700 !important; transform: scale(1.02); }",
+                "js": "document.body.classList.add('layout-tv');"
+            }
+        };
 
-        async function init() {
-            try {
-                apps = await (await fetch('/api/apps')).json();
-                presets = await (await fetch('/presets.json')).json();
-                const sel = document.getElementById('preset');
-                Object.keys(presets).forEach(k => { if(k!=='__CORE__') sel.innerHTML+=`<option value="${k}">${presets[k].name}</option>`; });
-                render();
-            } catch(e) { console.error(e); }
+        let apps = JSON.parse(localStorage.getItem('tp_apps') || '[]');
+
+        function init() {
+            const sel = document.getElementById('preset');
+            Object.keys(PRESETS).forEach(k => { 
+                if(k!=='__CORE__') sel.innerHTML+=`<option value="${k}">${PRESETS[k].name}</option>`; 
+            });
+            render();
         }
 
         function render() {
@@ -74,7 +103,7 @@
                 const d = document.createElement('div'); d.className = 'card'; d.tabIndex = 0;
                 let icon = `https://s2.googleusercontent.com/s2/favicons?domain_url=${encodeURIComponent(a.url)}&sz=64`;
                 d.innerHTML = `<img src="${icon}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><i class="fas fa-globe" style="display:none"></i><span>${a.name}</span>`;
-                d.onclick = () => window.location.href = a.url;
+                d.onclick = () => launch(a);
                 g.appendChild(d);
             });
             const add = document.createElement('div'); add.className = 'card add'; add.tabIndex = 0;
@@ -84,40 +113,51 @@
             if(apps.length>0) setTimeout(()=>document.querySelector('.card').focus(), 100);
         }
 
+        function launch(app) {
+            // --- THE SMUGGLER ---
+            // Package the code into window.name so it survives the trip to 192.168.x.x
+            const core = PRESETS['__CORE__'];
+            const preset = PRESETS[app.presetID] || {};
+            
+            const payload = {
+                id: 'tp_payload',
+                css: (core.css||'') + '\n' + (preset.css||'') + '\n' + (app.customCSS||''),
+                js: (core.js||'') + '\n' + (preset.js||'') + '\n' + (app.customJS||''),
+                home: window.location.href // Remember how to get back
+            };
+            
+            window.name = JSON.stringify(payload);
+            window.location.href = app.url;
+        }
+
         function openModal() { document.getElementById('modal').style.display='flex'; document.getElementById('name').focus(); }
         function closeModal() { document.getElementById('modal').style.display='none'; document.querySelector('.add').focus(); }
 
-        async function save() {
-            const payload = { name:document.getElementById('name').value, url:document.getElementById('url').value, presetID:document.getElementById('preset').value };
-            await fetch('/api/save', { method:'POST', body:JSON.stringify(payload)}); location.reload();
+        function save() {
+            const name = document.getElementById('name').value;
+            const url = document.getElementById('url').value;
+            const presetID = document.getElementById('preset').value;
+            if(name && url) {
+                apps.push({name, url, presetID});
+                localStorage.setItem('tp_apps', JSON.stringify(apps));
+                location.reload();
+            }
         }
-        async function deleteApp() {
-            if(confirm("Delete?")) { await fetch('/api/save', { method:'POST', body:JSON.stringify({delete:true, url:document.getElementById('url').value})}); location.reload(); }
+        
+        function deleteApp() {
+            // Simple delete logic for Alpha (Deletes last added for now to avoid ID complex)
+            // Ideally, pass index to modal. For v0.1, we just pop.
+            if(confirm("Delete most recent app?")) { 
+                apps.pop(); localStorage.setItem('tp_apps', JSON.stringify(apps)); location.reload(); 
+            }
         }
 
-        async function performUpdate() {
-            if(!confirm("Force Update from GitHub?")) return;
-            const btn = document.activeElement; btn.innerText="Updating...";
-            try {
-                const res = await fetch('/api/update', {method:'POST'});
-                const d = await res.json();
-                alert(d.message); if(d.status==='ok') window.location.reload();
-            } catch(e) { alert("Error: "+e.message); } 
-            btn.innerText="Check for Updates";
-        }
-
-        // --- SPATIAL NAV ENGINE v2 ---
+        // --- SPATIAL NAV ---
         document.addEventListener('keydown', (e) => {
-            // Ignore nav if modal is open (except Escape)
-            if(document.getElementById('modal').style.display==='flex') {
-                if(e.keyCode===10009 || e.keyCode===27) closeModal();
-                return;
+            if([37,38,39,40].includes(e.keyCode) && document.getElementById('modal').style.display==='none') {
+                e.preventDefault(); navigate(e.keyCode);
             }
-
-            if([37,38,39,40].includes(e.keyCode)) {
-                e.preventDefault();
-                navigate(e.keyCode);
-            }
+            if((e.keyCode===10009 || e.keyCode===27) && document.getElementById('modal').style.display==='flex') closeModal();
         });
 
         function navigate(k) {
@@ -125,37 +165,19 @@
             const cur = document.activeElement;
             const rect = cur.getBoundingClientRect();
             const cx = rect.x + rect.width/2; const cy = rect.y + rect.height/2;
+            let best=null; let minD=Infinity;
             
-            let best = null;
-            let minScore = Infinity;
-
             all.forEach(el => {
-                if(el === cur) return;
+                if(el===cur) return;
                 const r = el.getBoundingClientRect();
-                const ex = r.x + r.width/2; const ey = r.y + r.height/2;
-                
-                // Vector Logic
-                const dx = ex - cx;
-                const dy = ey - cy;
-                const dist = Math.hypot(dx, dy);
-
-                let isCandidate = false;
-                // Angle filtering: Ensure we aren't jumping backwards
-                if (k===37 && dx < 0 && Math.abs(dy) < Math.abs(dx)) isCandidate = true; // Left
-                if (k===39 && dx > 0 && Math.abs(dy) < Math.abs(dx)) isCandidate = true; // Right
-                if (k===38 && dy < 0 && Math.abs(dx) < Math.abs(dy)) isCandidate = true; // Up
-                if (k===40 && dy > 0 && Math.abs(dx) < Math.abs(dy)) isCandidate = true; // Down
-
-                if (isCandidate) {
-                    // Score = Distance, penalized heavily if not aligned on primary axis
-                    let score = dist;
-                    if (score < minScore) {
-                        minScore = score;
-                        best = el;
-                    }
-                }
+                const ex = r.x+r.width/2; const ey = r.y+r.height/2;
+                let valid=false;
+                if(k===37 && ex<cx && Math.abs(ey-cy)<60) valid=true; 
+                if(k===39 && ex>cx && Math.abs(ey-cy)<60) valid=true; 
+                if(k===38 && ey<cy && Math.abs(ex-cx)<100) valid=true; 
+                if(k===40 && ey>cy && Math.abs(ex-cx)<100) valid=true; 
+                if(valid) { const d=Math.hypot(ex-cx,ey-cy); if(d<minD){ minD=d; best=el; } }
             });
-
             if(best) best.focus();
         }
 

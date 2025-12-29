@@ -2,31 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal 037</title>
+    <title>TizenPortal 038</title>
     <style>
         body { background: #000; color: #fff; font-family: "Segoe UI", sans-serif; margin: 0; padding: 40px; overflow: hidden; }
-        
         header { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
         h1 { margin: 0; font-weight: 300; letter-spacing: 2px; }
-        
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 30px; }
-        
         .card { 
             background: #1a1a1a; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; 
             border: 4px solid transparent; border-radius: 8px; font-weight: bold; font-size: 20px; 
             flex-direction: column; gap: 10px; cursor: pointer; opacity: 0.7; transition: transform 0.1s;
             overflow: hidden !important; position: relative; max-width: 100%; min-width: 0;
         }
-        
         .icon-box { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .icon-box img { width: 100%; height: 100%; object-fit: contain; display: block; }
         .icon-box i { font-size: 50px; color: #888; display: none; }
-        
         .card.active, .card:focus { 
             border-color: #FFD700; background: #333; opacity: 1; transform: scale(1.05); z-index: 10; 
             box-shadow: 0 0 30px rgba(255, 215, 0, 0.3); outline: none;
         }
-        
         .add { border: 4px dashed #333; color: #666; }
         .add.active { border-color: #FFD700; color: #fff; }
         #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; z-index: 100; }
@@ -41,7 +35,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <header><h1>TizenPortal <span style="font-size:14px; color:#666;">037</span></h1></header>
+    <header><h1>TizenPortal <span style="font-size:14px; color:#666;">038</span></h1></header>
     <div id="grid" class="grid"></div>
     <div id="toast">Long Press Enter to Edit</div>
     <div id="modal">
@@ -62,48 +56,99 @@
                 "js": "window.TizenUtils={keepAwake:function(){try{var v=document.createElement('video');v.src='https://raw.githubusercontent.com/anthonium/Gestures/master/blank.mp4';v.loop=true;v.play();document.body.appendChild(v)}catch(e){}}};window.TizenUtils.keepAwake();" 
             },
             
-            // --- ABS FIX 037 (The Lifeboat) ---
+            // --- ABS FIX 038 (Styled Lifeboat) ---
             "abs": { 
                 "name": "Audiobookshelf", 
                 "css": `
-                    /* 1. HIDE THE BROKEN APP */
+                    /* 1. HIDE BROKEN APP */
                     #__nuxt, #__layout { display: none !important; opacity: 0 !important; }
                     
-                    /* 2. STYLE THE LIFEBOAT */
-                    body { background-color: #008080 !important; margin: 0 !important; padding: 20px !important; overflow-y: auto !important; }
+                    /* 2. LIFEBOAT CONTAINER (Dark Gradient) */
+                    body { 
+                        background: linear-gradient(135deg, #1f1f1f 0%, #333 100%) !important; 
+                        margin: 0 !important; 
+                        padding: 20px !important; 
+                        overflow-y: auto !important; 
+                        color: #fff !important;
+                    }
                     #tp-lifeboat { 
                         display: block !important; 
                         width: 100% !important; 
-                        text-align: center !important;
+                        padding-bottom: 50px;
                     }
                     
-                    /* 3. STYLE THE RESCUED CARDS */
+                    /* 3. RESCUED HEADINGS */
+                    .tp-rescued-heading {
+                        display: block !important;
+                        width: 100% !important;
+                        color: #FFD700 !important; /* Gold */
+                        font-size: 24px !important;
+                        margin: 30px 0 15px 10px !important;
+                        border-bottom: 1px solid #555 !important;
+                        padding-bottom: 5px !important;
+                        font-family: "Segoe UI", sans-serif !important;
+                        text-align: left !important;
+                        clear: both !important;
+                    }
+
+                    /* 4. RESCUED CARDS */
                     .tp-rescued-card {
                         display: inline-block !important;
                         width: 160px !important;
-                        height: 260px !important;
+                        height: 280px !important;
                         margin: 15px !important;
-                        background: #222 !important;
-                        border: 2px solid #444 !important;
+                        background: #2a2a2a !important; /* Dark Grey Card */
+                        border: 1px solid #444 !important;
+                        border-radius: 8px !important;
                         vertical-align: top !important;
                         position: relative !important;
                         cursor: pointer !important;
+                        overflow: hidden !important;
+                        transition: transform 0.2s;
                     }
+                    
+                    /* 5. CARD CONTENT STYLES */
                     .tp-rescued-card img {
                         width: 100% !important;
-                        height: 100% !important;
+                        height: 160px !important;
                         object-fit: cover !important;
+                        display: block !important;
+                        border-bottom: 1px solid #444 !important;
                     }
+                    
+                    /* Force Text Visibility */
+                    .tp-rescued-card p, .tp-rescued-card span, .tp-rescued-card div {
+                        color: #e0e0e0 !important;
+                        font-family: sans-serif !important;
+                        font-size: 14px !important;
+                        line-height: 1.2 !important;
+                        background: transparent !important;
+                    }
+                    
+                    /* Reveal Hidden Titles (e.g. Hover Titles) */
+                    .tp-rescued-card [cy-id="hoveringDisplayTitle"], 
+                    .tp-rescued-card [cy-id="textInline"] {
+                        opacity: 1 !important;
+                        visibility: visible !important;
+                        position: relative !important; 
+                        top: auto !important; left: auto !important;
+                        padding: 8px !important;
+                        height: auto !important;
+                        width: 100% !important;
+                        display: block !important;
+                    }
+
+                    /* 6. FOCUS STATE */
                     .tp-rescued-card:focus {
-                        outline: 5px solid #FFD700 !important;
+                        outline: 4px solid #FFD700 !important;
                         transform: scale(1.1);
                         z-index: 9999;
-                        border-color: #FFD700 !important;
+                        background: #444 !important;
+                        box-shadow: 0 0 20px rgba(0,0,0,0.8) !important;
                     }
                 `,
                 "js": `
                     setInterval(function() {
-                        // 1. Create Lifeboat if missing
                         var boat = document.getElementById('tp-lifeboat');
                         if (!boat) {
                             boat = document.createElement('div');
@@ -111,36 +156,43 @@
                             document.body.appendChild(boat);
                         }
 
-                        // 2. Scan for Books in the Wreckage
-                        var books = document.querySelectorAll('[id^="book-card-"]');
-                        
-                        // 3. Rescue them
-                        for (var i = 0; i < books.length; i++) {
-                            var original = books[i];
-                            var id = 'tp-rescue-' + i;
-                            
-                            // Only rescue if we haven't already
-                            if (!document.getElementById(id)) {
-                                var clone = original.cloneNode(true);
-                                clone.id = id;
-                                clone.className = 'tp-rescued-card';
-                                clone.setAttribute('tabindex', '0');
-                                
-                                // Fix Click Event
-                                clone.addEventListener('click', function() { original.click(); });
-                                clone.addEventListener('keydown', function(e) { 
-                                    if(e.keyCode === 13) { original.click(); } 
-                                });
+                        // Hide original
+                        var app = document.getElementById('__nuxt');
+                        if(app) app.style.display = 'none';
 
-                                boat.appendChild(clone);
+                        // SCANNER: Look for Headings and Books together
+                        var items = document.querySelectorAll('.categoryPlacard, [id^="book-card-"]');
+
+                        for (var i = 0; i < items.length; i++) {
+                            var original = items[i];
+                            var id = 'tp-rescue-' + i;
+
+                            if (!document.getElementById(id)) {
+                                // 1. RESCUE HEADING
+                                if (original.classList.contains('categoryPlacard')) {
+                                    var h2 = document.createElement('h2');
+                                    h2.innerText = original.innerText.trim();
+                                    h2.className = 'tp-rescued-heading';
+                                    h2.id = id;
+                                    boat.appendChild(h2);
+                                }
+                                // 2. RESCUE BOOK
+                                else {
+                                    var clone = original.cloneNode(true);
+                                    clone.id = id;
+                                    clone.className = 'tp-rescued-card';
+                                    clone.setAttribute('tabindex', '0');
+                                    
+                                    // Event Proxy
+                                    (function(orig) {
+                                        clone.addEventListener('click', function(e) { e.stopPropagation(); orig.click(); });
+                                        clone.addEventListener('keydown', function(e) { if(e.keyCode === 13) { e.stopPropagation(); e.preventDefault(); orig.click(); } });
+                                    })(original);
+
+                                    boat.appendChild(clone);
+                                }
                             }
                         }
-                        
-                        // 4. Force Focus if lost
-                        if (document.activeElement === document.body && boat.firstChild) {
-                            boat.firstChild.focus();
-                        }
-
                     }, 2000);
                 ` 
             },

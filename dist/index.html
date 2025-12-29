@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal v0.2.1</title>
+    <title>TizenPortal 022</title>
     <style>
         body { background: #000; color: #fff; font-family: "Segoe UI", sans-serif; margin: 0; padding: 40px; overflow: hidden; }
         
@@ -11,12 +11,33 @@
         
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 30px; }
         
+        /* CARD STYLES */
         .card { 
             background: #1a1a1a; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; 
             border: 4px solid transparent; border-radius: 8px; font-weight: bold; font-size: 20px; 
             flex-direction: column; gap: 10px; cursor: pointer; opacity: 0.7; transition: transform 0.1s;
+            overflow: hidden !important; /* CRITICAL FIX */
+            position: relative;
+            max-width: 100%;
         }
-        .card img { width: 50px; height: 50px; object-fit: contain; }
+        
+        /* STRICT IMAGE SIZING */
+        .card img { 
+            width: 64px !important; 
+            height: 64px !important; 
+            max-width: 64px !important;
+            max-height: 64px !important;
+            object-fit: contain; 
+            display: block;
+        }
+        
+        /* FALLBACK ICON SIZING */
+        .card i { 
+            font-size: 50px !important; 
+            color: #888; 
+            display: none; 
+            max-width: 100%;
+        }
         
         .card.active, .card:focus { 
             border-color: #FFD700; background: #333; opacity: 1;
@@ -27,6 +48,7 @@
         .add { border: 4px dashed #333; color: #666; }
         .add.active { border-color: #FFD700; color: #fff; }
 
+        /* MODAL */
         #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; z-index: 100; }
         .box { background: #222; padding: 40px; width: 600px; display: flex; flex-direction: column; gap: 15px; border: 2px solid #555; }
         input, select { padding: 15px; background: #111; color: white; border: 1px solid #444; width: 100%; font-size: 18px; }
@@ -43,7 +65,7 @@
 <body>
 
     <header>
-        <h1>TizenPortal <span style="font-size:14px; color:#666;">v0.2.1</span></h1>
+        <h1>TizenPortal <span style="font-size:14px; color:#666;">022</span></h1>
     </header>
     
     <div id="grid" class="grid"></div>
@@ -65,12 +87,23 @@
     </div>
 
     <script>
-        // DATA
+        // --- DATA & PRESETS ---
         var PRESETS = {
-            "__CORE__": { "css": "img,svg,video{max-width:100%!important;height:auto!important}:focus{outline:5px solid #FFD700!important}::-webkit-scrollbar{display:none}", "js": "window.TizenUtils={keepAwake:function(){try{var v=document.createElement('video');v.src='https://raw.githubusercontent.com/anthonium/Gestures/master/blank.mp4';v.loop=true;v.play();document.body.appendChild(v)}catch(e){}}};window.TizenUtils.keepAwake();" },
-            "abs": { "name": "Audiobookshelf", "css": ".flex{gap:0!important}", "js": "" },
+            "__CORE__": { 
+                "css": "img,svg,video{max-width:100%!important;height:auto!important}:focus{outline:5px solid #FFD700!important}::-webkit-scrollbar{display:none}", 
+                "js": "window.TizenUtils={keepAwake:function(){try{var v=document.createElement('video');v.src='https://raw.githubusercontent.com/anthonium/Gestures/master/blank.mp4';v.loop=true;v.play();document.body.appendChild(v)}catch(e){}}};window.TizenUtils.keepAwake();" 
+            },
+            
+            // AUDIOBOOKSHELF PRESET (FIXED)
+            "abs": { 
+                "name": "Audiobookshelf", 
+                "css": ".library-item:focus, .card:focus, .shelf-item:focus { border: 2px solid #FFD700 !important; transform: scale(1.02); z-index: 100; outline: none; }", 
+                "js": "setInterval(function(){ document.querySelectorAll('.library-item, .card, .shelf-item').forEach(function(el){ if(!el.getAttribute('tabindex')){ el.setAttribute('tabindex','0'); el.addEventListener('keydown', function(e){ if(e.keyCode===13){ el.click(); e.preventDefault(); e.stopPropagation(); } }); } }); }, 2000);" 
+            },
+            
             "jellyfin": { "name": "Jellyfin", "css": ":focus-visible{outline:4px solid #FFD700!important}", "js": "" }
         };
+        
         var USER_AGENTS = [
             { id: "default", name: "📺 Tizen (Default)", str: null },
             { id: "mobile",  name: "📱 Mobile (Android)", str: "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Mobile Safari/537.36" },
@@ -87,8 +120,10 @@
                 var keys = ["ColorF0Red", "ColorF1Green", "ColorF2Yellow", "ColorF3Blue", "MediaPlay", "MediaPause"];
                 for (var i = 0; i < keys.length; i++) { try { tizen.tvinputdevice.registerKey(keys[i]); } catch(e){} }
             }
+            
             var selP = document.getElementById('preset');
             Object.keys(PRESETS).forEach(function(k) { if(k!=='__CORE__') selP.innerHTML+='<option value="'+k+'">'+PRESETS[k].name+'</option>'; });
+            
             var selU = document.getElementById('ua');
             USER_AGENTS.forEach(function(u) { selU.innerHTML+='<option value="'+u.id+'">'+u.name+'</option>'; });
 
@@ -97,12 +132,25 @@
             setInterval(enforceFocus, 200);
         }
 
+        function getIconClass(name) {
+            var n = name.toLowerCase();
+            if(n.indexOf('home')>-1 || n.indexOf('ha')>-1) return 'fa-home';
+            if(n.indexOf('jelly')>-1 || n.indexOf('play')>-1 || n.indexOf('tube')>-1) return 'fa-play-circle';
+            if(n.indexOf('book')>-1 || n.indexOf('read')>-1 || n.indexOf('abs')>-1) return 'fa-book';
+            return 'fa-globe';
+        }
+
         function render() {
             var g = document.getElementById('grid'); g.innerHTML = '';
             apps.forEach(function(a, i) {
                 var d = document.createElement('div');
                 d.className = 'card'; d.tabIndex = 0;
-                d.innerHTML = '<img src="https://s2.googleusercontent.com/s2/favicons?domain_url='+encodeURIComponent(a.url)+'&sz=64"><span>'+a.name+'</span>';
+                
+                var iconClass = getIconClass(a.name);
+                var imgHTML = '<img src="https://s2.googleusercontent.com/s2/favicons?domain_url='+encodeURIComponent(a.url)+'&sz=64" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\';">';
+                var iconHTML = '<i class="fas '+iconClass+'"></i>';
+                
+                d.innerHTML = imgHTML + iconHTML + '<span>'+a.name+'</span>';
                 g.appendChild(d);
             });
             var add = document.createElement('div'); add.className = 'card add'; add.tabIndex = 0;
@@ -130,16 +178,23 @@
         document.addEventListener('keydown', function(e) {
             var k = e.keyCode;
             if(document.getElementById('modal').style.display === 'flex') { if(k===10009||k===27) closeModal(); return; }
+            
             var cols = Math.floor(document.getElementById('grid').offsetWidth / 250) || 3;
             if (k===37) selectedIndex--; if (k===39) selectedIndex++; 
             if (k===38) selectedIndex-=cols; if (k===40) selectedIndex+=cols; 
-            if ([37,38,39,40].includes(k)) { e.preventDefault(); updateSelection(); }
-            if (k===13 && !pressTimer) { pressTimer = setTimeout(function() { pressTimer=null; openModal(selectedIndex); }, 800); }
+            
+            if ([37,38,39,40].indexOf(k) > -1) { e.preventDefault(); updateSelection(); }
+            
+            // LONG PRESS LOGIC
+            if (k===13 && !pressTimer) { 
+                pressTimer = setTimeout(function() { pressTimer=null; openModal(selectedIndex); }, 800); 
+            }
         });
 
         document.addEventListener('keyup', function(e) {
             if (e.keyCode === 13) {
-                if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; 
+                if (pressTimer) { 
+                    clearTimeout(pressTimer); pressTimer = null; 
                     if (selectedIndex === document.querySelectorAll('.card').length-1) openModal(-1); else launch(apps[selectedIndex]); 
                 }
             }
@@ -149,6 +204,7 @@
             var core = PRESETS['__CORE__'];
             var preset = PRESETS[app.presetID] || {};
             var uaObj = USER_AGENTS.find(function(u){ return u.id === app.ua }) || USER_AGENTS[0];
+            
             var payload = { css: (core.css||'')+'\n'+(preset.css||''), js: (core.js||'')+'\n'+(preset.js||''), ua: uaObj.str };
             var b64 = btoa(JSON.stringify(payload));
             var sep = app.url.indexOf('?') > -1 ? '&' : '?';
@@ -160,6 +216,7 @@
             var isAdd = (index === -1 || index >= apps.length);
             document.getElementById('modal-title').innerText = isAdd ? "Add App" : "Edit App";
             document.getElementById('btn-delete').style.display = isAdd ? 'none' : 'block';
+            
             if (!isAdd) {
                 var a = apps[index];
                 document.getElementById('name').value = a.name; document.getElementById('url').value = a.url;
@@ -169,6 +226,7 @@
         }
 
         function closeModal() { document.getElementById('modal').style.display='none'; }
+        
         function save() {
             var name=document.getElementById('name').value; var url=document.getElementById('url').value;
             if(name && url) {
@@ -178,6 +236,7 @@
                 closeModal(); render();
             }
         }
+        
         function deleteApp() { if(editIndex > -1 && confirm("Delete?")) { apps.splice(editIndex, 1); localStorage.setItem('tp_apps', JSON.stringify(apps)); selectedIndex=Math.max(0,editIndex-1); closeModal(); render(); } }
         function showToast(msg) { var t=document.getElementById('toast'); t.innerText=msg; t.style.opacity=1; setTimeout(function(){t.style.opacity=0;},5000); }
         init();

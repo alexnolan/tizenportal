@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal 034</title>
+    <title>TizenPortal 035</title>
     <style>
         body { background: #000; color: #fff; font-family: "Segoe UI", sans-serif; margin: 0; padding: 40px; overflow: hidden; }
         
@@ -41,7 +41,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <header><h1>TizenPortal <span style="font-size:14px; color:#666;">034</span></h1></header>
+    <header><h1>TizenPortal <span style="font-size:14px; color:#666;">035</span></h1></header>
     <div id="grid" class="grid"></div>
     <div id="toast">Long Press Enter to Edit</div>
     <div id="modal">
@@ -62,59 +62,75 @@
                 "js": "window.TizenUtils={keepAwake:function(){try{var v=document.createElement('video');v.src='https://raw.githubusercontent.com/anthonium/Gestures/master/blank.mp4';v.loop=true;v.play();document.body.appendChild(v)}catch(e){}}};window.TizenUtils.keepAwake();" 
             },
             
-            // --- ABS FIX 034 (Vertical Jailbreak) ---
+            // --- ABS FIX 035 (Clean Grid) ---
             "abs": { 
                 "name": "Audiobookshelf", 
                 "css": `
-                    /* 1. VARIABLE REPAIR */
-                    :root {
-                        --color-bg: #222222 !important; --color-primary: #333333 !important; --color-text: #eeeeee !important;
-                        --color-white: #ffffff !important; --color-black: #000000 !important;
-                        --spacing: 0.25rem !important;
+                    /* 1. CLEANUP SQUAD (Hide the junk) */
+                    [role="dialog"], /* Changelog/Modals */
+                    .modal, 
+                    #appbar, 
+                    nav, 
+                    aside, 
+                    .app-bar-and-toolbar, 
+                    .globalSearchMenu,
+                    [role="toolbar"] { 
+                        display: none !important; 
+                        width: 0 !important; 
+                        height: 0 !important; 
+                        opacity: 0 !important;
+                        pointer-events: none !important;
                     }
 
-                    /* 2. GLOBAL VISIBILITY */
+                    /* 2. BACKGROUND & VARIABLES */
+                    :root {
+                        --color-bg: #222222 !important; --color-primary: #333333 !important; --color-text: #eeeeee !important;
+                    }
                     html, body, #__nuxt, #__layout, #app { 
                         background-color: #222 !important; color: #fff !important; 
-                        opacity: 1 !important; visibility: visible !important; 
                         height: 100vh !important; width: 100vw !important; 
                         overflow-y: auto !important;
                     }
 
-                    /* 3. ICON CLAMP (Appbar Fix) */
-                    #appbar img, .w-8, .h-8 { width: 32px !important; height: 32px !important; min-width: 32px !important; }
-
-                    /* 4. JAILBREAK LAYOUT (The Big Fix) */
-                    .bookshelf-row, .categorizedBookshelfRow, .relative {
-                        overflow: visible !important;
-                        height: auto !important;
+                    /* 3. REVEAL ONLY THE LIBRARY */
+                    #bookshelf, .page, #app-content {
+                        opacity: 1 !important;
+                        visibility: visible !important;
                         display: block !important;
-                    }
-                    
-                    /* Force Flex containers to wrap and fill width */
-                    .flex, .flex-row { 
-                        display: flex !important; 
-                        flex-wrap: wrap !important; 
-                        width: 100% !important;
+                        height: auto !important;
+                        overflow: visible !important;
                     }
 
-                    /* 5. CARD RECONSTRUCTION */
+                    /* 4. FORCE GRID LAYOUT */
+                    .bookshelf-row, .categorizedBookshelfRow, .relative, .flex, .flex-row {
+                        display: flex !important;
+                        flex-wrap: wrap !important;
+                        height: auto !important;
+                        overflow: visible !important;
+                        white-space: normal !important;
+                    }
+
+                    /* 5. CARD STYLING */
                     [id^="book-card-"], .library-item, .card, .shelf-item { 
-                        position: relative !important; /* Was absolute */
+                        position: relative !important;
                         display: inline-block !important; 
                         width: 160px !important; 
-                        height: 260px !important; 
+                        height: 270px !important; 
                         margin: 10px !important; 
                         vertical-align: top !important; 
                         background: #333 !important; 
                         border: 1px solid #555 !important;
                         z-index: 10 !important;
-                        flex: none !important; /* Stop flex shrinking */
+                        flex: none !important;
                     }
                     
-                    /* 6. COVER IMAGES */
+                    /* 6. IMAGES */
                     [id^="cover-area-"] { height: 160px !important; width: 100% !important; }
-                    [id^="book-card-"] img, .card img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
+                    img { 
+                        width: 100% !important; height: 100% !important; 
+                        max-width: 100% !important; max-height: 100% !important;
+                        object-fit: cover !important; 
+                    }
 
                     /* 7. TEXT & FOCUS */
                     p, h1, h2, span, div { color: #fff !important; }
@@ -122,6 +138,7 @@
                         outline: 4px solid #FFD700 !important; transform: scale(1.1); z-index: 5000 !important; background: #444 !important; 
                     }
                 `,
+                // Keep the Focus Injector
                 "js": "setInterval(function(){ var els = document.querySelectorAll('[id^=\"book-card-\"], .library-item'); for(var i=0; i<els.length; i++) { var el = els[i]; if(!el.getAttribute('tabindex')) el.setAttribute('tabindex','0'); if(!el.dataset.tpClick) { el.dataset.tpClick='1'; el.addEventListener('keydown', function(e){ if(e.keyCode===13){ e.preventDefault(); e.stopPropagation(); this.click(); } }); } } }, 1000);" 
             },
             

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal 036</title>
+    <title>TizenPortal 037</title>
     <style>
         body { background: #000; color: #fff; font-family: "Segoe UI", sans-serif; margin: 0; padding: 40px; overflow: hidden; }
         
@@ -41,7 +41,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <header><h1>TizenPortal <span style="font-size:14px; color:#666;">036</span></h1></header>
+    <header><h1>TizenPortal <span style="font-size:14px; color:#666;">037</span></h1></header>
     <div id="grid" class="grid"></div>
     <div id="toast">Long Press Enter to Edit</div>
     <div id="modal">
@@ -62,73 +62,87 @@
                 "js": "window.TizenUtils={keepAwake:function(){try{var v=document.createElement('video');v.src='https://raw.githubusercontent.com/anthonium/Gestures/master/blank.mp4';v.loop=true;v.play();document.body.appendChild(v)}catch(e){}}};window.TizenUtils.keepAwake();" 
             },
             
-            // --- ABS FIX 036 (Purple Rain) ---
+            // --- ABS FIX 037 (The Lifeboat) ---
             "abs": { 
                 "name": "Audiobookshelf", 
                 "css": `
-                    /* 1. VARIABLE REPAIR */
-                    :root {
-                        --color-bg: #222222 !important; --color-primary: #333333 !important; --color-text: #eeeeee !important;
-                    }
-
-                    /* 2. REVEAL CONTENT (The Anti-Black-Screen) */
-                    html, body, #__nuxt, #__layout, #app { 
-                        background-color: #220022 !important; /* DARK PURPLE */
-                        color: #fff !important; 
-                        opacity: 1 !important; visibility: visible !important; 
-                        height: 100vh !important; width: 100vw !important; 
-                        overflow-y: auto !important;
-                    }
-                    div, span, p, img, h1, h2 { 
-                        opacity: 1 !important; 
-                        visibility: visible !important; 
-                    }
-
-                    /* 3. SUPPRESS OVERLAYS (The Anti-Changelog) */
-                    .modal, [role="dialog"], 
-                    #appbar, [role="toolbar"], nav, aside, 
-                    .app-bar-and-toolbar, .globalSearchMenu { 
-                        display: none !important; 
-                        width: 0 !important; height: 0 !important; 
-                        opacity: 0 !important; visibility: hidden !important; 
-                        pointer-events: none !important;
-                    }
-
-                    /* 4. FORCE GRID LAYOUT */
-                    .bookshelf-row, .categorizedBookshelfRow, .relative, .flex, .flex-row {
-                        display: flex !important;
-                        flex-wrap: wrap !important;
-                        height: auto !important;
-                        overflow: visible !important;
-                        white-space: normal !important;
-                    }
-
-                    /* 5. CARD STYLING */
-                    [id^="book-card-"], .library-item, .card, .shelf-item { 
-                        position: relative !important;
-                        display: inline-block !important; 
-                        width: 160px !important; height: 270px !important; 
-                        margin: 10px !important; 
-                        vertical-align: top !important; 
-                        background: #333 !important; border: 1px solid #555 !important;
-                        z-index: 10 !important;
-                        flex: none !important;
+                    /* 1. HIDE THE BROKEN APP */
+                    #__nuxt, #__layout { display: none !important; opacity: 0 !important; }
+                    
+                    /* 2. STYLE THE LIFEBOAT */
+                    body { background-color: #008080 !important; margin: 0 !important; padding: 20px !important; overflow-y: auto !important; }
+                    #tp-lifeboat { 
+                        display: block !important; 
+                        width: 100% !important; 
+                        text-align: center !important;
                     }
                     
-                    /* 6. IMAGES */
-                    [id^="cover-area-"] { height: 160px !important; width: 100% !important; }
-                    img { 
-                        width: 100% !important; height: 100% !important; 
-                        max-width: 100% !important; max-height: 100% !important;
-                        object-fit: cover !important; 
+                    /* 3. STYLE THE RESCUED CARDS */
+                    .tp-rescued-card {
+                        display: inline-block !important;
+                        width: 160px !important;
+                        height: 260px !important;
+                        margin: 15px !important;
+                        background: #222 !important;
+                        border: 2px solid #444 !important;
+                        vertical-align: top !important;
+                        position: relative !important;
+                        cursor: pointer !important;
                     }
-
-                    /* 7. FOCUS */
-                    [id^="book-card-"]:focus, .card:focus { 
-                        outline: 4px solid #FFD700 !important; transform: scale(1.1); z-index: 5000 !important; background: #444 !important; 
+                    .tp-rescued-card img {
+                        width: 100% !important;
+                        height: 100% !important;
+                        object-fit: cover !important;
+                    }
+                    .tp-rescued-card:focus {
+                        outline: 5px solid #FFD700 !important;
+                        transform: scale(1.1);
+                        z-index: 9999;
+                        border-color: #FFD700 !important;
                     }
                 `,
-                "js": "setInterval(function(){ var els = document.querySelectorAll('[id^=\"book-card-\"], .library-item'); for(var i=0; i<els.length; i++) { var el = els[i]; if(!el.getAttribute('tabindex')) el.setAttribute('tabindex','0'); if(!el.dataset.tpClick) { el.dataset.tpClick='1'; el.addEventListener('keydown', function(e){ if(e.keyCode===13){ e.preventDefault(); e.stopPropagation(); this.click(); } }); } } }, 1000);" 
+                "js": `
+                    setInterval(function() {
+                        // 1. Create Lifeboat if missing
+                        var boat = document.getElementById('tp-lifeboat');
+                        if (!boat) {
+                            boat = document.createElement('div');
+                            boat.id = 'tp-lifeboat';
+                            document.body.appendChild(boat);
+                        }
+
+                        // 2. Scan for Books in the Wreckage
+                        var books = document.querySelectorAll('[id^="book-card-"]');
+                        
+                        // 3. Rescue them
+                        for (var i = 0; i < books.length; i++) {
+                            var original = books[i];
+                            var id = 'tp-rescue-' + i;
+                            
+                            // Only rescue if we haven't already
+                            if (!document.getElementById(id)) {
+                                var clone = original.cloneNode(true);
+                                clone.id = id;
+                                clone.className = 'tp-rescued-card';
+                                clone.setAttribute('tabindex', '0');
+                                
+                                // Fix Click Event
+                                clone.addEventListener('click', function() { original.click(); });
+                                clone.addEventListener('keydown', function(e) { 
+                                    if(e.keyCode === 13) { original.click(); } 
+                                });
+
+                                boat.appendChild(clone);
+                            }
+                        }
+                        
+                        // 4. Force Focus if lost
+                        if (document.activeElement === document.body && boat.firstChild) {
+                            boat.firstChild.focus();
+                        }
+
+                    }, 2000);
+                ` 
             },
             
             "jellyfin": { "name": "Jellyfin", "css": ":focus-visible{outline:4px solid #FFD700!important}", "js": "" }

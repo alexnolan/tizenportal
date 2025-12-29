@@ -1,7 +1,6 @@
 (function() {
     if (window.location.hostname.indexOf('github.io') > -1) return;
 
-    // --- ES5 LOGGING ---
     var logs = [];
     function log(type, args) {
         var msg = Array.prototype.slice.call(args).map(function(a){ return (typeof a==='object'?JSON.stringify(a):String(a)); }).join(' ');
@@ -10,7 +9,6 @@
     }
     var origLog = console.log; console.log = function() { log('INF', arguments); origLog.apply(console, arguments); }; console.error = function() { log('ERR', arguments); };
 
-    // --- CONFIG ---
     var Config = {
         payload: null, homeUrl: 'https://alexnolan.github.io/tizenportal/dist/index.html',
         load: function() {
@@ -33,7 +31,6 @@
         }
     };
 
-    // --- UI (SIDEBAR 022) ---
     var UI = {
         open: false, maximized: false, idx: 0, consoleFocused: false,
         items: [
@@ -47,7 +44,7 @@
         ],
         init: function() {
             var css = "" +
-                "#tp-b { position:fixed; top:0; right:-300px; width:280px; bottom:0; background:#111; border-left:2px solid #333; z-index:2147483647; transition:right 0.2s, width 0.2s; font-family:sans-serif; display:flex; flex-direction:column; }" +
+                "#tp-b { position:fixed; top:0; right:-300px; width:280px; bottom:0; background:#111; border-left:2px solid #333; z-index:2147483647 !important; transition:right 0.2s, width 0.2s; font-family:sans-serif; display:flex; flex-direction:column; }" +
                 "#tp-b.open { right:0; box-shadow:-10px 0 50px rgba(0,0,0,0.8); }" +
                 "#tp-b.max { width: 95%; border-left: none; }" +
                 ".tp-i { padding:12px; color:#fff; cursor:pointer; border-bottom:1px solid #222; font-size:16px; }" +
@@ -55,11 +52,11 @@
                 "#tp-c { flex:1; background:#000; color:#0f0; font-family:monospace; font-size:12px; padding:10px; overflow-y:auto; display:none; border-top:1px solid #444; white-space:pre-wrap; word-break:break-all; outline:none; }" +
                 "#tp-c.focused { border: 2px solid #FFD700; background: #080808; }" +
                 "#tp-b.max #tp-c { font-size: 14px; display: block; height: auto; }" +
-                ".tp-t { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#222; color:#fff; padding:10px; border:1px solid #FFD700; opacity:0; transition:opacity 0.5s; z-index:2147483647; pointer-events:none; }";
+                ".tp-t { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#222; color:#fff; padding:10px; border:1px solid #FFD700; opacity:0; transition:opacity 0.5s; z-index:2147483647 !important; pointer-events:none; }";
             
             var s = document.createElement('style'); s.textContent = css; document.head.appendChild(s);
             var d = document.createElement('div'); d.id='tp-b';
-            d.innerHTML = '<div style="padding:15px;background:#222;color:#FFD700;font-weight:bold">TizenPortal 029</div><div style="flex-shrink:0;overflow-y:auto;max-height:50%" id="tp-l"></div><div id="tp-c" tabindex="0"></div>';
+            d.innerHTML = '<div style="padding:15px;background:#222;color:#FFD700;font-weight:bold">TizenPortal 030</div><div style="flex-shrink:0;overflow-y:auto;max-height:50%" id="tp-l"></div><div id="tp-c" tabindex="0"></div>';
             document.body.appendChild(d);
 
             var l = document.getElementById('tp-l');
@@ -108,17 +105,15 @@
         toast: function(m) { var t = document.getElementById('tp-toast'); t.innerText = m; t.style.opacity = 1; setTimeout(function(){ t.style.opacity=0; }, 3000); }
     };
 
-    // --- INPUT ---
     var Input = {
         mouse: false, x: window.innerWidth/2, y: window.innerHeight/2, cursor: null,
         init: function() {
-            var attempts = 0;
-            var regInterval = setInterval(function() {
+            // RE-BIND KEYS FOREVER (Heartbeat)
+            setInterval(function() {
                 if (typeof tizen !== 'undefined' && tizen.tvinputdevice) {
                     ["ColorF0Red","ColorF1Green","ColorF2Yellow","ColorF3Blue","MediaPlay","MediaPause"].forEach(function(k){ try { tizen.tvinputdevice.registerKey(k); } catch(e){} });
-                    attempts++; if(attempts > 5) clearInterval(regInterval);
                 }
-            }, 1000);
+            }, 2000);
             document.addEventListener('keydown', this.key.bind(this), true);
             setInterval(this.loop.bind(this), 50);
         },
@@ -164,6 +159,6 @@
 
     window.TP = { ui: UI, input: Input };
     var loaded = Config.load(); Config.apply();
-    var ready = function() { UI.init(); Input.init(); if(loaded) UI.toast("TizenPortal 029"); else UI.toast("No Config"); };
+    var ready = function() { UI.init(); Input.init(); if(loaded) UI.toast("TizenPortal 030"); else UI.toast("No Config"); };
     if (document.body) ready(); else document.addEventListener('DOMContentLoaded', ready);
 })();

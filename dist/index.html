@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal 035</title>
+    <title>TizenPortal 036</title>
     <style>
         body { background: #000; color: #fff; font-family: "Segoe UI", sans-serif; margin: 0; padding: 40px; overflow: hidden; }
         
@@ -41,7 +41,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <header><h1>TizenPortal <span style="font-size:14px; color:#666;">035</span></h1></header>
+    <header><h1>TizenPortal <span style="font-size:14px; color:#666;">036</span></h1></header>
     <div id="grid" class="grid"></div>
     <div id="toast">Long Press Enter to Edit</div>
     <div id="modal">
@@ -62,43 +62,36 @@
                 "js": "window.TizenUtils={keepAwake:function(){try{var v=document.createElement('video');v.src='https://raw.githubusercontent.com/anthonium/Gestures/master/blank.mp4';v.loop=true;v.play();document.body.appendChild(v)}catch(e){}}};window.TizenUtils.keepAwake();" 
             },
             
-            // --- ABS FIX 035 (Clean Grid) ---
+            // --- ABS FIX 036 (Purple Rain) ---
             "abs": { 
                 "name": "Audiobookshelf", 
                 "css": `
-                    /* 1. CLEANUP SQUAD (Hide the junk) */
-                    [role="dialog"], /* Changelog/Modals */
-                    .modal, 
-                    #appbar, 
-                    nav, 
-                    aside, 
-                    .app-bar-and-toolbar, 
-                    .globalSearchMenu,
-                    [role="toolbar"] { 
-                        display: none !important; 
-                        width: 0 !important; 
-                        height: 0 !important; 
-                        opacity: 0 !important;
-                        pointer-events: none !important;
-                    }
-
-                    /* 2. BACKGROUND & VARIABLES */
+                    /* 1. VARIABLE REPAIR */
                     :root {
                         --color-bg: #222222 !important; --color-primary: #333333 !important; --color-text: #eeeeee !important;
                     }
+
+                    /* 2. REVEAL CONTENT (The Anti-Black-Screen) */
                     html, body, #__nuxt, #__layout, #app { 
-                        background-color: #222 !important; color: #fff !important; 
+                        background-color: #220022 !important; /* DARK PURPLE */
+                        color: #fff !important; 
+                        opacity: 1 !important; visibility: visible !important; 
                         height: 100vh !important; width: 100vw !important; 
                         overflow-y: auto !important;
                     }
+                    div, span, p, img, h1, h2 { 
+                        opacity: 1 !important; 
+                        visibility: visible !important; 
+                    }
 
-                    /* 3. REVEAL ONLY THE LIBRARY */
-                    #bookshelf, .page, #app-content {
-                        opacity: 1 !important;
-                        visibility: visible !important;
-                        display: block !important;
-                        height: auto !important;
-                        overflow: visible !important;
+                    /* 3. SUPPRESS OVERLAYS (The Anti-Changelog) */
+                    .modal, [role="dialog"], 
+                    #appbar, [role="toolbar"], nav, aside, 
+                    .app-bar-and-toolbar, .globalSearchMenu { 
+                        display: none !important; 
+                        width: 0 !important; height: 0 !important; 
+                        opacity: 0 !important; visibility: hidden !important; 
+                        pointer-events: none !important;
                     }
 
                     /* 4. FORCE GRID LAYOUT */
@@ -114,12 +107,10 @@
                     [id^="book-card-"], .library-item, .card, .shelf-item { 
                         position: relative !important;
                         display: inline-block !important; 
-                        width: 160px !important; 
-                        height: 270px !important; 
+                        width: 160px !important; height: 270px !important; 
                         margin: 10px !important; 
                         vertical-align: top !important; 
-                        background: #333 !important; 
-                        border: 1px solid #555 !important;
+                        background: #333 !important; border: 1px solid #555 !important;
                         z-index: 10 !important;
                         flex: none !important;
                     }
@@ -132,13 +123,11 @@
                         object-fit: cover !important; 
                     }
 
-                    /* 7. TEXT & FOCUS */
-                    p, h1, h2, span, div { color: #fff !important; }
+                    /* 7. FOCUS */
                     [id^="book-card-"]:focus, .card:focus { 
                         outline: 4px solid #FFD700 !important; transform: scale(1.1); z-index: 5000 !important; background: #444 !important; 
                     }
                 `,
-                // Keep the Focus Injector
                 "js": "setInterval(function(){ var els = document.querySelectorAll('[id^=\"book-card-\"], .library-item'); for(var i=0; i<els.length; i++) { var el = els[i]; if(!el.getAttribute('tabindex')) el.setAttribute('tabindex','0'); if(!el.dataset.tpClick) { el.dataset.tpClick='1'; el.addEventListener('keydown', function(e){ if(e.keyCode===13){ e.preventDefault(); e.stopPropagation(); this.click(); } }); } } }, 1000);" 
             },
             

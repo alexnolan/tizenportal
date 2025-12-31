@@ -13,13 +13,29 @@
         payload: null, homeUrl: 'https://alexnolan.github.io/tizenportal/dist/index.html',
         load: function() {
             try {
+                // 1. Check window.name (Cross-Domain Navigation)
+                if (window.name && window.name.indexOf('TP_CONFIG=') === 0) {
+                    var j = atob(window.name.substring(10)); 
+                    this.payload = JSON.parse(j);
+                    sessionStorage.setItem('tp_conf', j); localStorage.setItem('tp_conf', j);
+                    window.name = ''; // Clean up
+                    console.log("[TP] Loaded window.name"); return true;
+                }
+
+                // 2. Check URL Param (Direct Link)
                 var m = window.location.href.match(/[?&]tp=([^&]+)/);
                 if (m && m[1]) {
-                    var j = atob(m[1]); this.payload = JSON.parse(j); sessionStorage.setItem('tp_conf', j);
+                    var j = atob(m[1]); this.payload = JSON.parse(j); 
+                    sessionStorage.setItem('tp_conf', j); localStorage.setItem('tp_conf', j);
                     window.history.replaceState({}, document.title, window.location.href.replace(/[?&]tp=[^&]+/, ''));
                     console.log("[TP] Loaded URL"); return true;
                 }
-                var s = sessionStorage.getItem('tp_conf'); if(s){this.payload=JSON.parse(s);console.log("[TP] Loaded Storage");return true;}
+                
+                // 3. Fallback to Storage
+                var s = sessionStorage.getItem('tp_conf'); 
+                if(s){this.payload=JSON.parse(s);console.log("[TP] Loaded Storage");return true;}
+                var l = localStorage.getItem('tp_conf');
+                if(l){this.payload=JSON.parse(l);console.log("[TP] Loaded Local");return true;}
             } catch(e) { console.error("Conf Fail", e); } return false;
         },
         apply: function() {

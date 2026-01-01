@@ -109,8 +109,11 @@
             },
             
             waitForNuxt: function() {
-                if (typeof window.__NUXT__ !== 'undefined' || document.querySelectorAll('[id*="__nuxt"]').length > 0) {
-                    this.log('WAIT_NUXT: Found Nuxt, creating lifeboat');
+                var nuxtFound = typeof window.__NUXT__ !== 'undefined' || document.querySelectorAll('[id*="__nuxt"]').length > 0;
+                var booksExist = document.querySelectorAll('[id^="book-card-"]').length > 0;
+                
+                if (nuxtFound || booksExist || document.body) {
+                    this.log('WAIT_NUXT: Ready (nuxt=' + nuxtFound + ' books=' + booksExist + ')');
                     this.createLifeboat();
                     this.setupMutationObserver();
                     this.state = 'DETECT_PAGE';
@@ -191,19 +194,28 @@
                 var self = this;
                 var callCount = 0;
                 var logged = false;
+                var loaderStuckCounter = 0;
                 this.observer = new MutationObserver(function(mutations) {
                     try {
                         callCount++;
                         // Check if page is loading
                         var loader = document.getElementById('nuxt-loading');
-                        var loaderOpacity = loader ? getComputedStyle(loader).opacity : 'N/A';
+                        var loaderOpacity = loader ? getComputedStyle(loader).opacity : '0';
                         
                         if (loader && loaderOpacity !== '0') {
-                            if (callCount % 10 === 0) self.log('Loading... opacity=' + loaderOpacity);
-                            return;
+                            loaderStuckCounter++;
+                            // If loader stuck for 100+ checks, force render anyway
+                            if (loaderStuckCounter > 100) {
+                                self.log('Loader stuck, forcing render anyway');
+                                loaderStuckCounter = 0;
+                            } else {
+                                return;
+                            }
+                        } else {
+                            loaderStuckCounter = 0;
                         }
                         
-                        // First time we get past loader, dump everything
+                        // First time past loader, dump ID inspection
                         if (!logged) {
                             logged = true;
                             var allIds = document.querySelectorAll('[id]');
@@ -214,16 +226,9 @@
                                     bookIds.push(id);
                                 }
                             }
-                            self.log('Found IDs with book/card: ' + (bookIds.length > 0 ? bookIds.slice(0, 3).join(',') : 'NONE'));
-                        }
-                        
-                        // Aggressive debugging: log what we're finding
-                        var booksBySelector = document.querySelectorAll('[id^="book-card-"]').length;
-                        var allBooks = document.querySelectorAll('[id*="book"]');
-                        var allCards = document.querySelectorAll('[id*="card"]');
-                        
-                        if (booksBySelector === 0 && callCount % 5 === 0) {
-                            self.log('selector [id^="book-card-"]=0 | [id*="book"]=' + allBooks.length + ' [id*="card"]=' + allCards.length);
+                            if (bookIds.length > 0) {
+                                self.log('Found IDs: ' + bookIds.slice(0, 5).join(','));
+                            }
                         }
                         
                         self.detectAndRender();

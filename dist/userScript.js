@@ -295,7 +295,7 @@
         UI.init(); 
         Input.init(); 
         if(loaded) { 
-            UI.toast("TizenPortal 047"); 
+            UI.toast("TizenPortal 050"); 
         } else { 
             UI.toast("No Config"); 
             tpHud('No payload found'); 

@@ -146,9 +146,11 @@
                 tpDiag('Lifeboat and navbar created');
             }
 
-            // B. CHECK FOR FORMS & INPUTS
+            // B. CHECK FOR FORMS & INPUTS (Only on login pages, not content pages)
             var loginOk = false;
-            if (window.TizenUtils && window.TizenUtils.handleLogin(boat, 'Audiobookshelf')) {
+            // Skip form generation if this looks like a content page (has books/items)
+            var hasContent = document.querySelectorAll('[id^="book-card-"], .book-item, [class*="item"]').length > 0;
+            if (!hasContent && window.TizenUtils && window.TizenUtils.handleLogin(boat, 'Audiobookshelf')) {
                 loginOk = true;
             }
             if(tpLast.login !== loginOk) { tpDiag('handleLogin=' + loginOk); tpLast.login = loginOk; }

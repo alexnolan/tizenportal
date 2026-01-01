@@ -1,2 +1,18 @@
 AGENT_INSTRUCTIONS.md
 .github/copilot-instructions.md
+# Documentation (do not commit)
+REFACTOR_LOG.md
+REFACTORING_SUMMARY.md
+COMPLETION_REPORT.md
+*.log
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

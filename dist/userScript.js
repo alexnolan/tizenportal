@@ -190,6 +190,8 @@
             if ([37,38,39,40].indexOf(k) > -1 && !this.mouse) {
                 var focusables = Array.prototype.slice.call(document.querySelectorAll('a, button, input, select, textarea, [tabindex]'))
                     .filter(function(el){ return el && el.tabIndex > -1 && el.offsetParent !== null; });
+                // Clear old focus outlines
+                for(var j=0; j<focusables.length; j++) focusables[j].style.outline='';
                 var idx = focusables.indexOf(document.activeElement);
                 var isTextInput = (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA'));
                 
@@ -200,7 +202,7 @@
                         if (idx === -1 && focusables.length) idx = 0;
                         if (k === 38) idx = Math.max(0, idx - 1);
                         if (k === 40) idx = Math.min(focusables.length - 1, idx + 1);
-                        if (focusables[idx]) focusables[idx].focus();
+                        if (focusables[idx]) { focusables[idx].focus(); focusables[idx].style.outline='3px solid #FF6600'; }
                         e.preventDefault(); e.stopPropagation(); return;
                     }
                     // Left/Right allowed on text input for normal editing
@@ -211,7 +213,7 @@
                 if (idx === -1 && focusables.length) idx = 0;
                 if (k===37 || k===38) idx = Math.max(0, idx-1);
                 if (k===39 || k===40) idx = Math.min(focusables.length-1, idx+1);
-                if (focusables[idx]) focusables[idx].focus();
+                if (focusables[idx]) { focusables[idx].focus(); focusables[idx].style.outline='3px solid #FF6600'; }
                 e.preventDefault(); e.stopPropagation(); return;
             }
 

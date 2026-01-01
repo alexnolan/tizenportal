@@ -53,9 +53,9 @@
         },
         apply: function() {
             if (!this.payload) return false;
-            if (this.payload.ua) { try { Object.defineProperty(navigator, 'userAgent', { get: function(){ return Config.payload.ua; } }); tpHud('UA override applied'); } catch(e){ tpHud('UA override failed'); } }
-            if (this.payload.css) { var s=document.createElement('style'); s.textContent=this.payload.css; document.head.appendChild(s); tpHud('CSS injected'); }
-            if (this.payload.js) { try { new Function(this.payload.js)(); tpHud('JS executed'); } catch(e){ tpHud('JS exec failed'); } }
+            if (this.payload.ua) { try { Object.defineProperty(navigator, 'userAgent', { get: function(){ return Config.payload.ua; } }); tpHud('UA override applied'); } catch(e){ tpHud('UA override failed: ' + (e && e.message ? e.message : '?')); console.error('UA override failed', e); } }
+            if (this.payload.css) { try { var s=document.createElement('style'); s.textContent=this.payload.css; document.head.appendChild(s); tpHud('CSS injected (' + this.payload.css.length + ' chars)'); } catch(e){ tpHud('CSS inject failed: ' + (e && e.message ? e.message : '?')); console.error('CSS inject failed', e); } }
+            if (this.payload.js) { try { new Function(this.payload.js)(); tpHud('JS executed (' + this.payload.js.length + ' chars)'); } catch(e){ tpHud('JS exec failed: ' + (e && e.message ? e.message : '?')); console.error('JS exec failed', e); } }
             return true;
         }
     };

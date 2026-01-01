@@ -186,6 +186,18 @@
             if (k===404) { this.toggleMouse(); e.preventDefault(); return; } 
             if (k===405) { window.location.href = Config.homeUrl; e.preventDefault(); return; } 
 
+            // D-pad focus navigation (linear) to avoid scroll
+            if ([37,38,39,40].indexOf(k) > -1 && !this.mouse) {
+                var focusables = Array.prototype.slice.call(document.querySelectorAll('a, button, input, select, textarea, [tabindex]'))
+                    .filter(function(el){ return el && el.tabIndex > -1 && el.offsetParent !== null; });
+                var idx = focusables.indexOf(document.activeElement);
+                if (idx === -1 && focusables.length) idx = 0;
+                if (k===37 || k===38) idx = Math.max(0, idx-1);
+                if (k===39 || k===40) idx = Math.min(focusables.length-1, idx+1);
+                if (focusables[idx]) focusables[idx].focus();
+                e.preventDefault(); e.stopPropagation(); return;
+            }
+
             if (this.mouse) {
                 if (k===37) this.x-=25; if (k===38) this.y-=25; if (k===39) this.x+=25; if (k===40) this.y+=25;
                 if (k===13) this.click(); this.draw();

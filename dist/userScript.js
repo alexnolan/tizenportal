@@ -191,6 +191,23 @@
                 var focusables = Array.prototype.slice.call(document.querySelectorAll('a, button, input, select, textarea, [tabindex]'))
                     .filter(function(el){ return el && el.tabIndex > -1 && el.offsetParent !== null; });
                 var idx = focusables.indexOf(document.activeElement);
+                var isTextInput = (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA'));
+                
+                // On text inputs: Up/Down move focus, Left/Right allow text editing. Back/Esc blurs.
+                if (isTextInput) {
+                    if (k === 10009 || k === 27) { document.activeElement.blur(); e.preventDefault(); e.stopPropagation(); return; }
+                    if (k === 38 || k === 40) {
+                        if (idx === -1 && focusables.length) idx = 0;
+                        if (k === 38) idx = Math.max(0, idx - 1);
+                        if (k === 40) idx = Math.min(focusables.length - 1, idx + 1);
+                        if (focusables[idx]) focusables[idx].focus();
+                        e.preventDefault(); e.stopPropagation(); return;
+                    }
+                    // Left/Right allowed on text input for normal editing
+                    return;
+                }
+                
+                // On other elements: all D-pad moves focus
                 if (idx === -1 && focusables.length) idx = 0;
                 if (k===37 || k===38) idx = Math.max(0, idx-1);
                 if (k===39 || k===40) idx = Math.min(focusables.length-1, idx+1);

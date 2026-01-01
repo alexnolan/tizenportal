@@ -2,6 +2,18 @@
     if (window.location.hostname.indexOf('github.io') > -1) return;
 
     var logs = [];
+    var tpHud = function(msg){
+        try {
+            var h = document.getElementById('tp-diag');
+            if(!h){
+                h = document.createElement('div'); h.id='tp-diag';
+                h.style.cssText='position:fixed;top:0;left:0;right:0;z-index:2147483647;background:rgba(0,0,0,0.85);color:#FFD700;font-size:13px;font-family:sans-serif;padding:6px 10px;pointer-events:none;text-align:left;';
+                document.body.appendChild(h);
+            }
+            h.textContent = '[TP] ' + msg;
+            setTimeout(function(){ try { if(h) h.style.opacity='0.4'; } catch(e){} }, 3000);
+        } catch(e){}
+    };
     function log(type, args) {
         var msg = Array.prototype.slice.call(args).map(function(a){ return (typeof a==='object'?JSON.stringify(a):String(a)); }).join(' ');
         logs.unshift('['+type+'] '+msg); if (logs.length > 200) logs.pop();
@@ -20,7 +32,7 @@
                     sessionStorage.setItem('tp_conf', j); localStorage.setItem('tp_conf', j);
                     // Clear hash without reloading
                     history.replaceState(null, document.title, window.location.pathname + window.location.search);
-                    console.log("[TP] Loaded Hash"); return true;
+                    tpHud('Loaded hash payload'); console.log("[TP] Loaded Hash"); return true;
                 }
 
                 // 2. Check URL Param (Legacy/Direct)
@@ -29,21 +41,21 @@
                     var j = atob(m2[1]); this.payload = JSON.parse(j); 
                     sessionStorage.setItem('tp_conf', j); localStorage.setItem('tp_conf', j);
                     window.history.replaceState({}, document.title, window.location.href.replace(/[?&]tp=[^&]+/, ''));
-                    console.log("[TP] Loaded URL"); return true;
+                    tpHud('Loaded query payload'); console.log("[TP] Loaded URL"); return true;
                 }
                 
                 // 3. Fallback to Storage
                 var s = sessionStorage.getItem('tp_conf'); 
-                if(s){this.payload=JSON.parse(s);console.log("[TP] Loaded Storage");return true;}
+                if(s){this.payload=JSON.parse(s);tpHud('Loaded session payload');console.log("[TP] Loaded Storage");return true;}
                 var l = localStorage.getItem('tp_conf');
-                if(l){this.payload=JSON.parse(l);console.log("[TP] Loaded Local");return true;}
-            } catch(e) { console.error("Conf Fail", e); } return false;
+                if(l){this.payload=JSON.parse(l);tpHud('Loaded local payload');console.log("[TP] Loaded Local");return true;}
+            } catch(e) { console.error("Conf Fail", e); tpHud('Config load failed'); } return false;
         },
         apply: function() {
             if (!this.payload) return false;
-            if (this.payload.ua) { try { Object.defineProperty(navigator, 'userAgent', { get: function(){ return Config.payload.ua; } }); } catch(e){} }
-            if (this.payload.css) { var s=document.createElement('style'); s.textContent=this.payload.css; document.head.appendChild(s); }
-            if (this.payload.js) { try { new Function(this.payload.js)(); } catch(e){} }
+            if (this.payload.ua) { try { Object.defineProperty(navigator, 'userAgent', { get: function(){ return Config.payload.ua; } }); tpHud('UA override applied'); } catch(e){ tpHud('UA override failed'); } }
+            if (this.payload.css) { var s=document.createElement('style'); s.textContent=this.payload.css; document.head.appendChild(s); tpHud('CSS injected'); }
+            if (this.payload.js) { try { new Function(this.payload.js)(); tpHud('JS executed'); } catch(e){ tpHud('JS exec failed'); } }
             return true;
         }
     };
@@ -200,6 +212,6 @@
 
     window.TP = { ui: UI, input: Input };
     var loaded = Config.load(); Config.apply();
-    var ready = function() { UI.init(); Input.init(); if(loaded) UI.toast("TizenPortal 046"); else UI.toast("No Config"); };
+    var ready = function() { UI.init(); Input.init(); if(loaded) { UI.toast("TizenPortal 046"); } else { UI.toast("No Config"); tpHud('No payload found'); } };
     if (document.body) ready(); else document.addEventListener('DOMContentLoaded', ready);
 })();

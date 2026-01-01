@@ -1,6 +1,6 @@
 # 📺 TizenPortal
 
-![Version](https://img.shields.io/badge/version-0.4.6-blue) ![Tizen](https://img.shields.io/badge/Tizen-3.0%2B-blueviolet) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-0.4.7-blue) ![Tizen](https://img.shields.io/badge/Tizen-3.0%2B-blueviolet) ![License](https://img.shields.io/badge/license-MIT-green)
 
 **TizenPortal** is a universal launcher and compatibility layer designed for Samsung Smart TVs running Tizen OS. It allows you to run modern self-hosted web applications (like **Audiobookshelf**, **Jellyfin**, etc.) on older TVs that might otherwise struggle with broken layouts or incompatible interfaces.
 
@@ -45,6 +45,11 @@ This project is designed to be loaded via **TizenBrew** or a similar userscript 
     *   **Preset:** Select a "Rescue Strategy" if the app is known to be broken (e.g., "Audiobookshelf").
     *   **User Agent:** Select a device profile (Default Tizen is usually best, but try others if you have issues).
 3.  **🚀 Launch:** Click the card to open the app. TizenPortal will automatically inject the necessary fixes.
+
+### 🆕 What’s New in 0.4.7
+- Safer lifeboat: host app hides only after rescued content exists, reducing black-screen risk.
+- On-screen HUD banners show payload load/apply status (UA/CSS/JS) even if the sidebar is hidden.
+- Audiobookshelf lifeboat adds a debug banner and logs loader/form/book scraping to aid troubleshooting.
 
 ---
 

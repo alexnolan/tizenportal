@@ -243,13 +243,14 @@
                 ".tp-blue-input:focus { border-color:#FFD700; outline:none; }" +
                 ".tp-blue-label { display:block; color:#1e90ff; font-size:12px; margin-bottom:5px; font-weight:bold; }" +
                 ".tp-blue-btn { width:100%; padding:10px; background:#1e90ff; color:#fff; border:none; border-radius:4px; font-size:14px; cursor:pointer; margin-top:10px; }" +
-                ".tp-blue-btn:focus { outline:3px solid #FFD700; }";
+                ".tp-blue-btn:focus { outline:3px solid #FFD700; }" +
+                ".tp-form-hidden { opacity:0.001 !important; pointer-events:none !important; position:absolute !important; left:-9999px !important; }";
             
             var s = document.createElement('style'); s.textContent = css; document.head.appendChild(s);
             
             var menu = document.createElement('div');
             menu.id = 'tp-blue-menu';
-            menu.innerHTML = '<div id="tp-blue-header">🔵 Forms & Actions</div><div id="tp-blue-list"></div><div id="tp-blue-content"></div>';
+            menu.innerHTML = '<div id="tp-blue-header">📝 Forms</div><div id="tp-blue-list"></div><div id="tp-blue-content"></div>';
             document.body.appendChild(menu);
         },
         
@@ -258,11 +259,12 @@
             var menu = document.getElementById('tp-blue-menu');
             if (this.active) {
                 this.detectForms();
+                this.hideOriginalForms();
                 this.renderList();
                 menu.classList.add('active');
                 var firstItem = document.querySelector('.tp-blue-item');
                 if (firstItem) firstItem.focus();
-                UI.toast("Blue Menu - ↑↓ Navigate / Back to Close");
+                UI.toast("Forms Menu - ↑↓ Navigate / Back to Close");
             } else {
                 menu.classList.remove('active');
                 document.body.focus();
@@ -271,49 +273,102 @@
         
         detectForms: function() {
             this.forms = [];
-            var self = this;
+            var processed = {};
             
-            // Detect search inputs
-            var searchInputs = document.querySelectorAll('input[type="search"], input[placeholder*="Search" i], input[placeholder*="search" i]');
-            var visSearch = [];
-            for (var i = 0; i < searchInputs.length; i++) {
-                if (searchInputs[i].offsetParent !== null) visSearch.push(searchInputs[i]);
+            // 1. Find all <form> elements and group their inputs
+            var formEls = document.querySelectorAll('form');
+            for (var f = 0; f < formEls.length; f++) {
+                var formEl = formEls[f];
+                if (formEl.offsetParent === null) continue; // Skip hidden forms
+                
+                var inputs = formEl.querySelectorAll('input, textarea, select, button');
+                var visInputs = [];
+                for (var i = 0; i < inputs.length; i++) {
+                    var inp = inputs[i];
+                    // Skip already processed or TP elements
+                    if (inp.className && inp.className.indexOf('tp-') > -1) continue;
+                    if (inp.offsetParent !== null || inp.type === 'hidden') visInputs.push(inp);
+                    processed[inp] = true;
+                }
+                
+                if (visInputs.length > 0) {
+                    var formName = formEl.id || formEl.name || formEl.getAttribute('aria-label') || formEl.getAttribute('role') || '';
+                    // Try to detect form purpose
+                    var hasPassword = formEl.querySelector('input[type="password"]');
+                    var hasSearch = formEl.querySelector('input[type="search"], input[placeholder*="search" i]');
+                    var icon = hasPassword ? '🔐' : (hasSearch ? '🔍' : '📋');
+                    var label = formName || (hasPassword ? 'Login' : (hasSearch ? 'Search' : 'Form ' + (this.forms.length + 1)));
+                    
+                    this.forms.push({
+                        category: icon + ' ' + label,
+                        inputs: visInputs,
+                        formEl: formEl,
+                        type: 'form'
+                    });
+                }
             }
-            if (visSearch.length > 0) this.forms.push({category: '🔍 Search', inputs: visSearch, type: 'search'});
             
-            // Detect login inputs
-            var loginInputs = document.querySelectorAll('input[type="password"], input[type="email"], input[name*="user" i], input[name*="pass" i]');
-            var visLogin = [];
-            for (var j = 0; j < loginInputs.length; j++) {
-                if (loginInputs[j].offsetParent !== null) visLogin.push(loginInputs[j]);
+            // 2. Find orphan inputs (not in any form) - group as "Page Controls"
+            var allInputs = document.querySelectorAll('input, textarea, select');
+            var orphans = [];
+            for (var j = 0; j < allInputs.length; j++) {
+                var el = allInputs[j];
+                if (processed[el]) continue;
+                if (el.className && el.className.indexOf('tp-') > -1) continue;
+                if (el.offsetParent === null) continue;
+                // Skip inputs inside tp-lifeboat rescued cards (ABS action buttons etc)
+                if (el.closest && el.closest('.tp-rescued-card, #tp-lifeboat, #tp-bar, #tp-blue-menu')) continue;
+                orphans.push(el);
+                processed[el] = true;
             }
-            if (visLogin.length > 0) this.forms.push({category: '🔐 Login', inputs: visLogin, type: 'login'});
+            if (orphans.length > 0) {
+                this.forms.push({
+                    category: '⚙️ Page Controls',
+                    inputs: orphans,
+                    formEl: null,
+                    type: 'orphan'
+                });
+            }
             
-            // Detect text inputs (generic)
-            var textInputs = document.querySelectorAll('input[type="text"]:not([placeholder*="search" i]), textarea');
-            var visText = [];
-            for (var k = 0; k < textInputs.length; k++) {
-                if (textInputs[k].offsetParent !== null && visSearch.indexOf(textInputs[k]) === -1 && visLogin.indexOf(textInputs[k]) === -1) visText.push(textInputs[k]);
+            // 3. Find standalone buttons (not in forms, not in rescued cards)
+            var buttons = document.querySelectorAll('button:not(.tp-bar-btn):not(.tp-blue-btn)');
+            var standaloneButtons = [];
+            for (var k = 0; k < buttons.length; k++) {
+                var btn = buttons[k];
+                if (processed[btn]) continue;
+                if (btn.offsetParent === null) continue;
+                if (btn.closest && btn.closest('form, .tp-rescued-card, #tp-lifeboat, #tp-bar, #tp-blue-menu')) continue;
+                if (btn.textContent.trim().length === 0 || btn.textContent.trim().length > 40) continue;
+                standaloneButtons.push(btn);
             }
-            if (visText.length > 0) this.forms.push({category: '📝 Text Fields', inputs: visText, type: 'text'});
-            
-            // Detect selects/dropdowns
-            var selects = document.querySelectorAll('select');
-            var visSelect = [];
-            for (var l = 0; l < selects.length; l++) {
-                if (selects[l].offsetParent !== null) visSelect.push(selects[l]);
+            if (standaloneButtons.length > 0) {
+                this.forms.push({
+                    category: '🔘 Actions',
+                    inputs: standaloneButtons,
+                    formEl: null,
+                    type: 'buttons'
+                });
             }
-            if (visSelect.length > 0) this.forms.push({category: '📋 Dropdowns', inputs: visSelect, type: 'select'});
-            
-            // Detect buttons
-            var buttons = document.querySelectorAll('button:not(.tp-bar-btn):not(.tp-blue-btn), input[type="submit"], input[type="button"]');
-            var visBtn = [];
-            for (var m = 0; m < buttons.length; m++) {
-                if (buttons[m].offsetParent !== null && buttons[m].textContent.trim().length > 0 && buttons[m].textContent.trim().length < 30) visBtn.push(buttons[m]);
-            }
-            if (visBtn.length > 0) this.forms.push({category: '🔘 Buttons', inputs: visBtn, type: 'button'});
             
             console.log('[TP BlueMenu] Detected ' + this.forms.length + ' form groups');
+        },
+        
+        hideOriginalForms: function() {
+            // Hide original form elements but NOT rescued cards or TP UI
+            for (var f = 0; f < this.forms.length; f++) {
+                var form = this.forms[f];
+                if (form.formEl) {
+                    form.formEl.classList.add('tp-form-hidden');
+                } else {
+                    // For orphans, hide each input individually
+                    for (var i = 0; i < form.inputs.length; i++) {
+                        var inp = form.inputs[i];
+                        if (!inp.closest || !inp.closest('.tp-rescued-card, #tp-lifeboat')) {
+                            inp.classList.add('tp-form-hidden');
+                        }
+                    }
+                }
+            }
         },
         
         renderList: function() {
@@ -369,24 +424,35 @@
                 var orig = form.inputs[i];
                 var wrapper = document.createElement('div');
                 wrapper.style.marginBottom = '15px';
+                var tagName = orig.tagName.toLowerCase();
                 
-                if (form.type === 'button') {
+                // Handle buttons
+                if (tagName === 'button' || (tagName === 'input' && (orig.type === 'submit' || orig.type === 'button'))) {
                     var btn = document.createElement('button');
                     btn.className = 'tp-blue-btn';
-                    btn.innerText = orig.textContent.trim() || orig.value || 'Button';
+                    btn.innerText = orig.textContent.trim() || orig.value || 'Submit';
                     btn.tabIndex = 0;
                     (function(o) {
                         btn.onclick = function() { o.click(); };
                         btn.onkeydown = function(e) {
                             if (e.keyCode === 13) { o.click(); e.preventDefault(); }
                             if (e.keyCode === 10009 || e.keyCode === 27) { self.toggle(); e.preventDefault(); }
+                            if (e.keyCode === 38 || e.keyCode === 40) {
+                                var els = Array.prototype.slice.call(content.querySelectorAll('.tp-blue-input, .tp-blue-btn'));
+                                var idx = els.indexOf(btn);
+                                if (e.keyCode === 38 && idx > 0) els[idx-1].focus();
+                                if (e.keyCode === 40 && idx < els.length-1) els[idx+1].focus();
+                                e.preventDefault();
+                            }
                         };
                     })(orig);
                     wrapper.appendChild(btn);
-                } else if (form.type === 'select') {
+                } 
+                // Handle select/dropdown
+                else if (tagName === 'select') {
                     var label = document.createElement('label');
                     label.className = 'tp-blue-label';
-                    label.innerText = orig.name || 'Select';
+                    label.innerText = orig.name || orig.id || 'Select';
                     wrapper.appendChild(label);
                     
                     var select = document.createElement('select');
@@ -401,24 +467,37 @@
                     }
                     (function(o, s) {
                         s.onchange = function() { o.value = s.value; o.dispatchEvent(new Event('change')); };
+                        s.onkeydown = function(e) {
+                            if (e.keyCode === 10009 || e.keyCode === 27) { s.blur(); e.preventDefault(); }
+                        };
                     })(orig, select);
                     wrapper.appendChild(select);
-                } else {
+                } 
+                // Handle text inputs, textareas, etc
+                else {
                     var label = document.createElement('label');
                     label.className = 'tp-blue-label';
-                    label.innerText = orig.placeholder || orig.name || orig.type || 'Input';
+                    label.innerText = orig.placeholder || orig.name || orig.id || orig.type || 'Input';
                     wrapper.appendChild(label);
                     
-                    var input = document.createElement('input');
-                    input.type = orig.type === 'password' ? 'password' : 'text';
+                    var input = document.createElement(tagName === 'textarea' ? 'textarea' : 'input');
+                    if (tagName !== 'textarea') input.type = orig.type === 'password' ? 'password' : 'text';
                     input.className = 'tp-blue-input';
                     input.placeholder = orig.placeholder || '';
                     input.value = orig.value || '';
                     input.tabIndex = 0;
-                    (function(o, inp) {
+                    if (tagName === 'textarea') { input.style.minHeight = '80px'; input.style.resize = 'vertical'; }
+                    (function(o, inp, formEl) {
                         inp.oninput = function() { o.value = inp.value; o.dispatchEvent(new Event('input')); };
                         inp.onkeydown = function(e) {
-                            if (e.keyCode === 13) { o.dispatchEvent(new Event('change')); if(o.form) { var s = o.form.querySelector('button[type="submit"], input[type="submit"]'); if(s) s.click(); } }
+                            if (e.keyCode === 13 && tagName !== 'textarea') { 
+                                o.dispatchEvent(new Event('change')); 
+                                // Find submit button in form
+                                if (formEl) { 
+                                    var s = formEl.querySelector('button[type="submit"], input[type="submit"], button:not([type])'); 
+                                    if(s) s.click(); 
+                                }
+                            }
                             if (e.keyCode === 10009 || e.keyCode === 27) { inp.blur(); }
                             if (e.keyCode === 38 || e.keyCode === 40) {
                                 var inputs = Array.prototype.slice.call(content.querySelectorAll('.tp-blue-input, .tp-blue-btn'));
@@ -428,7 +507,7 @@
                                 e.preventDefault();
                             }
                         };
-                    })(orig, input);
+                    })(orig, input, form.formEl);
                     wrapper.appendChild(input);
                 }
                 
@@ -543,7 +622,7 @@
         BlueMenu.init();
         Input.init(); 
         if(loaded && applied) { 
-            UI.toast("TizenPortal 0532 - Ready"); 
+            UI.toast("TizenPortal 0533 - Ready"); 
         } else if(loaded && !applied) {
             UI.toast("Config Loaded - Apply Failed");
             tpHud('Payload loaded but apply failed');

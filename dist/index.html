@@ -549,11 +549,11 @@
                 }
                 
                 // Extract global search from appbar - controls-global-search component
-                var searchInput = document.querySelector('#appbar input[type="search"], #appbar input[placeholder*="Search" i]');
+                var searchInput = document.querySelector('#appbar input[type="search"], #appbar input[placeholder*="Search"]');
                 if (searchInput) {
                     var searchBtn = document.createElement('div');
                     searchBtn.className = 'tp-nav-item';
-                    searchBtn.innerText = '🔍 Search';
+                    searchBtn.innerText = 'Search';
                     searchBtn.tabIndex = 0;
                     (function(input) {
                         searchBtn.onclick = function() { input.focus(); };
@@ -1164,18 +1164,24 @@
         });
 
         function launch(app) {
+            var dbg = document.getElementById('debug-status');
+            dbg.style.display = 'block';
             try {
-                document.getElementById('debug-status').textContent = 'launch: ' + app.name;
+                dbg.textContent = 'launch: ' + app.name + ' preset=' + (app.presetID || 'none');
                 var core = PRESETS['__CORE__']; 
                 var preset = PRESETS[app.presetID] || {}; 
+                dbg.textContent = 'preset css=' + (preset.css ? preset.css.length : 0) + ' js=' + (preset.js ? preset.js.length : 0);
                 var uaObj = USER_AGENTS.find(function(u){ return u.id === app.ua }) || USER_AGENTS[0];
                 var payload = { css: (core.css||'')+'\n'+(preset.css||''), js: (core.js||'')+'\n'+(preset.js||''), ua: uaObj.str };
-                document.getElementById('debug-status').textContent = 'launch: navigating...';
                 var json = JSON.stringify(payload);
+                dbg.textContent = 'json=' + json.length + ' chars';
                 var encoded = btoa(unescape(encodeURIComponent(json)));
-                window.location.href = app.url + '#tp=' + encoded;
+                dbg.textContent = 'b64=' + encoded.length + ' url=' + app.url.substring(0,50);
+                var finalUrl = app.url + '#tp=' + encoded;
+                dbg.textContent = 'navigating... url=' + finalUrl.length + ' chars';
+                window.location.href = finalUrl;
             } catch(e) {
-                document.getElementById('debug-status').textContent = 'launch ERROR: ' + (e.message || 'unknown');
+                dbg.textContent = 'ERROR: ' + (e.message || 'unknown');
                 console.error('[TP] Launch error:', e);
                 alert('Error launching app: ' + (e.message || 'unknown'));
             }

@@ -489,8 +489,12 @@
         var selectedIndex = 0; var editIndex = -1; var pressTimer = null;
 
         function init() {
-            PRESETS.abs.css = document.getElementById('abs-css').innerHTML;
-            PRESETS.abs.js = document.getElementById('abs-js').innerHTML;
+            try {
+                PRESETS.abs.css = document.getElementById('abs-css').innerHTML;
+                PRESETS.abs.js = document.getElementById('abs-js').innerHTML;
+            } catch(e) {
+                console.error('[TP] Error loading presets:', e);
+            }
 
             if (typeof tizen !== 'undefined' && tizen.tvinputdevice) {
                 var keys = ["ColorF0Red", "ColorF1Green", "ColorF2Yellow", "ColorF3Blue", "MediaPlay", "MediaPause"];
@@ -581,9 +585,16 @@
         document.addEventListener('keyup', function(e) { if (e.keyCode === 13) { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; if (selectedIndex === document.querySelectorAll('.card').length-1) openModal(-1); else launch(apps[selectedIndex]); } } });
 
         function launch(app) {
-            var core = PRESETS['__CORE__']; var preset = PRESETS[app.presetID] || {}; var uaObj = USER_AGENTS.find(function(u){ return u.id === app.ua }) || USER_AGENTS[0];
-            var payload = { css: (core.css||'')+'\n'+(preset.css||''), js: (core.js||'')+'\n'+(preset.js||''), ua: uaObj.str };
-            window.location.href = app.url + '#tp=' + btoa(JSON.stringify(payload));
+            try {
+                var core = PRESETS['__CORE__']; 
+                var preset = PRESETS[app.presetID] || {}; 
+                var uaObj = USER_AGENTS.find(function(u){ return u.id === app.ua }) || USER_AGENTS[0];
+                var payload = { css: (core.css||'')+'\n'+(preset.css||''), js: (core.js||'')+'\n'+(preset.js||''), ua: uaObj.str };
+                window.location.href = app.url + '#tp=' + btoa(JSON.stringify(payload));
+            } catch(e) {
+                console.error('[TP] Launch error:', e);
+                alert('Error launching app: ' + (e.message || 'unknown'));
+            }
         }
 
         function openModal(index) { 

@@ -97,14 +97,16 @@
             { l: "➡️", title: "Forward", fn: function(){ window.history.forward(); }, c:"#0f0" },
             { l: "🔄", title: "Reload", fn: function(){ window.location.reload(); }, c:"#fff" },
             { l: "🖱️", title: "Mouse", fn: function(){ Input.toggleMouse(); }, c:"#fff" },
-            { l: "�", title: "Logs", fn: function(){ UI.toggleMode('logs'); }, c:"#0ff" },
+            { l: "�", title: "Forms", fn: function(){ BlueMenu.toggle(); }, c:"#1e90ff" },
+            { l: "📜", title: "Logs", fn: function(){ UI.toggleMode('logs'); }, c:"#0ff" },
             { l: "🔍", title: "Source", fn: function(){ UI.toggleMode('source'); }, c:"#0ff" }
         ],
         init: function() {
             var css = "" +
                 "#tp-bar { position:fixed; top:0; left:0; right:0; height:50px; background:#111; border-bottom:3px solid #FFD700; z-index:2147483646 !important; font-family:sans-serif; display:flex; align-items:center; padding:0 10px; gap:5px; box-shadow:0 5px 20px rgba(0,0,0,0.8); }" +
-                ".tp-bar-btn { min-width:40px; height:40px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px solid transparent; border-radius:4px; font-size:20px; transition:all 0.1s; flex-shrink:0; }" +
+                ".tp-bar-btn { min-width:40px; height:40px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px solid transparent; border-radius:4px; font-size:20px; transition:all 0.1s; flex-shrink:0; position:relative; }" +
                 ".tp-bar-btn:focus, .tp-bar-btn.active { border-color:#FFD700; background:#333; outline:none; }" +
+                ".tp-bar-btn:hover::after, .tp-bar-btn:focus::after { content:attr(title); position:absolute; top:100%; left:50%; transform:translateX(-50%); background:#000; color:#FFD700; padding:4px 8px; border-radius:4px; font-size:12px; white-space:nowrap; margin-top:5px; border:1px solid #FFD700; z-index:10000; }" +
                 "#tp-url { flex:1; height:40px; background:#222; color:#fff; border:2px solid #444; border-radius:4px; padding:0 10px; font-size:14px; font-family:monospace; outline:none; }" +
                 "#tp-url:focus { border-color:#FFD700; background:#000; }" +
                 "#tp-content { position:fixed; top:50px; left:0; right:0; bottom:0; background:#000; color:#0f0; font-family:monospace; font-size:11px; padding:10px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; display:none; z-index:2147483645 !important; }" +
@@ -541,7 +543,7 @@
         BlueMenu.init();
         Input.init(); 
         if(loaded && applied) { 
-            UI.toast("TizenPortal 0531 - Ready"); 
+            UI.toast("TizenPortal 0532 - Ready"); 
         } else if(loaded && !applied) {
             UI.toast("Config Loaded - Apply Failed");
             tpHud('Payload loaded but apply failed');

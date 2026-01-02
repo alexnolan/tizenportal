@@ -44,7 +44,9 @@
                 tpHud('hash match: ' + (m ? 'yes len=' + m[1].length : 'no'));
                 if (m && m[1]) {
                     tpHud('atob starting...');
-                    var decoded = atob(m[1]);
+                    // Reverse URL-safe base64 (- back to +, _ back to /)
+                    var b64 = m[1].replace(/-/g, '+').replace(/_/g, '/');
+                    var decoded = atob(b64);
                     tpHud('atob done, len=' + decoded.length);
                     tpHud('escape starting...');
                     var escaped = escape(decoded);
@@ -64,7 +66,9 @@
                 // 2. Check URL Param (Legacy/Direct)
                 var m2 = window.location.href.match(/[?&]tp=([^&]+)/);
                 if (m2 && m2[1]) {
-                    var j = decodeURIComponent(escape(atob(m2[1]))); this.payload = JSON.parse(j); 
+                    // Reverse URL-safe base64 (- back to +, _ back to /)
+                    var b64 = m2[1].replace(/-/g, '+').replace(/_/g, '/');
+                    var j = decodeURIComponent(escape(atob(b64))); this.payload = JSON.parse(j); 
                     sessionStorage.setItem('tp_conf', j); localStorage.setItem('tp_conf', j);
                     window.history.replaceState({}, document.title, window.location.href.replace(/[?&]tp=[^&]+/, ''));
                     tpHud('Query payload loaded'); console.log("[TP] Query payload loaded"); return true;
@@ -697,7 +701,7 @@
         BlueMenu.init();
         Input.init(); 
         if(loaded && applied) { 
-            UI.toast("TizenPortal 0554 - Ready"); 
+            UI.toast("TizenPortal 0556 - Ready"); 
         } else if(loaded && !applied) {
             UI.toast("Config Loaded - Apply Failed");
             tpHud('Payload loaded but apply failed');

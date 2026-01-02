@@ -290,7 +290,7 @@
 <body>
     <header>
         <div>
-            <h1>TizenPortal <span>0555</span></h1>
+            <h1>TizenPortal <span>0556</span></h1>
             <div class="subtitle">Smart TV App Launcher</div>
         </div>
     </header>
@@ -477,7 +477,8 @@ var ABS={state:"INIT",boat:null,nav:null,menu:null,observer:null,cache:{processe
                 var payload = { css: (core.css||'')+'\n'+(preset.css||''), js: (core.js||'')+'\n'+(preset.js||''), ua: uaObj.str };
                 var json = JSON.stringify(payload);
                 dbg.textContent = 'json=' + json.length + ' chars';
-                var encoded = btoa(unescape(encodeURIComponent(json)));
+                // Use URL-safe base64 (replace + with -, / with _)
+                var encoded = btoa(unescape(encodeURIComponent(json))).replace(/\+/g, '-').replace(/\//g, '_');
                 dbg.textContent = 'b64=' + encoded.length + ' url=' + app.url.substring(0,50);
                 var finalUrl = app.url + '#tp=' + encoded;
                 dbg.textContent = 'navigating... url=' + finalUrl.length + ' chars';

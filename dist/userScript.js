@@ -295,16 +295,20 @@
     };
 
     window.TP = { ui: UI, input: Input };
-    var loaded = Config.load(); Config.apply();
+    var loaded = Config.load(); 
+    var applied = Config.apply();
     var ready = function() { 
         // Ensure viewport is locked before any rendering
         if (window.TizenUtils && window.TizenUtils.lockViewport) {
-            window.TizenUtils.lockViewport();
+            try { TizenUtils.lockViewport(); } catch(e) { console.error('lockViewport failed', e); }
         }
         UI.init(); 
         Input.init(); 
-        if(loaded) { 
-            UI.toast("TizenPortal 0528"); 
+        if(loaded && applied) { 
+            UI.toast("TizenPortal 0528 - Ready"); 
+        } else if(loaded && !applied) {
+            UI.toast("Config Loaded - Apply Failed");
+            tpHud('Payload loaded but apply failed');
         } else { 
             UI.toast("No Config"); 
             tpHud('No payload found'); 

@@ -41,7 +41,7 @@
                 // 1. Check URL Hash (Client-Side, bypasses server limits)
                 var m = window.location.hash.match(/[#&]tp=([^&]+)/);
                 if (m && m[1]) {
-                    var j = atob(m[1]); this.payload = JSON.parse(j); 
+                    var j = decodeURIComponent(escape(atob(m[1]))); this.payload = JSON.parse(j); 
                     sessionStorage.setItem('tp_conf', j); localStorage.setItem('tp_conf', j);
                     // Clear hash without reloading
                     history.replaceState(null, document.title, window.location.pathname + window.location.search);
@@ -51,7 +51,7 @@
                 // 2. Check URL Param (Legacy/Direct)
                 var m2 = window.location.href.match(/[?&]tp=([^&]+)/);
                 if (m2 && m2[1]) {
-                    var j = atob(m2[1]); this.payload = JSON.parse(j); 
+                    var j = decodeURIComponent(escape(atob(m2[1]))); this.payload = JSON.parse(j); 
                     sessionStorage.setItem('tp_conf', j); localStorage.setItem('tp_conf', j);
                     window.history.replaceState({}, document.title, window.location.href.replace(/[?&]tp=[^&]+/, ''));
                     tpHud('Query payload loaded'); console.log("[TP] Query payload loaded"); return true;
@@ -682,7 +682,7 @@
         BlueMenu.init();
         Input.init(); 
         if(loaded && applied) { 
-            UI.toast("TizenPortal 0553 - Ready"); 
+            UI.toast("TizenPortal 0554 - Ready"); 
         } else if(loaded && !applied) {
             UI.toast("Config Loaded - Apply Failed");
             tpHud('Payload loaded but apply failed');

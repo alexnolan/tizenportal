@@ -1,4 +1,13 @@
 (function() {
+    // VERY EARLY DEBUG - show alert if we even start
+    try { 
+        var earlyDbg = document.createElement('div');
+        earlyDbg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:20px;font-size:20px;z-index:2147483647;text-align:center;';
+        earlyDbg.textContent = 'TP SCRIPT STARTED - ' + window.location.hostname;
+        if (document.body) document.body.appendChild(earlyDbg);
+        else document.addEventListener('DOMContentLoaded', function() { document.body.appendChild(earlyDbg); });
+    } catch(e) {}
+
     if (window.location.hostname.indexOf('github.io') > -1) return;
 
     var logs = [];

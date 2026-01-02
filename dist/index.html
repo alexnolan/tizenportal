@@ -103,22 +103,35 @@
             },
             
             init: function() {
+                if (this.initialized) return; // Prevent double-init
+                this.initialized = true;
                 this.log('INIT: Starting ABS lifeboat');
                 this.state = 'WAIT_NUXT';
                 this.waitForNuxt();
             },
             
             waitForNuxt: function() {
+                var self = this;
                 var nuxtFound = typeof window.__NUXT__ !== 'undefined' || document.querySelectorAll('[id*="__nuxt"]').length > 0;
-                var booksExist = document.querySelectorAll('[id^="book-card-"]').length > 0;
+                var booksExist = document.querySelectorAll('[id^="book-card-"], [cy-id="coverImage"]').length > 0;
                 
                 if (nuxtFound || booksExist || document.body) {
-                    this.log('WAIT_NUXT: Ready (nuxt=' + nuxtFound + ' books=' + booksExist + ')');
+                    this.log('WAIT_NUXT: Ready');
                     this.createLifeboat();
                     this.setupMutationObserver();
                     this.state = 'DETECT_PAGE';
                 } else {
-                    setTimeout(this.waitForNuxt.bind(this), 100);
+                    // Timeout after 5 seconds to prevent infinite loop
+                    if (!this.waitNuxtCount) this.waitNuxtCount = 0;
+                    this.waitNuxtCount++;
+                    if (this.waitNuxtCount > 50) {
+                        this.log('WAIT_NUXT: Timeout, forcing to DETECT_PAGE');
+                        this.createLifeboat();
+                        this.setupMutationObserver();
+                        this.state = 'DETECT_PAGE';
+                    } else {
+                        setTimeout(function() { self.waitForNuxt(); }, 100);
+                    }
                 }
             },
             
@@ -225,58 +238,56 @@
             
             detectAndRender: function() {
                 try {
-                    if (this.state !== 'DETECT_PAGE' && this.state !== 'READY') return;
+                    // Allow detection during DETECT_PAGE state
+                    if (this.state !== 'DETECT_PAGE') return false;
                     
                     // Try multiple selectors to find books
                     var bookSelectors = [
                         '[id^="book-card-"]',
+                        '[cy-id="coverImage"]', // Audiobookshelf uses cy-id - try this early
                         '[class*="bookCard"]',
                         '[class*="book-card"]',
-                        '[class*="itemCard"]',
-                        '[cy-id="coverImage"]', // Audiobookshelf uses cy-id
-                        'div[class*="rounded"][class*="overflow"]' // Generic card pattern
+                        '[class*="itemCard"]'
                     ];
                     
-                    var hasBooks = false;
                     var bookCount = 0;
                     var workingSelector = null;
                     
                     for (var s = 0; s < bookSelectors.length; s++) {
                         var count = document.querySelectorAll(bookSelectors[s]).length;
                         if (count > 0) {
-                            hasBooks = true;
                             bookCount = count;
                             workingSelector = bookSelectors[s];
-                            break;
+                            break; // Found, stop searching
                         }
                     }
                     
-                    var hasInputs = this.getVisibleInputs().length > 0;
+                    var visibleInputCount = this.getVisibleInputs().length;
                     
-                    // Log full details
-                    this.log('Detect: books=' + bookCount + ' selector=' + (workingSelector || 'none') + ' inputs=' + (hasInputs ? 'Y' : 'N'));
+                    // Log details
+                    this.log('Detect: books=' + bookCount + ' selector=' + (workingSelector || 'none') + ' inputs=' + visibleInputCount);
                     
-                    // Books take priority - if we have books, show content (not login form)
-                    if (hasBooks) {
-                        this.boat.innerHTML = ''; // Clear everything
+                    // Books take priority
+                    if (bookCount > 0) {
+                        this.boat.innerHTML = '';
                         this.cache = { processedBooks: {}, processedHeadings: {}, processedNav: false, bookSelector: workingSelector };
                         this.mode = 'content';
                         this.log('→ content mode');
                         this.renderContent(workingSelector);
                         this.state = 'READY';
                         document.body.classList.add('tp-lifeboat-active');
-                        return true; // Signal success
-                    } else if (hasInputs) {
+                        return true;
+                    } else if (visibleInputCount > 0) {
                         // Only show login form if NO books exist
-                        this.boat.innerHTML = ''; // Clear everything
+                        this.boat.innerHTML = '';
                         this.cache = { processedBooks: {}, processedHeadings: {}, processedNav: false };
                         this.mode = 'form';
                         this.log('→ form mode');
                         this.renderLoginForm();
                         this.state = 'READY';
-                        return true; // Signal success
+                        return true;
                     }
-                    return false; // No content detected yet
+                    return false; // Not ready yet
                 } catch(e) {
                     this.log('detectAndRender error: ' + (e.message || 'unknown'));
                     console.error('[TP ABS] detectAndRender error:', e);
@@ -288,10 +299,10 @@
                 var visible = [];
                 for (var i = 0; i < all.length; i++) {
                     var el = all[i];
-                    // Check for obvious non-visible states (but be lenient on offsetParent)
+                    // Skip display:none and visibility:hidden
                     if (el.style.display === 'none' || el.style.visibility === 'hidden') continue;
-                    // Accept if offsetParent valid OR element is in viewport
-                    if (el.offsetParent !== null || el.getBoundingClientRect().height > 0) {
+                    // Must have valid offsetParent (in the render tree) to be visible
+                    if (el.offsetParent !== null) {
                         visible.push(el);
                     }
                 }
@@ -321,6 +332,7 @@
                         this.log('Extracting navigation');
                         var toolbars = document.querySelectorAll('[role="toolbar"]');
                         this.log('Found ' + toolbars.length + ' toolbars');
+                        var navFragment = document.createDocumentFragment();
                         for (var t = 0; t < toolbars.length; t++) {
                             var toolbar = toolbars[t];
                             // Get navigation links, but skip form inputs
@@ -331,11 +343,10 @@
                                 if (link.tagName === 'INPUT' || link.tagName === 'TEXTAREA' || link.tagName === 'SELECT') continue;
                                 
                                 var text = link.textContent.trim();
-                                if (text && text.length > 0 && text.length < 30 && !document.getElementById('tp-nav-' + l)) {
+                                if (text && text.length > 0 && text.length < 30) {
                                     var navItem = document.createElement('div');
                                     navItem.className = 'tp-nav-item';
                                     navItem.innerText = text;
-                                    navItem.id = 'tp-nav-' + l;
                                     navItem.tabIndex = 0;
                                     var href = link.href || link.getAttribute('href');
                                     if (href) {
@@ -349,9 +360,12 @@
                                             navItem.onkeydown = function(e) { if (e.keyCode === 13) orig.click(); };
                                         })(link);
                                     }
-                                    this.nav.appendChild(navItem);
+                                    navFragment.appendChild(navItem);
                                 }
                             }
+                        }
+                        if (navFragment.childNodes.length > 0) {
+                            this.nav.appendChild(navFragment);
                         }
                         this.cache.processedNav = true;
                     }

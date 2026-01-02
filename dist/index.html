@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal 0564</title>
+    <title>TizenPortal 0565</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -290,7 +290,7 @@
 <body>
     <header>
         <div>
-            <h1>TizenPortal <span>0564</span></h1>
+            <h1>TizenPortal <span>0565</span></h1>
             <div class="subtitle">Smart TV App Launcher</div>
         </div>
     </header>
@@ -570,37 +570,33 @@
                 try {
                     if (this.state !== 'DETECT_PAGE') return false;
                     
-                    // Debug: find all elements with IDs containing "book", "card", "series"
-                    var allWithId = document.querySelectorAll('[id]');
-                    var idSamples = [];
-                    for (var d = 0; d < allWithId.length && idSamples.length < 10; d++) {
-                        var id = allWithId[d].id;
-                        if (id && (id.indexOf('book') > -1 || id.indexOf('card') > -1 || id.indexOf('series') > -1 || id.indexOf('item') > -1)) {
-                            idSamples.push(id.substring(0, 30));
-                        }
-                    }
-                    this.log('IDs: ' + (idSamples.length > 0 ? idSamples.join(', ') : 'none with book/card/series/item'));
-                    
-                    // Also check for images (books usually have cover images)
-                    var allImgs = document.querySelectorAll('img');
-                    this.log('Total imgs: ' + allImgs.length);
-                    
-                    // Use correct ABS selectors: [id^="book-card-"], [id^="series-card-"]
+                    // Try multiple selectors - ABS uses different patterns on different pages
                     var bookCards = document.querySelectorAll('[id^="book-card-"]');
                     var seriesCards = document.querySelectorAll('[id^="series-card-"]');
+                    
+                    // Fallback: find elements with book/cover in class or id
+                    var fallbackEls = document.querySelectorAll('[class*="book"], [id*="book"], [class*="cover"], [id*="cover"]');
+                    
+                    // Also count images as indicator of content
+                    var allImgs = document.querySelectorAll('img');
+                    
                     var totalCards = bookCards.length + seriesCards.length;
+                    this.log('Cards: book=' + bookCards.length + ' series=' + seriesCards.length + ' fallback=' + fallbackEls.length + ' imgs=' + allImgs.length);
                     
                     this.log('Cards: books=' + bookCards.length + ' series=' + seriesCards.length);
                     
                     this.forms = this.detectForms();
                     this.log('Detect: cards=' + totalCards + ' forms=' + this.forms.length);
                     
-                    if (totalCards > 0) {
+                    // Use fallback count if primary selectors fail
+                    var hasContent = totalCards > 0 || fallbackEls.length > 5;
+                    
+                    if (hasContent) {
                         this.boat.innerHTML = '';
                         this.cache.processedBooks = {};
                         this.cache.processedHeadings = {};
                         this.mode = 'content';
-                        this.log('Rendering ' + totalCards + ' cards');
+                        this.log('Rendering ' + totalCards + ' cards (fallback=' + fallbackEls.length + ')');
                         this.renderContent();
                         if (this.forms.length > 0) this.renderMenuUI();
                         this.state = 'READY';
@@ -908,6 +904,55 @@
                         this.boat.appendChild(sClone);
                         this.cache.processedBooks[sCardId] = true;
                         cardCount++;
+                    }
+                    
+                    // Fallback: if no cards found, try to find any images with links (likely book covers)
+                    if (cardCount === 0) {
+                        this.log('No cards, trying fallback image detection');
+                        var allImgs = document.querySelectorAll('img');
+                        for (var f = 0; f < allImgs.length && cardCount < 100; f++) {
+                            var img = allImgs[f];
+                            // Skip tiny images (icons, avatars)
+                            if (img.width < 50 || img.height < 50) continue;
+                            // Skip images inside our lifeboat
+                            if (img.closest && img.closest('#tp-lifeboat, #tp-navbar, #tp-bar')) continue;
+                            
+                            var fallbackId = 'fallback-' + f;
+                            if (this.cache.processedBooks[fallbackId]) continue;
+                            
+                            // Find parent link
+                            var parentLink = img.closest ? img.closest('a') : null;
+                            
+                            var fClone = document.createElement('div');
+                            fClone.id = 'tp-' + fallbackId;
+                            fClone.className = 'tp-rescued-card';
+                            fClone.setAttribute('tabindex', '0');
+                            
+                            var fImg = document.createElement('img');
+                            fImg.src = img.src || '';
+                            fImg.alt = img.alt || 'Cover';
+                            fClone.appendChild(fImg);
+                            
+                            // Try to find nearby text
+                            var textNode = img.parentElement ? img.parentElement.querySelector('p, span') : null;
+                            if (textNode) {
+                                var fText = document.createElement('div');
+                                fText.style.cssText = 'padding:8px;font-size:14px;line-height:1.3;color:#fff;';
+                                fText.innerText = textNode.textContent.trim().substring(0, 80);
+                                fClone.appendChild(fText);
+                            }
+                            
+                            if (parentLink && parentLink.href) {
+                                (function(href, el) {
+                                    el.onclick = function() { TizenUtils.navigate(href); };
+                                    el.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate(href); };
+                                })(parentLink.href, fClone);
+                            }
+                            
+                            this.boat.appendChild(fClone);
+                            this.cache.processedBooks[fallbackId] = true;
+                            cardCount++;
+                        }
                     }
                     
                     this.log('Rendered ' + cardCount + ' cards');

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal 0544</title>
+    <title>TizenPortal 0545</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -290,7 +290,7 @@
 <body>
     <header>
         <div>
-            <h1>TizenPortal <span>0544</span></h1>
+            <h1>TizenPortal <span>0545</span></h1>
             <div class="subtitle">Smart TV App Launcher</div>
         </div>
     </header>
@@ -428,6 +428,7 @@
                 
                 this.boat = document.createElement('div');
                 this.boat.id = 'tp-lifeboat';
+                this.boat.innerHTML = '<div style="color:#FFD700;font-size:24px;padding:40px;text-align:center;">Loading content...</div>';
                 
                 this.nav = document.createElement('div');
                 this.nav.id = 'tp-navbar';
@@ -442,8 +443,8 @@
                 document.body.appendChild(this.boat);
                 document.body.appendChild(this.menu);
                 
-                // DON'T hide original content yet - wait until books are detected and rendered
-                // document.body.classList.add('tp-lifeboat-active');
+                // Hide original content IMMEDIATELY - don't wait for book detection
+                document.body.classList.add('tp-lifeboat-active');
                 
                 // Extract navigation links right away
                 this.extractNavigation();
@@ -591,7 +592,7 @@
                         this.renderContent();
                         if (this.forms.length > 0) this.renderMenuUI();
                         this.state = 'READY';
-                        document.body.classList.add('tp-lifeboat-active');
+                        // tp-lifeboat-active already added in createLifeboat
                         return true;
                     } else if (this.forms.length > 0) {
                         this.boat.innerHTML = '';

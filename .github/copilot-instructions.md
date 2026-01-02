@@ -93,7 +93,7 @@ INIT → WAIT_NUXT → DETECT_PAGE → READY
 - **[../README.md](../README.md):** User-facing docs (features, installation, compatibility)
 - **[../.gitignore](../.gitignore):** Excludes internal docs (REFACTOR_LOG.md, etc.)
 
-## Current Status (v0.5.01)
+## Current Status (v0.5.29)
 - **MutationObserver:** Event-driven DOM detection replaces 2-second polling.
 - **State machine:** INIT → WAIT_NUXT → DETECT_PAGE → READY.
 - **Mode tracking:** Separate 'form' vs 'content' state prevents rendering conflicts.

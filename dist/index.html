@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal 0542</title>
+    <title>TizenPortal 0543</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -288,7 +288,7 @@
 <body>
     <header>
         <div>
-            <h1>TizenPortal <span>0542</span></h1>
+            <h1>TizenPortal <span>0543</span></h1>
             <div class="subtitle">Smart TV App Launcher</div>
         </div>
     </header>
@@ -339,7 +339,8 @@
         }
         
         /* 2. LIFEBOAT LAYOUT - Left sidebar + content area */
-        #tp-lifeboat { display: block; width: calc(100% - 100px); padding-bottom: 50px; margin-top: 60px; margin-left: 100px; margin-right: 0 !important; }
+        #tp-lifeboat { display: none; width: calc(100% - 120px); padding: 20px; padding-bottom: 50px; margin-top: 60px; margin-left: 100px; }
+        .tp-lifeboat-active #tp-lifeboat { display: block; }
         #tp-navbar { position: fixed; top: 50px; left: 0; bottom: 0; width: 90px; background: rgba(0,0,0,0.95); border-right: 2px solid #b8860b; display: flex; flex-direction: column; align-items: center; padding: 15px 5px; z-index: 10000; box-shadow: 5px 0 15px rgba(0,0,0,0.5); overflow-y: auto; }
         .tp-nav-item { color: #ddd; font-size: 12px; text-align: center; cursor: pointer; padding: 12px 8px; margin-bottom: 5px; border: 1px solid transparent; border-radius: 6px; white-space: normal; width: 100%; }
         .tp-nav-item:focus, .tp-nav-item:hover { color: #FFD700; border-color: #FFD700; background: #333; outline: none; }

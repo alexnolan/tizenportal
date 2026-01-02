@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal 0535</title>
+    <title>TizenPortal 0536</title>
     <style>
         body { background: #000; color: #fff; font-family: "Segoe UI", sans-serif; margin: 0; padding: 40px; overflow: hidden; }
         header { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
@@ -35,7 +35,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-        <header><h1>TizenPortal <span style="font-size:14px; color:#666;">0535</span></h1></header>
+        <header><h1>TizenPortal <span style="font-size:14px; color:#666;">0536</span></h1></header>
     <div id="grid" class="grid"></div>
     <div id="toast">Long Press Enter to Edit</div>
     <div id="debug-status" style="position:fixed;top:0;right:0;background:#000;color:#0f0;padding:10px;font-size:12px;font-family:monospace;z-index:9999;border:1px solid #0f0;">Loading...</div>
@@ -169,9 +169,10 @@
                 this.nav = document.createElement('div');
                 this.nav.id = 'tp-navbar';
                 
+                // Default Home button
                 var homeBtn = document.createElement('div');
                 homeBtn.className = 'tp-nav-item';
-                homeBtn.innerText = 'Home';
+                homeBtn.innerText = '🏠 Home';
                 homeBtn.tabIndex = 0;
                 homeBtn.onclick = function() { TizenUtils.navigate('/'); };
                 homeBtn.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate('/'); };
@@ -184,7 +185,89 @@
                 document.body.appendChild(this.nav);
                 document.body.appendChild(this.boat);
                 document.body.appendChild(this.menu);
+                
+                // Always hide original content immediately
+                document.body.classList.add('tp-lifeboat-active');
+                
+                // Extract navigation links right away
+                this.extractNavigation();
+                
                 this.log('Lifeboat created');
+            },
+            
+            extractNavigation: function() {
+                var self = this;
+                if (this.cache.processedNav) return;
+                
+                var navFragment = document.createDocumentFragment();
+                
+                // Extract siderail navigation links
+                var siderail = document.getElementById('siderail-buttons-container');
+                if (siderail) {
+                    var siderailLinks = siderail.querySelectorAll('a');
+                    this.log('Found siderail with ' + siderailLinks.length + ' links');
+                    for (var s = 0; s < siderailLinks.length; s++) {
+                        var sLink = siderailLinks[s];
+                        // Get text from the <p> element
+                        var pEl = sLink.querySelector('p');
+                        var text = pEl ? pEl.textContent.trim() : '';
+                        if (text && text.length > 0 && text.length < 30) {
+                            var navItem = document.createElement('div');
+                            navItem.className = 'tp-nav-item';
+                            navItem.innerText = text;
+                            navItem.tabIndex = 0;
+                            var href = sLink.href || sLink.getAttribute('href');
+                            (function(url) {
+                                navItem.onclick = function() { TizenUtils.navigate(url); };
+                                navItem.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate(url); };
+                            })(href);
+                            navFragment.appendChild(navItem);
+                        }
+                    }
+                } else {
+                    this.log('No siderail found, will retry');
+                    // Retry after a delay if siderail not found yet
+                    var self = this;
+                    setTimeout(function() { self.extractNavigation(); }, 500);
+                    return;
+                }
+                
+                // Extract library dropdown
+                var libDropdown = document.querySelector('[aria-haspopup="menu"]');
+                if (libDropdown) {
+                    var libBtn = document.createElement('div');
+                    libBtn.className = 'tp-nav-item';
+                    libBtn.innerText = '📚 Library';
+                    libBtn.tabIndex = 0;
+                    (function(orig) {
+                        libBtn.onclick = function() { orig.click(); };
+                        libBtn.onkeydown = function(e) { if (e.keyCode === 13) orig.click(); };
+                    })(libDropdown);
+                    navFragment.appendChild(libBtn);
+                }
+                
+                // Extract search button
+                var searchForm = document.querySelector('form[role="search"]');
+                if (searchForm) {
+                    var searchInput = searchForm.querySelector('input');
+                    if (searchInput) {
+                        var searchBtn = document.createElement('div');
+                        searchBtn.className = 'tp-nav-item';
+                        searchBtn.innerText = '🔍 Search';
+                        searchBtn.tabIndex = 0;
+                        (function(input) {
+                            searchBtn.onclick = function() { input.focus(); };
+                            searchBtn.onkeydown = function(e) { if (e.keyCode === 13) input.focus(); };
+                        })(searchInput);
+                        navFragment.appendChild(searchBtn);
+                    }
+                }
+                
+                if (navFragment.childNodes.length > 0) {
+                    this.nav.appendChild(navFragment);
+                    this.log('Added ' + navFragment.childNodes.length + ' nav items');
+                }
+                this.cache.processedNav = true;
             },
             
             setupMutationObserver: function() {
@@ -437,70 +520,7 @@
                 try {
                     if (this.mode !== 'content') return;
                     
-                    // Extract navigation elements
-                    if (!this.cache.processedNav) {
-                        var navFragment = document.createDocumentFragment();
-                        
-                        // Extract siderail navigation links
-                        var siderail = document.getElementById('siderail-buttons-container');
-                        if (siderail) {
-                            var siderailLinks = siderail.querySelectorAll('a');
-                            for (var s = 0; s < siderailLinks.length; s++) {
-                                var sLink = siderailLinks[s];
-                                // Get text from the <p> element, not the whole link (which includes icon text)
-                                var pEl = sLink.querySelector('p');
-                                var text = pEl ? pEl.textContent.trim() : '';
-                                if (text && text.length > 0 && text.length < 30) {
-                                    var navItem = document.createElement('div');
-                                    navItem.className = 'tp-nav-item';
-                                    navItem.innerText = text;
-                                    navItem.tabIndex = 0;
-                                    var href = sLink.href || sLink.getAttribute('href');
-                                    (function(url) {
-                                        navItem.onclick = function() { TizenUtils.navigate(url); };
-                                        navItem.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate(url); };
-                                    })(href);
-                                    navFragment.appendChild(navItem);
-                                }
-                            }
-                        }
-                        
-                        // Extract library dropdown
-                        var libDropdown = document.querySelector('[aria-haspopup="menu"]');
-                        if (libDropdown) {
-                            var libBtn = document.createElement('div');
-                            libBtn.className = 'tp-nav-item';
-                            libBtn.innerText = '📚 ' + (libDropdown.textContent.trim() || 'Library');
-                            libBtn.tabIndex = 0;
-                            (function(orig) {
-                                libBtn.onclick = function() { orig.click(); };
-                                libBtn.onkeydown = function(e) { if (e.keyCode === 13) orig.click(); };
-                            })(libDropdown);
-                            navFragment.appendChild(libBtn);
-                        }
-                        
-                        // Extract search form
-                        var searchForm = document.querySelector('form[role="search"]');
-                        if (searchForm) {
-                            var searchInput = searchForm.querySelector('input[type="text"]');
-                            if (searchInput) {
-                                var searchBtn = document.createElement('div');
-                                searchBtn.className = 'tp-nav-item';
-                                searchBtn.innerText = '🔍 Search';
-                                searchBtn.tabIndex = 0;
-                                (function(input) {
-                                    searchBtn.onclick = function() { input.focus(); };
-                                    searchBtn.onkeydown = function(e) { if (e.keyCode === 13) input.focus(); };
-                                })(searchInput);
-                                navFragment.appendChild(searchBtn);
-                            }
-                        }
-                        
-                        if (navFragment.childNodes.length > 0) {
-                            this.nav.appendChild(navFragment);
-                        }
-                        this.cache.processedNav = true;
-                    }
+                    // Navigation now extracted in extractNavigation() - no duplicate code here
                     
                     // Extract books from category sections
                     var categorySections = document.querySelectorAll('.categorizedBookshelfRow');

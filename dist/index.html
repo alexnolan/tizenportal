@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal 0528</title>
+    <title>TizenPortal 0529</title>
     <style>
         body { background: #000; color: #fff; font-family: "Segoe UI", sans-serif; margin: 0; padding: 40px; overflow: hidden; }
         header { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
@@ -35,7 +35,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-        <header><h1>TizenPortal <span style="font-size:14px; color:#666;">0528</span></h1></header>
+        <header><h1>TizenPortal <span style="font-size:14px; color:#666;">0529</span></h1></header>
     <div id="grid" class="grid"></div>
     <div id="toast">Long Press Enter to Edit</div>
     <div id="debug-status" style="position:fixed;top:0;right:0;background:#000;color:#0f0;padding:10px;font-size:12px;font-family:monospace;z-index:9999;border:1px solid #0f0;">Loading...</div>
@@ -70,6 +70,12 @@
             z-index: -100 !important;
         }
         
+        /* Hide native modals/dialogs when lifeboat active */
+        .tp-lifeboat-active [role="dialog"],
+        .tp-lifeboat-active .modal {
+            display: none !important;
+        }
+        
         /* 2. LIFEBOAT LAYOUT */
         #tp-lifeboat { display: block; width: 100%; padding-bottom: 50px; margin-top: 70px; margin-right: 0 !important; }
         #tp-navbar { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: rgba(0,0,0,0.9); border-bottom: 2px solid #b8860b; display: flex; align-items: center; padding: 0 20px; z-index: 10000; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
@@ -88,7 +94,6 @@
         /* 4. SURGICAL IMAGE FIXES - restrict ONLY nav/button icons */
         nav img, [role="navigation"] img, header img, 
         a img[alt="Home"], img[alt="Home"], 
-        img.w-8, img.w-10, img.h-8, img.h-10,
         .tp-nav-item img,
         nav button img, header button img, [role="toolbar"] button img { 
             max-width: 50px !important;
@@ -438,38 +443,63 @@
                 try {
                     if (this.mode !== 'content') return;
                     
-                    // Extract toolbar navigation
+                    // Extract navigation elements
                     if (!this.cache.processedNav) {
-                        var toolbars = document.querySelectorAll('[role="toolbar"]');
                         var navFragment = document.createDocumentFragment();
-                        for (var t = 0; t < toolbars.length; t++) {
-                            var toolbar = toolbars[t];
-                            var links = toolbar.querySelectorAll('a, button:not([type="text"]):not([type="search"])');
-                            for (var l = 0; l < links.length; l++) {
-                                var link = links[l];
-                                if (link.tagName === 'INPUT' || link.tagName === 'TEXTAREA' || link.tagName === 'SELECT') continue;
-                                var text = link.textContent.trim();
+                        
+                        // Extract siderail navigation links
+                        var siderail = document.getElementById('siderail-buttons-container');
+                        if (siderail) {
+                            var siderailLinks = siderail.querySelectorAll('a');
+                            for (var s = 0; s < siderailLinks.length; s++) {
+                                var sLink = siderailLinks[s];
+                                var text = sLink.textContent.trim();
                                 if (text && text.length > 0 && text.length < 30) {
                                     var navItem = document.createElement('div');
                                     navItem.className = 'tp-nav-item';
                                     navItem.innerText = text;
                                     navItem.tabIndex = 0;
-                                    var href = link.href || link.getAttribute('href');
-                                    if (href) {
-                                        (function(url) {
-                                            navItem.onclick = function() { TizenUtils.navigate(url); };
-                                            navItem.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate(url); };
-                                        })(href);
-                                    } else {
-                                        (function(orig) {
-                                            navItem.onclick = function() { orig.click(); };
-                                            navItem.onkeydown = function(e) { if (e.keyCode === 13) orig.click(); };
-                                        })(link);
-                                    }
+                                    var href = sLink.href || sLink.getAttribute('href');
+                                    (function(url) {
+                                        navItem.onclick = function() { TizenUtils.navigate(url); };
+                                        navItem.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate(url); };
+                                    })(href);
                                     navFragment.appendChild(navItem);
                                 }
                             }
                         }
+                        
+                        // Extract library dropdown
+                        var libDropdown = document.querySelector('[aria-haspopup="menu"]');
+                        if (libDropdown) {
+                            var libBtn = document.createElement('div');
+                            libBtn.className = 'tp-nav-item';
+                            libBtn.innerText = '📚 ' + (libDropdown.textContent.trim() || 'Library');
+                            libBtn.tabIndex = 0;
+                            (function(orig) {
+                                libBtn.onclick = function() { orig.click(); };
+                                libBtn.onkeydown = function(e) { if (e.keyCode === 13) orig.click(); };
+                            })(libDropdown);
+                            navFragment.appendChild(libBtn);
+                        }
+                        
+                        // Extract search form
+                        var searchForm = document.querySelector('form[role="search"]');
+                        if (searchForm) {
+                            var searchInput = searchForm.querySelector('input[type="text"]');
+                            if (searchInput) {
+                                var searchBtn = document.createElement('div');
+                                searchBtn.className = 'tp-nav-item';
+                                searchBtn.innerText = '🔍 Search';
+                                searchBtn.tabIndex = 0;
+                                (function(input) {
+                                    searchBtn.onclick = function() { input.focus(); };
+                                    searchBtn.onkeydown = function(e) { if (e.keyCode === 13) input.focus(); };
+                                })(searchInput);
+                                navFragment.appendChild(searchBtn);
+                            }
+                        }
+                        
                         if (navFragment.childNodes.length > 0) {
                             this.nav.appendChild(navFragment);
                         }
@@ -536,6 +566,76 @@
                                 textDiv.style.lineHeight = '1.3';
                                 textDiv.innerText = textContent.substring(0, 100);
                                 clone.appendChild(textDiv);
+                            }
+                            
+                            // Extract action buttons from overlay
+                            var overlay = card.querySelector('[cy-id="overlay"]');
+                            if (overlay) {
+                                var buttonBar = document.createElement('div');
+                                buttonBar.style.cssText = 'display:flex;gap:8px;padding:4px 8px;justify-content:center;background:rgba(0,0,0,0.7);';
+                                
+                                var playBtn = overlay.querySelector('[cy-id="playButton"]');
+                                var readBtn = overlay.querySelector('[cy-id="readButton"]');
+                                var editBtn = overlay.querySelector('[cy-id="editButton"]');
+                                var moreBtn = overlay.querySelector('[cy-id="moreButton"]');
+                                
+                                var addedButtons = false;
+                                
+                                if (playBtn) {
+                                    var play = document.createElement('div');
+                                    play.innerHTML = '▶';
+                                    play.style.cssText = 'color:#1e90ff;font-size:18px;cursor:pointer;padding:4px;';
+                                    play.tabIndex = 0;
+                                    (function(orig) {
+                                        play.onclick = function(e) { e.stopPropagation(); orig.click(); };
+                                        play.onkeydown = function(e) { if (e.keyCode === 13) { e.stopPropagation(); orig.click(); } };
+                                    })(playBtn);
+                                    buttonBar.appendChild(play);
+                                    addedButtons = true;
+                                }
+                                
+                                if (readBtn && readBtn.style.display !== 'none') {
+                                    var read = document.createElement('div');
+                                    read.innerHTML = '📖';
+                                    read.style.cssText = 'color:#1e90ff;font-size:18px;cursor:pointer;padding:4px;';
+                                    read.tabIndex = 0;
+                                    (function(orig) {
+                                        read.onclick = function(e) { e.stopPropagation(); orig.click(); };
+                                        read.onkeydown = function(e) { if (e.keyCode === 13) { e.stopPropagation(); orig.click(); } };
+                                    })(readBtn);
+                                    buttonBar.appendChild(read);
+                                    addedButtons = true;
+                                }
+                                
+                                if (editBtn) {
+                                    var edit = document.createElement('div');
+                                    edit.innerHTML = '✏';
+                                    edit.style.cssText = 'color:#888;font-size:18px;cursor:pointer;padding:4px;';
+                                    edit.tabIndex = 0;
+                                    (function(orig) {
+                                        edit.onclick = function(e) { e.stopPropagation(); orig.click(); };
+                                        edit.onkeydown = function(e) { if (e.keyCode === 13) { e.stopPropagation(); orig.click(); } };
+                                    })(editBtn);
+                                    buttonBar.appendChild(edit);
+                                    addedButtons = true;
+                                }
+                                
+                                if (moreBtn) {
+                                    var more = document.createElement('div');
+                                    more.innerHTML = '⋮';
+                                    more.style.cssText = 'color:#888;font-size:18px;cursor:pointer;padding:4px;';
+                                    more.tabIndex = 0;
+                                    (function(orig) {
+                                        more.onclick = function(e) { e.stopPropagation(); orig.click(); };
+                                        more.onkeydown = function(e) { if (e.keyCode === 13) { e.stopPropagation(); orig.click(); } };
+                                    })(moreBtn);
+                                    buttonBar.appendChild(more);
+                                    addedButtons = true;
+                                }
+                                
+                                if (addedButtons) {
+                                    clone.appendChild(buttonBar);
+                                }
                             }
                             
                             // Attach click handler

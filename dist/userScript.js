@@ -116,7 +116,7 @@
             
             var s = document.createElement('style'); s.textContent = css; document.head.appendChild(s);
             var d = document.createElement('div'); d.id='tp-b'; d.className='unfocused';
-            d.innerHTML = '<div id="tp-h">TizenPortal 0528</div>' +
+            d.innerHTML = '<div id="tp-h">TizenPortal 0529</div>' +
                           '<div id="tp-l"></div>' +
                           '<div id="tp-c" tabindex="0"></div>';
             document.body.appendChild(d);
@@ -305,7 +305,7 @@
         UI.init(); 
         Input.init(); 
         if(loaded && applied) { 
-            UI.toast("TizenPortal 0528 - Ready"); 
+            UI.toast("TizenPortal 0529 - Ready"); 
         } else if(loaded && !applied) {
             UI.toast("Config Loaded - Apply Failed");
             tpHud('Payload loaded but apply failed');

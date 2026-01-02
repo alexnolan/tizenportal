@@ -52,422 +52,60 @@
     </div>
 
     <script id="abs-css" type="text/template">
-        /* 1. GLOBAL BASICS */
-        body { 
-            background-color: #222 !important; 
-            margin: 0 !important; padding: 20px !important; 
-            overflow-y: auto !important; 
-            font-family: sans-serif !important; 
-            color: #fff !important; 
-        }
-
-        /* 3. LIFEBOAT MODE (Default) */
-        /* We hide the broken app unless we are in form mode. 
-           NOTE: Chrome 47 does not support complex :not(.class *) selectors, so we hide by default.
-           The .tp-form-mode #__nuxt rule above will override this due to higher specificity. */
-        .tp-lifeboat-active #__nuxt { 
-            opacity: 0.001 !important; 
-            pointer-events: none !important; 
-            position: fixed !important; 
-            top: 0 !important; 
-            left: 0 !important; 
-            z-index: -100 !important;
+        /* Force desktop layout - disable Tailwind responsive breakpoints */
+        body { min-width: 1920px !important; }
+        
+        /* Surgical image fixes - only restrict nav/button icons, NOT book covers */
+        nav img, button img, [role="navigation"] img, aside img { 
+            max-width: 50px !important; 
+            height: auto !important; 
         }
         
-        #tp-lifeboat { display: block; width: 100%; padding-bottom: 50px; margin-top: 70px; }
-        #tp-navbar { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: rgba(0,0,0,0.9); border-bottom: 2px solid #b8860b; display: flex; align-items: center; padding: 0 20px; z-index: 10000; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        .tp-nav-item { color: #ddd; font-size: 18px; margin-right: 20px; cursor: pointer; padding: 10px; border: 1px solid transparent; }
-        .tp-nav-item:focus, .tp-nav-item:hover { color: #FFD700; border-color: #FFD700; background: #333; outline: none; }
+        /* Allow book covers to display properly */
+        [cy-id="coverImage"], [class*="book-card"] img, [class*="bookCard"] img, 
+        .categorizedBookshelfRow img, [id^="book-card-"] img {
+            max-width: none !important;
+            width: auto !important;
+            height: auto !important;
+        }
+        
+        /* Enhanced focus indicators for TV remote */
+        :focus { outline: 5px solid #FFD700 !important; }
+        
+        /* Ensure scrollable content */
+        body { overflow-y: auto !important; }
     </script>
     
     <script id="abs-js" type="text/template">
-        // ABS Lifeboat - State Machine with MutationObserver
-        var ABS = {
-            state: 'INIT', // INIT -> WAIT_NUXT -> DETECT_PAGE -> READY
-            boat: null,
-            nav: null,
-            observer: null,
-            cache: { processedBooks: {}, processedHeadings: {}, processedNav: false },
-            ui: { debugBanner: null },
-            mode: null, // 'form' or 'content'
-            
-            log: function(msg) {
-                console.log('[TP ABS] ' + msg);
-                if (!this.ui.debugBanner) {
-                    var b = document.createElement('div');
-                    b.id = 'tp-debug';
-                    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147483647;background:rgba(0,0,0,0.8);color:#FFD700;font-size:14px;font-family:sans-serif;padding:6px 10px;pointer-events:none;text-align:left;';
-                    document.body.appendChild(b);
-                    this.ui.debugBanner = b;
-                }
-                this.ui.debugBanner.textContent = '[TP ABS] ' + msg;
-            },
-            
-            init: function() {
-                if (this.initialized) return; // Prevent double-init
-                this.initialized = true;
-                this.log('INIT: Starting ABS lifeboat');
-                this.state = 'WAIT_NUXT';
-                this.waitForNuxt();
-            },
-            
-            waitForNuxt: function() {
-                var self = this;
-                var nuxtFound = typeof window.__NUXT__ !== 'undefined' || document.querySelectorAll('[id*="__nuxt"]').length > 0;
-                var booksExist = document.querySelectorAll('[id^="book-card-"], [cy-id="coverImage"]').length > 0;
+        // Simple Audiobookshelf compatibility - Login form proxy only
+        (function() {
+            function checkForLogin() {
+                // Only proxy login forms, let native app handle everything else
+                var visibleInputs = Array.prototype.slice.call(document.querySelectorAll('input, textarea, button'))
+                    .filter(function(el) {
+                        return el.offsetParent !== null && 
+                               el.style.display !== 'none' && 
+                               el.style.visibility !== 'hidden';
+                    });
                 
-                if (nuxtFound || booksExist || document.body) {
-                    this.log('WAIT_NUXT: Ready');
-                    this.createLifeboat();
-                    this.setupMutationObserver();
-                    this.state = 'DETECT_PAGE';
-                } else {
-                    // Timeout after 5 seconds to prevent infinite loop
-                    if (!this.waitNuxtCount) this.waitNuxtCount = 0;
-                    this.waitNuxtCount++;
-                    if (this.waitNuxtCount > 50) {
-                        this.log('WAIT_NUXT: Timeout, forcing to DETECT_PAGE');
-                        this.createLifeboat();
-                        this.setupMutationObserver();
-                        this.state = 'DETECT_PAGE';
-                    } else {
-                        setTimeout(function() { self.waitForNuxt(); }, 100);
-                    }
-                }
-            },
-            
-            createLifeboat: function() {
-                if (this.boat) return;
+                // If we find visible inputs and no book content, assume login screen
+                var hasBooks = document.querySelectorAll('[cy-id="coverImage"], [id^="book-card-"]').length > 0;
                 
-                this.boat = document.createElement('div');
-                this.boat.id = 'tp-lifeboat';
-                
-                this.nav = document.createElement('div');
-                this.nav.id = 'tp-navbar';
-                
-                // Extract home URL from Nuxt config
-                var homeUrl = '/';
-                if (window.__NUXT__ && window.__NUXT__.config && window.__NUXT__.config.routerBasePath) {
-                    homeUrl = window.__NUXT__.config.routerBasePath;
-                }
-                
-                // Extract and apply background immediately
-                this.extractBackground();
-                
-                // Add Home button
-                var homeBtn = document.createElement('div');
-                homeBtn.className = 'tp-nav-item';
-                homeBtn.innerText = 'Home';
-                homeBtn.tabIndex = 0;
-                homeBtn.onclick = function() { TizenUtils.navigate(homeUrl); };
-                homeBtn.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate(homeUrl); };
-                this.nav.appendChild(homeBtn);
-                
-                document.body.appendChild(this.nav);
-                document.body.appendChild(this.boat);
-                this.log('DETECT_PAGE: Lifeboat created, waiting for DOM');
-            },
-            
-            extractBackground: function() {
-                var bgImg = '';
-                var searchEls = [
-                    document.querySelector('.bg-bg-background'),
-                    document.querySelector('[class*="background"]'),
-                    document.querySelector('[class*="bg"]'),
-                    document.querySelector('[style*="background"]'),
-                    document.getElementById('__nuxt'),
-                    document.body
-                ];
-                
-                for (var s = 0; s < searchEls.length; s++) {
-                    var el = searchEls[s];
-                    if (!el) continue;
-                    if (el.style && el.style.backgroundImage) {
-                        bgImg = el.style.backgroundImage;
-                        this.log('BG from inline style');
-                        break;
-                    }
-                    var cs = window.getComputedStyle(el);
-                    if (cs && cs.backgroundImage && cs.backgroundImage !== 'none') {
-                        bgImg = cs.backgroundImage;
-                        this.log('BG from computed style');
-                        break;
-                    }
-                }
-                
-                if (bgImg) {
-                    document.body.style.backgroundImage = bgImg;
-                    document.body.style.backgroundRepeat = 'no-repeat';
-                    document.body.style.backgroundSize = 'cover';
-                    document.body.style.backgroundPosition = 'center';
-                    document.body.style.backgroundAttachment = 'fixed';
-                }
-            },
-            
-            setupMutationObserver: function() {
-                var self = this;
-                var rendered = false;
-                this.observer = new MutationObserver(function(mutations) {
-                    if (rendered) return; // Only fire once
+                if (visibleInputs.length > 0 && !hasBooks && window.TizenUtils) {
+                    var container = document.createElement('div');
+                    container.id = 'tp-login-container';
+                    container.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;';
+                    document.body.appendChild(container);
                     
-                    try {
-                        // Check if loader is still active
-                        var loader = document.getElementById('nuxt-loading');
-                        var loaderOpacity = loader ? getComputedStyle(loader).opacity : '0';
-                        
-                        if (loader && loaderOpacity !== '0') return; // Still loading, skip
-                        
-                        // Try to detect and render
-                        var hasBooks = self.detectAndRender();
-                        if (hasBooks) {
-                            rendered = true;
-                            if (self.observer) self.observer.disconnect();
-                        }
-                    } catch(e) {
-                        self.log('Observer error: ' + (e.message || 'unknown'));
-                        console.error('[TP ABS] Observer error:', e);
-                    }
-                });
-                
-                this.observer.observe(document.body, {
-                    childList: true,
-                    subtree: true,
-                    attributes: false
-                });
-                this.log('MutationObserver active (fire-once mode)');
-            },
-            
-            detectAndRender: function() {
-                try {
-                    // Allow detection during DETECT_PAGE state
-                    if (this.state !== 'DETECT_PAGE') return false;
-                    
-                    // Try multiple selectors to find books
-                    var bookSelectors = [
-                        '[id^="book-card-"]',
-                        '[cy-id="coverImage"]', // Audiobookshelf uses cy-id - try this early
-                        '[class*="bookCard"]',
-                        '[class*="book-card"]',
-                        '[class*="itemCard"]'
-                    ];
-                    
-                    var bookCount = 0;
-                    var workingSelector = null;
-                    
-                    for (var s = 0; s < bookSelectors.length; s++) {
-                        var count = document.querySelectorAll(bookSelectors[s]).length;
-                        if (count > 0) {
-                            bookCount = count;
-                            workingSelector = bookSelectors[s];
-                            break; // Found, stop searching
-                        }
-                    }
-                    
-                    var visibleInputCount = this.getVisibleInputs().length;
-                    
-                    // Log details
-                    this.log('Detect: books=' + bookCount + ' selector=' + (workingSelector || 'none') + ' inputs=' + visibleInputCount);
-                    
-                    // Books take priority
-                    if (bookCount > 0) {
-                        this.boat.innerHTML = '';
-                        this.cache = { processedBooks: {}, processedHeadings: {}, processedNav: false, bookSelector: workingSelector };
-                        this.mode = 'content';
-                        this.log('>> content mode');
-                        this.renderContent(workingSelector);
-                        this.state = 'READY';
-                        document.body.classList.add('tp-lifeboat-active');
-                        return true;
-                    } else if (visibleInputCount > 0) {
-                        // Only show login form if NO books exist
-                        this.boat.innerHTML = '';
-                        this.cache = { processedBooks: {}, processedHeadings: {}, processedNav: false };
-                        this.mode = 'form';
-                        this.log('>> form mode');
-                        this.renderLoginForm();
-                        this.state = 'READY';
-                        return true;
-                    }
-                    return false; // Not ready yet
-                } catch(e) {
-                    this.log('detectAndRender error: ' + (e.message || 'unknown'));
-                    console.error('[TP ABS] detectAndRender error:', e);
-                    return false;
-                }
-            },
-            
-            getVisibleInputs: function() {
-                var all = document.querySelectorAll('input, textarea, select, button');
-                var visible = [];
-                for (var i = 0; i < all.length; i++) {
-                    var el = all[i];
-                    // Skip display:none and visibility:hidden
-                    if (el.style.display === 'none' || el.style.visibility === 'hidden') continue;
-                    // Must have valid offsetParent (in the render tree) to be visible
-                    if (el.offsetParent !== null) {
-                        visible.push(el);
-                    }
-                }
-                return visible;
-            },
-            
-            renderLoginForm: function() {
-                if (window.TizenUtils && window.TizenUtils.handleLogin) {
-                    var result = window.TizenUtils.handleLogin(this.boat, 'Audiobookshelf');
-                    if (result) {
-                        this.log('Login form rendered');
-                    }
-                }
-            },
-            
-            renderContent: function(bookSelector) {
-                try {
-                    if (this.mode !== 'content') return; // Not in content mode
-                    
-                    // Use passed selector or fall back to cache or default
-                    bookSelector = bookSelector || this.cache.bookSelector || '[id^="book-card-"]';
-                    
-                    this.log('renderContent with selector: ' + bookSelector);
-                    
-                    // Extract navigation toolbar if exists
-                    if (!this.cache.processedNav) {
-                        this.log('Extracting navigation');
-                        var toolbars = document.querySelectorAll('[role="toolbar"]');
-                        this.log('Found ' + toolbars.length + ' toolbars');
-                        var navFragment = document.createDocumentFragment();
-                        for (var t = 0; t < toolbars.length; t++) {
-                            var toolbar = toolbars[t];
-                            // Get navigation links, but skip form inputs
-                            var links = toolbar.querySelectorAll('a, button:not([type="text"]):not([type="search"]):not([type="password"])');
-                            for (var l = 0; l < links.length; l++) {
-                                var link = links[l];
-                                // Skip if it's a form input
-                                if (link.tagName === 'INPUT' || link.tagName === 'TEXTAREA' || link.tagName === 'SELECT') continue;
-                                
-                                var text = link.textContent.trim();
-                                if (text && text.length > 0 && text.length < 30) {
-                                    var navItem = document.createElement('div');
-                                    navItem.className = 'tp-nav-item';
-                                    navItem.innerText = text;
-                                    navItem.tabIndex = 0;
-                                    var href = link.href || link.getAttribute('href');
-                                    if (href) {
-                                        (function(url) {
-                                            navItem.onclick = function() { TizenUtils.navigate(url); };
-                                            navItem.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate(url); };
-                                        })(href);
-                                    } else {
-                                        (function(orig) {
-                                            navItem.onclick = function() { orig.click(); };
-                                            navItem.onkeydown = function(e) { if (e.keyCode === 13) orig.click(); };
-                                        })(link);
-                                    }
-                                    navFragment.appendChild(navItem);
-                                }
-                            }
-                        }
-                        if (navFragment.childNodes.length > 0) {
-                            this.nav.appendChild(navFragment);
-                        }
-                        this.cache.processedNav = true;
-                    }
-                    
-                    this.log('Extracting books');
-                    var categorySections = document.querySelectorAll('.categorizedBookshelfRow');
-                    this.log('Found ' + categorySections.length + ' category sections');
-                    var bookCount = 0;
-                    
-                    for (var i = 0; i < categorySections.length; i++) {
-                        var section = categorySections[i];
-                        var sectionId = 'tp-section-' + i;
-                        
-                        // Find the category placard (header) for this section
-                        var placard = null;
-                        var parent = section.parentElement;
-                        if (parent && parent.parentElement) {
-                            placard = parent.parentElement.querySelector('.categoryPlacard');
-                        }
-                        
-                        // Render category header if found and not already processed
-                        if (placard && !this.cache.processedHeadings[sectionId]) {
-                            var text = placard.textContent.trim();
-                            if (text.length > 0) {
-                                var h = document.createElement('div');
-                                h.className = 'tp-shelf-title';
-                                h.innerText = text;
-                                h.id = sectionId + '-header';
-                                this.boat.appendChild(h);
-                                this.cache.processedHeadings[sectionId] = true;
-                            }
-                        }
-                        
-                        // Extract books from this section
-                        var books;
-                        if (bookSelector === '[cy-id="coverImage"]') {
-                            // For cy-id selector, find the cover images and walk up to card parent
-                            var covers = section.querySelectorAll('[cy-id="coverImage"]');
-                            books = [];
-                            for (var c = 0; c < covers.length; c++) {
-                                var card = covers[c].closest('div[class*="rounded"]') || covers[c].closest('div');
-                                if (card && books.indexOf(card) === -1) {
-                                    books.push(card);
-                                }
-                            }
-                        } else {
-                            books = section.querySelectorAll(bookSelector);
-                        }
-                        
-                        for (var b = 0; b < books.length; b++) {
-                            var original = books[b];
-                            var bookId = 'tp-book-' + i + '-' + b;
-                            
-                            if (this.cache.processedBooks[bookId]) continue;
-                            
-                            var clone = original.cloneNode(true);
-                            clone.id = bookId;
-                            clone.className = 'tp-rescued-card';
-                            clone.setAttribute('tabindex', '0');
-                            
-                            // Clean image
-                            var img = clone.querySelector('img[cy-id="coverImage"]') || clone.querySelector('img');
-                            if (img) {
-                                img.removeAttribute('class');
-                                img.removeAttribute('style');
-                                var src = img.getAttribute('src') || img.getAttribute('data-src');
-                                if (src) img.src = src;
-                            }
-                            
-                            // Attach click handler
-                            var link = original.closest('a') || original.querySelector('a');
-                            if (link && link.href) {
-                                (function(href, el) {
-                                    el.onclick = function() { TizenUtils.navigate(href); };
-                                    el.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate(href); };
-                                })(link.href, clone);
-                            } else {
-                                (function(orig, el) {
-                                    el.onclick = function() { orig.click(); };
-                                    el.onkeydown = function(e) { if (e.keyCode === 13) orig.click(); };
-                                })(original, clone);
-                            }
-                            
-                            this.boat.appendChild(clone);
-                            this.cache.processedBooks[bookId] = true;
-                            bookCount++;
-                        }
-                    }
-                    
-                    this.log('Rendered ' + bookCount + ' books in ' + categorySections.length + ' categories');
-                } catch(e) {
-                    this.log('renderContent error: ' + (e.message || 'unknown'));
-                    console.error('[TP ABS] renderContent error:', e);
+                    TizenUtils.handleLogin(container, 'Audiobookshelf');
+                    console.log('[TP ABS] Login proxy active');
                 }
             }
-        };
-        
-        // Start initialization
-        if (window.console) console.log('[TP ABS] Starting init...');
-        ABS.init();
+            
+            // Check on load and after short delay for Nuxt
+            if (document.body) checkForLogin();
+            setTimeout(checkForLogin, 1000);
+        })();
     </script>
 
     <script>

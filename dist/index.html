@@ -273,7 +273,7 @@
                         this.boat.innerHTML = '';
                         this.cache = { processedBooks: {}, processedHeadings: {}, processedNav: false, bookSelector: workingSelector };
                         this.mode = 'content';
-                        this.log('→ content mode');
+                        this.log('>> content mode');
                         this.renderContent(workingSelector);
                         this.state = 'READY';
                         document.body.classList.add('tp-lifeboat-active');
@@ -283,7 +283,7 @@
                         this.boat.innerHTML = '';
                         this.cache = { processedBooks: {}, processedHeadings: {}, processedNav: false };
                         this.mode = 'form';
-                        this.log('→ form mode');
+                        this.log('>> form mode');
                         this.renderLoginForm();
                         this.state = 'READY';
                         return true;

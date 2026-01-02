@@ -605,7 +605,9 @@
                 var uaObj = USER_AGENTS.find(function(u){ return u.id === app.ua }) || USER_AGENTS[0];
                 var payload = { css: (core.css||'')+'\n'+(preset.css||''), js: (core.js||'')+'\n'+(preset.js||''), ua: uaObj.str };
                 document.getElementById('debug-status').textContent = 'launch: navigating...';
-                window.location.href = app.url + '#tp=' + btoa(JSON.stringify(payload));
+                var json = JSON.stringify(payload);
+                var encoded = btoa(unescape(encodeURIComponent(json)));
+                window.location.href = app.url + '#tp=' + encoded;
             } catch(e) {
                 document.getElementById('debug-status').textContent = 'launch ERROR: ' + (e.message || 'unknown');
                 console.error('[TP] Launch error:', e);

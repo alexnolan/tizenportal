@@ -89,117 +89,91 @@
     };
 
     var UI = {
-        focused: 'main', // 'main' or 'addressbar'
-        idx: 0, contentMode: 'none',
+        focused: 'main', // 'main' or 'sidebar'
+        idx: 0, contentMode: 'none', // 'none', 'logs', 'source'
         items: [
-            { l: "🏠", title: "Home", fn: function(){ window.location.href = Config.homeUrl; }, c:"#FFD700" },
-            { l: "⬅️", title: "Back", fn: function(){ window.history.back(); }, c:"#0f0" },
-            { l: "➡️", title: "Forward", fn: function(){ window.history.forward(); }, c:"#0f0" },
-            { l: "🔄", title: "Reload", fn: function(){ window.location.reload(); }, c:"#fff" },
-            { l: "🖱️", title: "Mouse", fn: function(){ Input.toggleMouse(); }, c:"#fff" },
-            { l: "📐", title: "Aspect", fn: function(){ Input.toggleAspect(); }, c:"#fff" },
-            { l: "📜", title: "Logs", fn: function(){ UI.setMode('logs'); }, c:"#0ff" },
-            { l: "🔍", title: "Source", fn: function(){ UI.setMode('source'); }, c:"#0ff" }
+            { l: "🏠 Exit Home", fn: function(){ window.location.href = Config.homeUrl; }, c:"#FFD700" },
+            { l: "⬅️ Back", fn: function(){ window.history.back(); }, c:"#0f0" },
+            { l: "➡️ Forward", fn: function(){ window.history.forward(); }, c:"#0f0" },
+            { l: "🔄 Reload", fn: function(){ window.location.reload(); }, c:"#fff" },
+            { l: "🌐 URL", fn: function(){ var u = prompt("Go to URL:", window.location.href); if(u) window.location.href=u; }, c:"#0f0" },
+            { l: "🖱️ Mouse", fn: function(){ Input.toggleMouse(); }, c:"#fff" },
+            { l: "📐 Aspect", fn: function(){ Input.toggleAspect(); }, c:"#fff" },            { l: "🔲 Maximize", fn: function(){ UI.toggleMax(); }, c:"#0ff" },            { l: " Source", fn: function(){ UI.setMode('source'); }, c:"#0ff" },
+            { l: "📜 Logs", fn: function(){ UI.setMode('logs'); }, c:"#aaa" }
         ],
         init: function() {
             var css = "" +
-                "#tp-bar { position:fixed; top:0; left:0; right:0; height:50px; background:#111; border-bottom:3px solid #FFD700; z-index:2147483646 !important; font-family:sans-serif; display:flex; align-items:center; padding:0 10px; gap:5px; box-shadow:0 5px 20px rgba(0,0,0,0.8); }" +
-                ".tp-bar-btn { min-width:40px; height:40px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px solid transparent; border-radius:4px; font-size:20px; transition:all 0.1s; flex-shrink:0; }" +
-                ".tp-bar-btn:focus, .tp-bar-btn.active { border-color:#FFD700; background:#333; outline:none; }" +
-                "#tp-url { flex:1; height:40px; background:#222; color:#fff; border:2px solid #444; border-radius:4px; padding:0 10px; font-size:14px; font-family:monospace; outline:none; }" +
-                "#tp-url:focus { border-color:#FFD700; background:#000; }" +
-                "#tp-content { position:fixed; top:50px; left:0; right:0; bottom:0; background:#000; color:#0f0; font-family:monospace; font-size:11px; padding:10px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; display:none; z-index:2147483645 !important; }" +
-                "#tp-content.active { display:block; }" +
-                ".tp-t { position:fixed; top:60px; left:50%; transform:translateX(-50%); background:#222; color:#fff; padding:10px; border:1px solid #FFD700; opacity:0; transition:opacity 0.5s; z-index:2147483647 !important; pointer-events:none; }";
+                "#tp-b { position:fixed; top:0; right:0; width:300px; bottom:0; background:#111; border-left:3px solid #FFD700; z-index:2147483646 !important; font-family:sans-serif; display:flex; flex-direction:column; box-shadow:-10px 0 50px rgba(0,0,0,0.8); overflow:hidden; }" +
+                "#tp-b.unfocused { pointer-events:none; opacity:0.5; }" +
+                "#tp-h { padding:15px; background:#222; border-bottom:1px solid #444; font-size:12px; color:#FFD700; word-break:break-all; font-weight:bold; }" +
+                "#tp-l { flex-shrink:0; overflow-y:auto; max-height:60%; border-bottom:1px solid #333; }" +
+                ".tp-i { padding:12px; color:#fff; cursor:pointer; border-bottom:1px solid #222; font-size:16px; transition:background 0.1s; }" +
+                ".tp-i:focus { outline:3px solid #FF6600; background:#333; }" +
+                ".tp-i.active { background:#FFD700; color:#000; font-weight:bold; }" +
+                "#tp-c { flex:1; background:#000; color:#0f0; font-family:monospace; font-size:11px; padding:10px; overflow-y:auto; border-top:1px solid #444; white-space:pre-wrap; word-break:break-all; outline:none; }" +
+                "#tp-c.focused { border: 2px solid #FFD700; background: #080808; }" +
+                ".tp-t { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#222; color:#fff; padding:10px; border:1px solid #FFD700; opacity:0; transition:opacity 0.5s; z-index:2147483647 !important; pointer-events:none; }";
             
             var s = document.createElement('style'); s.textContent = css; document.head.appendChild(s);
-            
-            var bar = document.createElement('div'); bar.id='tp-bar';
-            
-            var self = this;
+            var d = document.createElement('div'); d.id='tp-b'; d.className='unfocused';
+            d.innerHTML = '<div id="tp-h">TizenPortal 0529</div>' +
+                          '<div id="tp-l"></div>' +
+                          '<div id="tp-c" tabindex="0"></div>';
+            document.body.appendChild(d);
+
+            var l = document.getElementById('tp-l');
             this.items.forEach(function(item, i) {
-                var btn = document.createElement('div');
-                btn.className='tp-bar-btn';
-                btn.innerText=item.l;
-                btn.title=item.title;
-                btn.style.color=item.c;
-                btn.tabIndex=0;
-                btn.onclick = function() { self.idx=i; self.upd(); item.fn(); };
-                btn.onkeydown = function(e) {
-                    if(e.keyCode === 13) { self.idx=i; item.fn(); e.preventDefault(); }
-                    if(e.keyCode === 37 && i > 0) { self.idx=i-1; self.upd(); document.querySelectorAll('.tp-bar-btn')[self.idx].focus(); e.preventDefault(); }
-                    if(e.keyCode === 39 && i < self.items.length-1) { self.idx=i+1; self.upd(); document.querySelectorAll('.tp-bar-btn')[self.idx].focus(); e.preventDefault(); }
-                    if(e.keyCode === 39 && i === self.items.length-1) { document.getElementById('tp-url').focus(); e.preventDefault(); }
-                    if(e.keyCode === 10009 || e.keyCode === 27) { self.toggleFocus(); e.preventDefault(); }
+                var el = document.createElement('div'); el.className='tp-i'; el.innerText=item.l; el.tabIndex=0; el.style.color=item.c;
+                el.onclick = function() { UI.idx=i; UI.upd(); item.fn(); };
+                el.onkeydown = function(e) {
+                    if(e.keyCode === 13) { UI.idx=i; item.fn(); e.preventDefault(); }
                 };
-                bar.appendChild(btn);
+                l.appendChild(el);
             });
-            
-            var url = document.createElement('input');
-            url.id='tp-url';
-            url.type='text';
-            url.value=window.location.href;
-            url.tabIndex=0;
-            url.onkeydown = function(e) {
-                if(e.keyCode === 13) { window.location.href = url.value; e.preventDefault(); }
-                if(e.keyCode === 37 && url.selectionStart === 0) { 
-                    var btns = document.querySelectorAll('.tp-bar-btn');
-                    if(btns.length) { self.idx = btns.length-1; self.upd(); btns[self.idx].focus(); }
-                    e.preventDefault(); 
-                }
-                if(e.keyCode === 10009 || e.keyCode === 27) { url.blur(); self.toggleFocus(); e.preventDefault(); }
-            };
-            bar.appendChild(url);
-            
-            var content = document.createElement('div');
-            content.id='tp-content';
-            content.tabIndex=0;
-            content.onkeydown = function(e) {
-                if(e.keyCode === 38) { content.scrollTop -= 40; e.preventDefault(); }
-                if(e.keyCode === 40) { content.scrollTop += 40; e.preventDefault(); }
-                if(e.keyCode === 10009 || e.keyCode === 27) { self.setMode('none'); e.preventDefault(); }
-            };
-            
-            var t = document.createElement('div'); t.className='tp-t'; t.id='tp-toast';
-            
-            document.body.appendChild(bar);
-            document.body.appendChild(content);
-            document.body.appendChild(t);
+            var t = document.createElement('div'); t.className='tp-t'; t.id='tp-toast'; document.body.appendChild(t);
         },
         toggleFocus: function() { 
-            this.focused = (this.focused === 'main') ? 'addressbar' : 'main';
-            var btns = document.querySelectorAll('.tp-bar-btn');
-            if(this.focused === 'addressbar') {
-                if(btns.length) btns[0].focus();
-                this.toast("Address Bar - Use ←→ to navigate");
+            this.focused = (this.focused === 'main') ? 'sidebar' : 'main';
+            var b = document.getElementById('tp-b');
+            if(this.focused === 'sidebar') {
+                b.className = 'focused';
+                b.style.pointerEvents = 'auto';
+                if(this.items.length) document.querySelector('.tp-i').focus();
             } else {
+                b.className = 'unfocused';
+                b.style.pointerEvents = 'none';
                 document.body.focus();
             }
             this.upd();
         },
         setMode: function(mode) {
             this.contentMode = mode;
-            var c = document.getElementById('tp-content');
+            var c = document.getElementById('tp-c');
+            c.innerHTML = ''; // Memory Nuke
             
             if (mode === 'none') {
-                c.classList.remove('active');
+                c.style.display = 'none';
             } else {
-                c.classList.add('active');
+                c.style.display = 'block';
                 if(mode === 'logs') this.updateConsole();
                 if(mode === 'source') this.viewSource();
-                c.focus();
-                this.toast("↑↓ Scroll / Back to Exit");
+                this.enterConsoleFocus();
             }
         },
         viewSource: function() {
             var html = document.documentElement.outerHTML.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            var c = document.getElementById('tp-content');
+            var c = document.getElementById('tp-c');
             c.innerHTML = '<div style="color:#FFD700;background:#222;border-bottom:2px solid #FFD700;padding:10px;margin:-10px -10px 10px -10px;font-weight:bold;">PAGE SOURCE</div>' + 
                           '<div style="color:#0ff;font-size:10px;line-height:1.4;">' + html + '</div>';
         },
+        enterConsoleFocus: function() { var c = document.getElementById('tp-c'); c.classList.add('focused'); c.focus(); this.toast("Scroll / Back to Exit"); },
+        exitConsoleFocus: function() { 
+            var c = document.getElementById('tp-c'); c.classList.remove('focused'); 
+            this.setMode('none'); // Close window on back
+        },
         updateConsole: function() {
             if(this.contentMode !== 'logs') return;
-            var c = document.getElementById('tp-content');
+            var c = document.getElementById('tp-c');
             var header = '<div style="color:#FFD700;background:#222;border-bottom:2px solid #FFD700;padding:10px;margin:-10px -10px 10px -10px;font-weight:bold;">CONSOLE LOGS</div>';
             var entries = logs.map(function(l){ 
                 var color = l.type === 'ERR' ? '#f00' : (l.type === 'INF' ? '#0f0' : '#fff');
@@ -209,10 +183,19 @@
             }).join('');
             c.innerHTML = header + entries;
         },
-        upd: function() { 
-            var btns = document.querySelectorAll('.tp-bar-btn'); 
-            for(var i=0; i<btns.length; i++) btns[i].className = (i===this.idx) ? 'tp-bar-btn active' : 'tp-bar-btn'; 
+        nav: function(d) {
+            if(this.focused !== 'sidebar') return;
+            if(this.contentMode !== 'none') {
+                var c = document.getElementById('tp-c');
+                if(d==='u') c.scrollTop -= 40; if(d==='d') c.scrollTop += 40; return;
+            }
+            if(d==='u') this.idx--; if(d==='d') this.idx++;
+            if(this.idx < 0) this.idx = this.items.length - 1; if(this.idx >= this.items.length) this.idx = 0;
+            this.upd();
         },
+        exe: function() { if(this.focused === 'sidebar' && this.contentMode === 'none') this.items[this.idx].fn(); },
+        toggleMax: function() { UI.toast("Maximize Toggle"); },
+        upd: function() { var els = document.querySelectorAll('.tp-i'); for(var i=0; i<els.length; i++) els[i].className = (i===this.idx) ? 'tp-i active' : 'tp-i'; },
         toast: function(m) { var t = document.getElementById('tp-toast'); t.innerText = m; t.style.opacity = 1; setTimeout(function(){ t.style.opacity=0; }, 3000); }
     };
 
@@ -235,9 +218,17 @@
         },
         key: function(e) {
             var k = e.keyCode;
-            
-            // Blue button toggles address bar focus
+            if (UI.focused === 'sidebar') {
+                if (k===38) UI.nav('u'); if (k===40) UI.nav('d');
+                if ([10009, 27, 37].indexOf(k) > -1) {
+                    if (UI.contentMode !== 'none') UI.exitConsoleFocus(); 
+                    else UI.toggleFocus(); 
+                    e.preventDefault(); e.stopPropagation(); return;
+                }
+                if (k===13) UI.exe(); if (k===406) UI.toggleFocus(); e.preventDefault(); e.stopPropagation(); return;
+            }
             if (k===406) { 
+                // Blue button: toggle TP sidebar OR ABS menu (context-aware)
                 if (window.ABS && window.ABS.toggleMenuFocus && window.ABS.mode) {
                     window.ABS.toggleMenuFocus();
                 } else {

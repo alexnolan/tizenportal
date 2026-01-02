@@ -78,13 +78,13 @@
         
         /* 2. LIFEBOAT LAYOUT */
         #tp-lifeboat { display: block; width: 100%; padding-bottom: 50px; margin-top: 70px; margin-right: 0 !important; }
-        #tp-navbar { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: rgba(0,0,0,0.9); border-bottom: 2px solid #b8860b; display: flex; align-items: center; padding: 0 20px; z-index: 10000; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        .tp-nav-item { color: #ddd; font-size: 18px; margin-right: 20px; cursor: pointer; padding: 10px; border: 1px solid transparent; }
+        #tp-navbar { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: rgba(0,0,0,0.9); border-bottom: 2px solid #b8860b; display: flex; flex-wrap: wrap; align-items: center; padding: 0 20px; z-index: 10000; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .tp-nav-item { color: #ddd; font-size: 18px; margin-right: 20px; cursor: pointer; padding: 10px; border: 1px solid transparent; white-space: nowrap; }
         .tp-nav-item:focus, .tp-nav-item:hover { color: #FFD700; border-color: #FFD700; background: #333; outline: none; }
         
-        /* 3. FORM MENU - Collapsible right panel */
-        #tp-menu { position: fixed; right: 0; top: 60px; bottom: 0; width: 350px; background: #1a3a52; border-left: 3px solid #1e90ff; z-index: 9999; display: flex; flex-direction: column; box-shadow: -10px 0 30px rgba(0,0,0,0.7); transform: translateX(400px); transition: transform 0.3s ease; }
-        #tp-menu.expanded { transform: translateX(0); }
+        /* 3. FORM MENU - Hidden until activated by remote */
+        #tp-menu { position: fixed; right: 0; top: 60px; bottom: 0; width: 350px; background: #1a3a52; border-left: 3px solid #1e90ff; z-index: 9999; display: none; flex-direction: column; box-shadow: -10px 0 30px rgba(0,0,0,0.7); }
+        #tp-menu.active { display: flex; }
         #tp-menu-header { background: #0f2847; color: #1e90ff; padding: 15px; border-bottom: 2px solid #1e90ff; font-weight: bold; font-size: 16px; }
         #tp-menu-list { flex-shrink: 0; overflow-y: auto; max-height: 40%; border-bottom: 1px solid #0f2847; }
         .tp-menu-item { padding: 12px 15px; color: #aaa; cursor: pointer; border-bottom: 1px solid #0f2847; font-size: 14px; transition: background 0.1s; }
@@ -312,8 +312,7 @@
                             if (e.keyCode === 13) { self.selectForm(idx); e.preventDefault(); }
                             if (e.keyCode === 38 && idx > 0) { self.selectForm(idx-1); e.preventDefault(); }
                             if (e.keyCode === 40 && idx < self.forms.length-1) { self.selectForm(idx+1); e.preventDefault(); }
-                            if (e.keyCode === 37) { self.toggleMenuFocus(); e.preventDefault(); e.stopPropagation(); }
-                            if (e.keyCode === 39) { self.toggleMenuFocus(); e.preventDefault(); e.stopPropagation(); }
+                            if (e.keyCode === 10009 || e.keyCode === 27) { self.toggleMenuFocus(); e.preventDefault(); e.stopPropagation(); }
                         };
                     })(i);
                     frag.appendChild(item);
@@ -415,16 +414,14 @@
                 this.menuFocused = !this.menuFocused;
                 var menu = document.getElementById('tp-menu');
                 if (this.menuFocused) {
-                    menu.classList.add('expanded');
-                    this.menuExpanded = true;
+                    menu.classList.add('active');
                     var firstItem = document.querySelector('.tp-menu-item');
                     if (firstItem) firstItem.focus();
-                    this.log('Menu focused (expanded)');
+                    this.log('Menu active');
                 } else {
-                    menu.classList.remove('expanded');
-                    this.menuExpanded = false;
+                    menu.classList.remove('active');
                     document.body.focus();
-                    this.log('Menu unfocused (collapsed)');
+                    this.log('Menu hidden');
                 }
             },
             
@@ -665,24 +662,7 @@
             }
         };
         
-        // Inject global key handler for menu toggle
-        var originalKeyHandler = document.onkeydown;
-        document.addEventListener('keydown', function(e) {
-            if (e.keyCode === 39) { // Right arrow - expand menu
-                if (ABS.mode === 'content' && !ABS.menuFocused) {
-                    ABS.toggleMenuFocus();
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
-            }
-            if (e.keyCode === 37) { // Left arrow - collapse menu
-                if (ABS.menuFocused) {
-                    ABS.toggleMenuFocus();
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
-            }
-        }, true);
+        // Menu toggled only by Blue button (406) from userScript, not arrow keys
         
         if (window.console) console.log('[TP ABS] Init');
         ABS.init();

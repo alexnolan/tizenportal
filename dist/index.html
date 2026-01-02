@@ -356,9 +356,13 @@
                         this.log('Found ' + toolbars.length + ' toolbars');
                         for (var t = 0; t < toolbars.length; t++) {
                             var toolbar = toolbars[t];
-                            var links = toolbar.querySelectorAll('a, button[href], [onclick]');
+                            // Get navigation links, but skip form inputs
+                            var links = toolbar.querySelectorAll('a, button:not([type="text"]):not([type="search"]):not([type="password"])');
                             for (var l = 0; l < links.length; l++) {
                                 var link = links[l];
+                                // Skip if it's a form input
+                                if (link.tagName === 'INPUT' || link.tagName === 'TEXTAREA' || link.tagName === 'SELECT') continue;
+                                
                                 var text = link.textContent.trim();
                                 if (text && text.length > 0 && text.length < 30 && !document.getElementById('tp-nav-' + l)) {
                                     var navItem = document.createElement('div');

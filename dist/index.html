@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal 0547</title>
+    <title>TizenPortal 0562</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -290,7 +290,7 @@
 <body>
     <header>
         <div>
-            <h1>TizenPortal <span>0547</span></h1>
+            <h1>TizenPortal <span>0562</span></h1>
             <div class="subtitle">Smart TV App Launcher</div>
         </div>
     </header>
@@ -644,8 +644,8 @@
                 var forms = [];
                 var processed = {};
                 
-                // Detect search inputs
-                var searchInputs = document.querySelectorAll('input[type="search"], input[placeholder*="Search" i], input[placeholder*="search" i]');
+                // Detect search inputs (no case-insensitive flag - not supported on Chrome 63)
+                var searchInputs = document.querySelectorAll('input[type="search"], input[placeholder*="Search"], input[placeholder*="search"]');
                 if (searchInputs.length > 0) {
                     var visible = [];
                     for (var i = 0; i < searchInputs.length; i++) {

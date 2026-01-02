@@ -37,11 +37,24 @@
     var Config = {
         payload: null, homeUrl: 'https://alexnolan.github.io/tizenportal/dist/index.html',
         load: function() {
+            tpHud('load() starting...');
             try {
                 // 1. Check URL Hash (Client-Side, bypasses server limits)
                 var m = window.location.hash.match(/[#&]tp=([^&]+)/);
+                tpHud('hash match: ' + (m ? 'yes len=' + m[1].length : 'no'));
                 if (m && m[1]) {
-                    var j = decodeURIComponent(escape(atob(m[1]))); this.payload = JSON.parse(j); 
+                    tpHud('atob starting...');
+                    var decoded = atob(m[1]);
+                    tpHud('atob done, len=' + decoded.length);
+                    tpHud('escape starting...');
+                    var escaped = escape(decoded);
+                    tpHud('escape done, len=' + escaped.length);
+                    tpHud('decodeURI starting...');
+                    var j = decodeURIComponent(escaped);
+                    tpHud('decodeURI done, len=' + j.length);
+                    tpHud('JSON.parse starting...');
+                    this.payload = JSON.parse(j);
+                    tpHud('JSON.parse done');
                     sessionStorage.setItem('tp_conf', j); localStorage.setItem('tp_conf', j);
                     // Clear hash without reloading
                     history.replaceState(null, document.title, window.location.pathname + window.location.search);
@@ -65,7 +78,9 @@
             } catch(e) { console.error("Conf load failed", e); tpHud('Config load failed: ' + (e.message || 'parse error')); } return false;
         },
         apply: function() {
-            if (!this.payload) return false;
+            tpHud('apply() starting...');
+            if (!this.payload) { tpHud('No payload!'); return false; }
+            tpHud('payload.css=' + (this.payload.css ? this.payload.css.length : 0) + ' js=' + (this.payload.js ? this.payload.js.length : 0));
             // Apply User Agent override first
             if (this.payload.ua) { 
                 try { 

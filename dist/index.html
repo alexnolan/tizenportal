@@ -55,9 +55,13 @@
         /* Force desktop layout - disable Tailwind responsive breakpoints */
         body { min-width: 1920px !important; }
         
-        /* Surgical image fixes - only restrict nav/button icons, NOT book covers */
-        nav img, button img, [role="navigation"] img, aside img { 
-            max-width: 50px !important; 
+        /* Surgical image fixes - only restrict nav/button/header icons, NOT book covers */
+        nav img, button img, [role="navigation"] img, aside img, header img, 
+        a img[alt="Home"], img[alt="Home"], 
+        img.w-8, img.w-10, img.h-8, img.h-10 { 
+            max-width: 50px !important;
+            min-width: auto !important;
+            width: auto !important;
             height: auto !important; 
         }
         

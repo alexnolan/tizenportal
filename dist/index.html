@@ -613,9 +613,13 @@
             }
             dbg('init: loading presets...');
             try {
-                PRESETS.abs.css = document.getElementById('abs-css').innerHTML;
-                PRESETS.abs.js = document.getElementById('abs-js').innerHTML;
-                dbg('init: presets loaded');
+                var absCss = document.getElementById('abs-css');
+                var absJs = document.getElementById('abs-js');
+                if (!absCss) throw new Error('abs-css template not found');
+                if (!absJs) throw new Error('abs-js template not found');
+                PRESETS.abs.css = absCss.innerHTML;
+                PRESETS.abs.js = absJs.innerHTML;
+                dbg('init: presets loaded (css=' + Math.round(PRESETS.abs.css.length/1024) + 'KB, js=' + Math.round(PRESETS.abs.js.length/1024) + 'KB)');
             } catch(e) {
                 dbg('init: preset error: ' + (e.message || 'unknown'));
                 console.error('[TP] Error loading presets:', e);

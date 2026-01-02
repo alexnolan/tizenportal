@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal 0540</title>
+    <title>TizenPortal 0541</title>
     <style>
         body { background: #000; color: #fff; font-family: "Segoe UI", sans-serif; margin: 0; padding: 40px; overflow: hidden; }
         header { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
@@ -35,10 +35,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-        <header><h1>TizenPortal <span style="font-size:14px; color:#666;">0540</span></h1></header>
+        <header><h1>TizenPortal <span style="font-size:14px; color:#666;">0541</span></h1></header>
     <div id="grid" class="grid"></div>
     <div id="toast">Long Press Enter to Edit</div>
-    <div id="debug-status" style="position:fixed;top:0;right:0;background:#000;color:#0f0;padding:10px;font-size:12px;font-family:monospace;z-index:9999;border:1px solid #0f0;">Loading...</div>
+    <div id="debug-status" style="position:fixed;top:0;right:0;background:#000;color:#0f0;padding:10px;font-size:12px;font-family:monospace;z-index:9999;border:1px solid #0f0;display:none;">Loading...</div>
     <div id="modal">
         <div class="box">
             <h2 id="modal-title">Add App</h2>
@@ -769,10 +769,7 @@
                 var iconHTML = '<i class="fas '+iconClass+'"></i>';
                 var box = '<div class="icon-box">' + imgHTML + iconHTML + '</div>';
                 d.innerHTML = box + '<span>'+a.name+'</span>';
-                (function(app) {
-                    d.onclick = function() { launch(app); };
-                    d.onkeydown = function(e) { if(e.keyCode===13) launch(app); };
-                })(a);
+                // Note: onclick removed - launch/edit handled by global keydown/keyup with long-press detection
                 g.appendChild(d);
             });
             
@@ -829,7 +826,24 @@
             if ([37,38,39,40].indexOf(k) > -1) { e.preventDefault(); updateSelection(); }
             if (k===13 && !pressTimer) { pressTimer = setTimeout(function() { pressTimer=null; openModal(selectedIndex); }, 800); }
         });
-        document.addEventListener('keyup', function(e) { if (e.keyCode === 13) { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; if (selectedIndex === document.querySelectorAll('.card').length-1) openModal(-1); else launch(apps[selectedIndex]); } } });
+        document.addEventListener('keyup', function(e) { 
+            if (e.keyCode === 13) { 
+                if (pressTimer) { 
+                    clearTimeout(pressTimer); 
+                    pressTimer = null; 
+                    var cards = document.querySelectorAll('.card');
+                    var addIdx = cards.length - 1;  // Add App is last card
+                    var clearIdx = cards.length - 2; // Clear Cache is second to last
+                    if (selectedIndex === addIdx) {
+                        openModal(-1); // Add new app
+                    } else if (selectedIndex === clearIdx) {
+                        clearCache(); // Clear cache
+                    } else if (apps[selectedIndex]) {
+                        launch(apps[selectedIndex]); // Launch existing app
+                    }
+                } 
+            } 
+        });
 
         function launch(app) {
             try {

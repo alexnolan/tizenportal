@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal 0562</title>
+    <title>TizenPortal 0563</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -290,7 +290,7 @@
 <body>
     <header>
         <div>
-            <h1>TizenPortal <span>0562</span></h1>
+            <h1>TizenPortal <span>0563</span></h1>
             <div class="subtitle">Smart TV App Launcher</div>
         </div>
     </header>
@@ -570,59 +570,25 @@
                 try {
                     if (this.state !== 'DETECT_PAGE') return false;
                     
-                    // Debug: dump all images with src info
-                    var allImages = document.querySelectorAll('img');
-                    var imgInfo = [];
-                    for (var i = 0; i < Math.min(allImages.length, 5); i++) {
-                        var img = allImages[i];
-                        var src = (img.src || '').substring(0, 30);
-                        imgInfo.push(src);
-                    }
-                    this.log('Imgs(' + allImages.length + '): ' + imgInfo.join(' | '));
+                    // Use correct ABS selectors: [id^="book-card-"], [id^="series-card-"]
+                    var bookCards = document.querySelectorAll('[id^="book-card-"]');
+                    var seriesCards = document.querySelectorAll('[id^="series-card-"]');
+                    var totalCards = bookCards.length + seriesCards.length;
                     
-                    // Debug: find elements with "book" or "cover" in class/id
-                    var bookEls = document.querySelectorAll('[class*="book"], [id*="book"], [class*="cover"], [id*="cover"]');
-                    this.log('book/cover els: ' + bookEls.length);
-                    
-                    // Debug: find shelf/library elements
-                    var shelfEls = document.querySelectorAll('[class*="shelf"], [class*="library"], [class*="Shelf"], [class*="Library"]');
-                    this.log('shelf/lib els: ' + shelfEls.length);
-                    
-                    // Log first few class names of divs to find patterns
-                    var divs = document.querySelectorAll('div[class]');
-                    var divClasses = [];
-                    for (var d = 0; d < Math.min(divs.length, 8); d++) {
-                        var cls = divs[d].className;
-                        if (cls && cls.length < 50) divClasses.push(cls.substring(0, 25));
-                    }
-                    this.log('Divs: ' + divClasses.join(' | '));
-                    
-                    // Try multiple selectors for books
-                    var covers = [];
-                    var bookCards = [];
-                    var rows = [];
-                    try { covers = document.querySelectorAll('[cy-id="coverImage"]'); } catch(e) { this.log('cy-id selector failed'); }
-                    try { bookCards = document.querySelectorAll('[id^="book-card-"]'); } catch(e) { this.log('book-card selector failed'); }
-                    try { rows = document.querySelectorAll('.categorizedBookshelfRow'); } catch(e) { this.log('row selector failed'); }
-                    
-                    this.log('Query: covers=' + covers.length + ' cards=' + bookCards.length + ' rows=' + rows.length);
-                    
-                    var bookCount = covers.length || bookCards.length || bookEls.length;
+                    this.log('Cards: books=' + bookCards.length + ' series=' + seriesCards.length);
                     
                     this.forms = this.detectForms();
-                    this.log('Detect: books=' + bookCount + ' forms=' + this.forms.length);
+                    this.log('Detect: cards=' + totalCards + ' forms=' + this.forms.length);
                     
-                    if (bookCount > 0) {
+                    if (totalCards > 0) {
                         this.boat.innerHTML = '';
                         this.cache.processedBooks = {};
                         this.cache.processedHeadings = {};
-                        // Keep processedNav - already extracted in createLifeboat
                         this.mode = 'content';
-                        this.log('Rendering books');
+                        this.log('Rendering ' + totalCards + ' cards');
                         this.renderContent();
                         if (this.forms.length > 0) this.renderMenuUI();
                         this.state = 'READY';
-                        // tp-lifeboat-active already added in createLifeboat
                         return true;
                     } else if (this.forms.length > 0) {
                         this.boat.innerHTML = '';
@@ -827,161 +793,109 @@
                 try {
                     if (this.mode !== 'content') return;
                     
-                    // Navigation now extracted in extractNavigation() - no duplicate code here
+                    // Direct query for book and series cards using correct ABS selectors
+                    var bookCards = document.querySelectorAll('[id^="book-card-"]');
+                    var seriesCards = document.querySelectorAll('[id^="series-card-"]');
+                    var cardCount = 0;
                     
-                    // Extract books from category sections
-                    var categorySections = document.querySelectorAll('.categorizedBookshelfRow');
-                    this.log('Found ' + categorySections.length + ' sections');
-                    var bookCount = 0;
+                    this.log('Rendering: books=' + bookCards.length + ' series=' + seriesCards.length);
                     
-                    for (var i = 0; i < categorySections.length; i++) {
-                        var section = categorySections[i];
-                        var sectionId = 'tp-section-' + i;
+                    // Process book cards
+                    for (var i = 0; i < bookCards.length; i++) {
+                        var card = bookCards[i];
+                        var cardId = card.id || ('book-' + i);
                         
-                        // Find category header
-                        var placard = null;
-                        var parent = section.parentElement;
-                        if (parent && parent.parentElement) {
-                            placard = parent.parentElement.querySelector('.categoryPlacard');
-                        }
+                        if (this.cache.processedBooks[cardId]) continue;
                         
-                        if (placard && !this.cache.processedHeadings[sectionId]) {
-                            var text = placard.textContent.trim();
-                            if (text.length > 0) {
-                                var h = document.createElement('div');
-                                h.className = 'tp-shelf-title';
-                                h.innerText = text;
-                                h.id = sectionId + '-header';
-                                this.boat.appendChild(h);
-                                this.cache.processedHeadings[sectionId] = true;
-                            }
-                        }
+                        var clone = document.createElement('div');
+                        clone.id = 'tp-' + cardId;
+                        clone.className = 'tp-rescued-card';
+                        clone.setAttribute('tabindex', '0');
                         
-                        // Extract books using cy-id
-                        var covers = section.querySelectorAll('[cy-id="coverImage"]');
-                        for (var c = 0; c < covers.length; c++) {
-                            var cover = covers[c];
-                            var bookId = 'tp-book-' + i + '-' + c;
-                            
-                            if (this.cache.processedBooks[bookId]) continue;
-                            
-                            // Find the book card container
-                            var card = cover.closest('div[class*="rounded"]') || cover.closest('div');
-                            if (!card) continue;
-                            
-                            var clone = document.createElement('div');
-                            clone.id = bookId;
-                            clone.className = 'tp-rescued-card';
-                            clone.setAttribute('tabindex', '0');
-                            
-                            // Clone cover image
+                        // Find cover image inside the card
+                        var coverImg = card.querySelector('img');
+                        if (coverImg) {
                             var img = document.createElement('img');
-                            img.src = cover.getAttribute('src') || cover.getAttribute('data-src');
-                            img.alt = cover.getAttribute('alt') || 'Book cover';
+                            img.src = coverImg.src || coverImg.getAttribute('data-src') || '';
+                            img.alt = coverImg.alt || 'Book cover';
                             clone.appendChild(img);
-                            
-                            // Extract text content
-                            var textContent = card.textContent.trim();
-                            if (textContent) {
-                                var textDiv = document.createElement('div');
-                                textDiv.style.padding = '8px';
-                                textDiv.style.fontSize = '14px';
-                                textDiv.style.lineHeight = '1.3';
-                                textDiv.innerText = textContent.substring(0, 100);
-                                clone.appendChild(textDiv);
-                            }
-                            
-                            // Extract action buttons from overlay
-                            var overlay = card.querySelector('[cy-id="overlay"]');
-                            if (overlay) {
-                                var buttonBar = document.createElement('div');
-                                buttonBar.style.cssText = 'display:flex;gap:8px;padding:4px 8px;justify-content:center;background:rgba(0,0,0,0.7);';
-                                
-                                var playBtn = overlay.querySelector('[cy-id="playButton"]');
-                                var readBtn = overlay.querySelector('[cy-id="readButton"]');
-                                var editBtn = overlay.querySelector('[cy-id="editButton"]');
-                                var moreBtn = overlay.querySelector('[cy-id="moreButton"]');
-                                
-                                var addedButtons = false;
-                                
-                                if (playBtn) {
-                                    var play = document.createElement('div');
-                                    play.innerHTML = '▶';
-                                    play.style.cssText = 'color:#1e90ff;font-size:18px;cursor:pointer;padding:4px;';
-                                    play.tabIndex = 0;
-                                    (function(orig) {
-                                        play.onclick = function(e) { e.stopPropagation(); orig.click(); };
-                                        play.onkeydown = function(e) { if (e.keyCode === 13) { e.stopPropagation(); orig.click(); } };
-                                    })(playBtn);
-                                    buttonBar.appendChild(play);
-                                    addedButtons = true;
-                                }
-                                
-                                if (readBtn && readBtn.style.display !== 'none') {
-                                    var read = document.createElement('div');
-                                    read.innerHTML = '📖';
-                                    read.style.cssText = 'color:#1e90ff;font-size:18px;cursor:pointer;padding:4px;';
-                                    read.tabIndex = 0;
-                                    (function(orig) {
-                                        read.onclick = function(e) { e.stopPropagation(); orig.click(); };
-                                        read.onkeydown = function(e) { if (e.keyCode === 13) { e.stopPropagation(); orig.click(); } };
-                                    })(readBtn);
-                                    buttonBar.appendChild(read);
-                                    addedButtons = true;
-                                }
-                                
-                                if (editBtn) {
-                                    var edit = document.createElement('div');
-                                    edit.innerHTML = '✏';
-                                    edit.style.cssText = 'color:#888;font-size:18px;cursor:pointer;padding:4px;';
-                                    edit.tabIndex = 0;
-                                    (function(orig) {
-                                        edit.onclick = function(e) { e.stopPropagation(); orig.click(); };
-                                        edit.onkeydown = function(e) { if (e.keyCode === 13) { e.stopPropagation(); orig.click(); } };
-                                    })(editBtn);
-                                    buttonBar.appendChild(edit);
-                                    addedButtons = true;
-                                }
-                                
-                                if (moreBtn) {
-                                    var more = document.createElement('div');
-                                    more.innerHTML = '⋮';
-                                    more.style.cssText = 'color:#888;font-size:18px;cursor:pointer;padding:4px;';
-                                    more.tabIndex = 0;
-                                    (function(orig) {
-                                        more.onclick = function(e) { e.stopPropagation(); orig.click(); };
-                                        more.onkeydown = function(e) { if (e.keyCode === 13) { e.stopPropagation(); orig.click(); } };
-                                    })(moreBtn);
-                                    buttonBar.appendChild(more);
-                                    addedButtons = true;
-                                }
-                                
-                                if (addedButtons) {
-                                    clone.appendChild(buttonBar);
-                                }
-                            }
-                            
-                            // Attach click handler
-                            var link = card.closest('a') || card.querySelector('a');
-                            if (link && link.href) {
-                                (function(href, el) {
-                                    el.onclick = function() { TizenUtils.navigate(href); };
-                                    el.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate(href); };
-                                })(link.href, clone);
-                            } else {
-                                (function(orig, el) {
-                                    el.onclick = function() { orig.click(); };
-                                    el.onkeydown = function(e) { if (e.keyCode === 13) orig.click(); };
-                                })(card, clone);
-                            }
-                            
-                            this.boat.appendChild(clone);
-                            this.cache.processedBooks[bookId] = true;
-                            bookCount++;
                         }
+                        
+                        // Extract title text (usually in p or span elements)
+                        var titleEl = card.querySelector('p, span, .truncate');
+                        if (titleEl) {
+                            var textDiv = document.createElement('div');
+                            textDiv.style.cssText = 'padding:8px;font-size:14px;line-height:1.3;color:#fff;';
+                            textDiv.innerText = titleEl.textContent.trim().substring(0, 80);
+                            clone.appendChild(textDiv);
+                        }
+                        
+                        // Find link and attach click handler
+                        var link = card.closest('a') || card.querySelector('a');
+                        if (link && link.href) {
+                            (function(href, el) {
+                                el.onclick = function() { TizenUtils.navigate(href); };
+                                el.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate(href); };
+                            })(link.href, clone);
+                        } else {
+                            (function(orig, el) {
+                                el.onclick = function() { orig.click(); };
+                                el.onkeydown = function(e) { if (e.keyCode === 13) orig.click(); };
+                            })(card, clone);
+                        }
+                        
+                        this.boat.appendChild(clone);
+                        this.cache.processedBooks[cardId] = true;
+                        cardCount++;
                     }
                     
-                    this.log('Rendered ' + bookCount + ' books');
+                    // Process series cards (same pattern)
+                    for (var s = 0; s < seriesCards.length; s++) {
+                        var sCard = seriesCards[s];
+                        var sCardId = sCard.id || ('series-' + s);
+                        
+                        if (this.cache.processedBooks[sCardId]) continue;
+                        
+                        var sClone = document.createElement('div');
+                        sClone.id = 'tp-' + sCardId;
+                        sClone.className = 'tp-rescued-card';
+                        sClone.setAttribute('tabindex', '0');
+                        
+                        var sCoverImg = sCard.querySelector('img');
+                        if (sCoverImg) {
+                            var sImg = document.createElement('img');
+                            sImg.src = sCoverImg.src || sCoverImg.getAttribute('data-src') || '';
+                            sImg.alt = sCoverImg.alt || 'Series cover';
+                            sClone.appendChild(sImg);
+                        }
+                        
+                        var sTitleEl = sCard.querySelector('p, span, .truncate');
+                        if (sTitleEl) {
+                            var sTextDiv = document.createElement('div');
+                            sTextDiv.style.cssText = 'padding:8px;font-size:14px;line-height:1.3;color:#fff;';
+                            sTextDiv.innerText = sTitleEl.textContent.trim().substring(0, 80);
+                            sClone.appendChild(sTextDiv);
+                        }
+                        
+                        var sLink = sCard.closest('a') || sCard.querySelector('a');
+                        if (sLink && sLink.href) {
+                            (function(href, el) {
+                                el.onclick = function() { TizenUtils.navigate(href); };
+                                el.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate(href); };
+                            })(sLink.href, sClone);
+                        } else {
+                            (function(orig, el) {
+                                el.onclick = function() { orig.click(); };
+                                el.onkeydown = function(e) { if (e.keyCode === 13) orig.click(); };
+                            })(sCard, sClone);
+                        }
+                        
+                        this.boat.appendChild(sClone);
+                        this.cache.processedBooks[sCardId] = true;
+                        cardCount++;
+                    }
+                    
+                    this.log('Rendered ' + cardCount + ' cards');
                 } catch(e) {
                     this.log('renderContent error: ' + (e.message || 'unknown'));
                 }

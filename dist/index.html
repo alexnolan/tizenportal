@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TizenPortal 0567</title>
+    <title>TizenPortal 0568</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -290,7 +290,7 @@
 <body>
     <header>
         <div>
-            <h1>TizenPortal <span>0567</span></h1>
+            <h1>TizenPortal <span>0568</span></h1>
             <div class="subtitle">Smart TV App Launcher</div>
         </div>
     </header>
@@ -396,161 +396,141 @@
                 if (this.initialized) return;
                 this.initialized = true;
                 this.log('Starting');
-                this.interceptSocket();
+                this.interceptFetch();
                 this.state = 'WAIT_NUXT';
                 this.waitForNuxt();
             },
             
-            // Intercept socket.io to capture init payload
-            interceptSocket: function() {
+            // Intercept fetch API to capture library data
+            interceptFetch: function() {
                 var self = this;
+                var origFetch = window.fetch;
                 
-                // Hook into window.io if it exists
-                var checkSocket = function() {
-                    if (window.io && !window.io._tpHooked) {
-                        window.io._tpHooked = true;
-                        var origIo = window.io;
-                        window.io = function() {
-                            var socket = origIo.apply(this, arguments);
-                            self.hookSocket(socket);
-                            return socket;
-                        };
-                        // Copy properties
-                        for (var k in origIo) {
-                            if (origIo.hasOwnProperty(k)) window.io[k] = origIo[k];
+                window.fetch = function(url, opts) {
+                    return origFetch.apply(this, arguments).then(function(response) {
+                        // Clone response so we can read it
+                        var clone = response.clone();
+                        var urlStr = typeof url === 'string' ? url : (url.url || '');
+                        
+                        // Check for library item endpoints
+                        if (urlStr.indexOf('/api/libraries/') > -1 && urlStr.indexOf('/items') > -1) {
+                            clone.json().then(function(data) {
+                                self.log('Fetch intercepted: ' + urlStr.substring(0, 50));
+                                self.log('Keys: ' + (data ? Object.keys(data).join(',') : 'null'));
+                                if (data && data.results && data.results.length > 0) {
+                                    self.log('Found ' + data.results.length + ' library items');
+                                    self.libraryData = data.results;
+                                    self.renderFromLibraryData();
+                                }
+                            }).catch(function(e) {});
                         }
-                        self.log('Socket.io hooked');
-                    }
-                    
-                    // Also try to find existing socket on window.$nuxt
-                    if (window.$nuxt && window.$nuxt.$socket && !window.$nuxt.$socket._tpHooked) {
-                        window.$nuxt.$socket._tpHooked = true;
-                        self.hookSocket(window.$nuxt.$socket);
-                        self.log('Existing $nuxt socket hooked');
-                    }
+                        
+                        // Also check personalized view
+                        if (urlStr.indexOf('/personalized') > -1) {
+                            clone.json().then(function(data) {
+                                self.log('Personalized data: ' + (data ? (Array.isArray(data) ? data.length + ' sections' : Object.keys(data).join(',')) : 'null'));
+                                if (Array.isArray(data) && data.length > 0) {
+                                    self.personalizedData = data;
+                                    self.renderFromPersonalizedData();
+                                }
+                            }).catch(function(e) {});
+                        }
+                        
+                        return response;
+                    });
                 };
                 
-                // Check immediately and periodically
-                checkSocket();
-                var socketInterval = setInterval(function() {
-                    checkSocket();
-                    if (self.socketData) {
-                        clearInterval(socketInterval);
-                    }
-                }, 500);
-                
-                // Stop checking after 30 seconds
-                setTimeout(function() { clearInterval(socketInterval); }, 30000);
+                this.log('Fetch interceptor installed');
             },
             
-            hookSocket: function(socket) {
-                var self = this;
-                if (!socket || !socket.on) return;
+            renderFromLibraryData: function() {
+                if (!this.libraryData || !this.boat) return;
                 
-                // Listen for init event which contains library data
-                socket.on('init', function(data) {
-                    self.log('Socket init received: ' + (data ? Object.keys(data).join(',') : 'null'));
-                    self.socketData = data;
-                    self.renderFromSocketData();
-                });
+                this.log('Rendering ' + this.libraryData.length + ' library items');
+                this.boat.innerHTML = '';
+                this.mode = 'content';
                 
-                // Also listen for other useful events
-                socket.on('user_item_progress_updated', function(data) {
-                    self.log('Progress update: ' + JSON.stringify(data).substring(0, 100));
-                });
-            },
-            
-            renderFromSocketData: function() {
-                if (!this.socketData || !this.boat) return;
-                
-                var data = this.socketData;
-                this.log('Parsing socket data...');
-                
-                // Try to find library items in the data
-                var items = [];
-                
-                // ABS init payload structure varies - try common paths
-                if (data.libraryItems) items = data.libraryItems;
-                else if (data.items) items = data.items;
-                else if (data.results) items = data.results;
-                else if (data.library && data.library.items) items = data.library.items;
-                
-                if (items.length === 0) {
-                    // Try to find any array that looks like books
-                    for (var key in data) {
-                        if (Array.isArray(data[key]) && data[key].length > 0) {
-                            var sample = data[key][0];
-                            if (sample && (sample.media || sample.book || sample.title || sample.name)) {
-                                items = data[key];
-                                this.log('Found items in: ' + key);
-                                break;
-                            }
-                        }
-                    }
+                for (var i = 0; i < this.libraryData.length && i < 100; i++) {
+                    var item = this.libraryData[i];
+                    this.renderItem(item);
                 }
                 
-                this.log('Found ' + items.length + ' items from socket');
-                
-                if (items.length > 0) {
-                    this.boat.innerHTML = '';
-                    this.mode = 'content';
-                    this.renderItems(items);
-                    this.state = 'READY';
-                }
+                this.state = 'READY';
             },
             
-            renderItems: function(items) {
+            renderFromPersonalizedData: function() {
+                if (!this.personalizedData || !this.boat) return;
+                
+                this.log('Rendering personalized sections');
+                this.boat.innerHTML = '';
+                this.mode = 'content';
                 var cardCount = 0;
                 
-                for (var i = 0; i < items.length && cardCount < 100; i++) {
-                    var item = items[i];
-                    var id = item.id || item.libraryItemId || ('item-' + i);
+                for (var s = 0; s < this.personalizedData.length && cardCount < 100; s++) {
+                    var section = this.personalizedData[s];
                     
-                    if (this.cache.processedBooks[id]) continue;
-                    
-                    // Extract metadata
-                    var meta = item.media ? item.media.metadata : (item.metadata || item);
-                    var title = meta.title || meta.name || item.title || item.name || 'Unknown';
-                    var author = meta.authorName || meta.author || (meta.authors && meta.authors[0] ? meta.authors[0].name : '');
-                    
-                    // Build cover URL
-                    var coverUrl = '';
-                    if (item.media && item.media.coverPath) {
-                        coverUrl = '/api/items/' + id + '/cover';
-                    } else if (item.coverPath) {
-                        coverUrl = '/api/items/' + id + '/cover';
+                    // Add section header
+                    if (section.label) {
+                        var header = document.createElement('div');
+                        header.className = 'tp-shelf-title';
+                        header.innerText = section.label;
+                        this.boat.appendChild(header);
                     }
                     
-                    var clone = document.createElement('div');
-                    clone.id = 'tp-' + id;
-                    clone.className = 'tp-rescued-card';
-                    clone.setAttribute('tabindex', '0');
-                    
-                    if (coverUrl) {
-                        var img = document.createElement('img');
-                        img.src = coverUrl;
-                        img.alt = title;
-                        img.onerror = function() { this.style.display = 'none'; };
-                        clone.appendChild(img);
+                    // Render items in section
+                    var entities = section.entities || [];
+                    for (var e = 0; e < entities.length && cardCount < 100; e++) {
+                        this.renderItem(entities[e]);
+                        cardCount++;
                     }
-                    
-                    var textDiv = document.createElement('div');
-                    textDiv.style.cssText = 'padding:8px;font-size:14px;line-height:1.3;color:#fff;';
-                    textDiv.innerText = title.substring(0, 60) + (author ? '\n' + author.substring(0, 40) : '');
-                    clone.appendChild(textDiv);
-                    
-                    // Click to open item
-                    (function(itemId) {
-                        clone.onclick = function() { TizenUtils.navigate('/item/' + itemId); };
-                        clone.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate('/item/' + itemId); };
-                    })(id);
-                    
-                    this.boat.appendChild(clone);
-                    this.cache.processedBooks[id] = true;
-                    cardCount++;
                 }
                 
-                this.log('Rendered ' + cardCount + ' items from socket data');
+                this.state = 'READY';
+                this.log('Rendered ' + cardCount + ' items from personalized data');
+            },
+            
+            renderItem: function(item) {
+                if (!item) return;
+                
+                var id = item.id || item.libraryItemId || '';
+                if (this.cache.processedBooks[id]) return;
+                
+                // Extract metadata - ABS has different structures
+                var meta = item.media ? item.media.metadata : (item.metadata || item);
+                var title = meta.title || item.title || 'Unknown';
+                var author = '';
+                if (meta.authors && meta.authors.length > 0) {
+                    author = meta.authors[0].name || '';
+                } else if (meta.authorName) {
+                    author = meta.authorName;
+                }
+                
+                var clone = document.createElement('div');
+                clone.id = 'tp-' + id;
+                clone.className = 'tp-rescued-card';
+                clone.setAttribute('tabindex', '0');
+                
+                // Cover image
+                var img = document.createElement('img');
+                img.src = '/api/items/' + id + '/cover';
+                img.alt = title;
+                img.onerror = function() { this.style.display = 'none'; };
+                clone.appendChild(img);
+                
+                // Text
+                var textDiv = document.createElement('div');
+                textDiv.style.cssText = 'padding:8px;font-size:14px;line-height:1.3;color:#fff;';
+                textDiv.innerText = title.substring(0, 60) + (author ? '\n' + author.substring(0, 40) : '');
+                clone.appendChild(textDiv);
+                
+                // Click handler
+                (function(itemId) {
+                    clone.onclick = function() { TizenUtils.navigate('/item/' + itemId); };
+                    clone.onkeydown = function(e) { if (e.keyCode === 13) TizenUtils.navigate('/item/' + itemId); };
+                })(id);
+                
+                this.boat.appendChild(clone);
+                this.cache.processedBooks[id] = true;
             },
             
             waitForNuxt: function() {

@@ -192,46 +192,23 @@
             
             setupMutationObserver: function() {
                 var self = this;
-                var callCount = 0;
-                var logged = false;
-                var loaderStuckCounter = 0;
+                var rendered = false;
                 this.observer = new MutationObserver(function(mutations) {
+                    if (rendered) return; // Only fire once
+                    
                     try {
-                        callCount++;
-                        // Check if page is loading
+                        // Check if loader is still active
                         var loader = document.getElementById('nuxt-loading');
                         var loaderOpacity = loader ? getComputedStyle(loader).opacity : '0';
                         
-                        if (loader && loaderOpacity !== '0') {
-                            loaderStuckCounter++;
-                            // If loader stuck for 100+ checks, force render anyway
-                            if (loaderStuckCounter > 100) {
-                                self.log('Loader stuck, forcing render anyway');
-                                loaderStuckCounter = 0;
-                            } else {
-                                return;
-                            }
-                        } else {
-                            loaderStuckCounter = 0;
-                        }
+                        if (loader && loaderOpacity !== '0') return; // Still loading, skip
                         
-                        // First time past loader, dump ID inspection
-                        if (!logged) {
-                            logged = true;
-                            var allIds = document.querySelectorAll('[id]');
-                            var bookIds = [];
-                            for (var i = 0; i < allIds.length; i++) {
-                                var id = allIds[i].id;
-                                if (id.indexOf('book') > -1 || id.indexOf('card') > -1) {
-                                    bookIds.push(id);
-                                }
-                            }
-                            if (bookIds.length > 0) {
-                                self.log('Found IDs: ' + bookIds.slice(0, 5).join(','));
-                            }
+                        // Try to detect and render
+                        var hasBooks = self.detectAndRender();
+                        if (hasBooks) {
+                            rendered = true;
+                            if (self.observer) self.observer.disconnect();
                         }
-                        
-                        self.detectAndRender();
                     } catch(e) {
                         self.log('Observer error: ' + (e.message || 'unknown'));
                         console.error('[TP ABS] Observer error:', e);
@@ -243,7 +220,7 @@
                     subtree: true,
                     attributes: false
                 });
-                this.log('MutationObserver active');
+                this.log('MutationObserver active (fire-once mode)');
             },
             
             detectAndRender: function() {
@@ -278,38 +255,28 @@
                     
                     // Log full details
                     this.log('Detect: books=' + bookCount + ' selector=' + (workingSelector || 'none') + ' inputs=' + (hasInputs ? 'Y' : 'N'));
-                    this.log('Is this working?');
+                    
                     // Books take priority - if we have books, show content (not login form)
                     if (hasBooks) {
-                        if (this.mode !== 'content') {
-                            this.boat.innerHTML = ''; // Clear form if we switch to content mode
-                            this.cache = { processedBooks: {}, processedHeadings: {}, processedNav: false, bookSelector: workingSelector };
-                            this.mode = 'content';
-                            this.log('→ content mode');
-                        }
+                        this.boat.innerHTML = ''; // Clear everything
+                        this.cache = { processedBooks: {}, processedHeadings: {}, processedNav: false, bookSelector: workingSelector };
+                        this.mode = 'content';
+                        this.log('→ content mode');
                         this.renderContent(workingSelector);
                         this.state = 'READY';
-                        // Toggle visibility based on content
-                        if (this.boat.childElementCount > 0) {
-                            document.body.classList.add('tp-lifeboat-active');
-                        }
+                        document.body.classList.add('tp-lifeboat-active');
+                        return true; // Signal success
                     } else if (hasInputs) {
                         // Only show login form if NO books exist
-                        if (this.mode !== 'form') {
-                            this.boat.innerHTML = ''; // Clear content if we switch to form mode
-                            this.cache = { processedBooks: {}, processedHeadings: {}, processedNav: false };
-                            this.mode = 'form';
-                            this.log('→ form mode');
-                        }
+                        this.boat.innerHTML = ''; // Clear everything
+                        this.cache = { processedBooks: {}, processedHeadings: {}, processedNav: false };
+                        this.mode = 'form';
+                        this.log('→ form mode');
                         this.renderLoginForm();
                         this.state = 'READY';
-                    } else if (this.state === 'READY' && !this.mode) {
-                        // Fallback: if we're stuck with no books and no inputs, show the original app
-                        this.log('FALLBACK: revealing original app');
-                        document.body.classList.remove('tp-lifeboat-active');
-                        this.boat.innerHTML = '';
-                        this.mode = 'fallback';
+                        return true; // Signal success
                     }
+                    return false; // No content detected yet
                 } catch(e) {
                     this.log('detectAndRender error: ' + (e.message || 'unknown'));
                     console.error('[TP ABS] detectAndRender error:', e);

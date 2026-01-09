@@ -1,6 +1,6 @@
 # 📺 TizenPortal
 
-![Version](https://img.shields.io/badge/version-0.5.49-blue) ![Tizen](https://img.shields.io/badge/Tizen-3.0%2B-blueviolet) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-0100-blue) ![Tizen](https://img.shields.io/badge/Tizen-3.0%2B-blueviolet) ![License](https://img.shields.io/badge/license-MIT-green)
 
 **TizenPortal** is a universal launcher and compatibility layer designed for Samsung Smart TVs running Tizen OS. It allows you to run modern self-hosted web applications (like **Audiobookshelf**, **Jellyfin**, etc.) on older TVs that might otherwise struggle with broken layouts or incompatible interfaces.
 
@@ -46,7 +46,7 @@ This project is designed to be loaded via **TizenBrew** or a similar userscript 
     *   **User Agent:** Select a device profile (Default Tizen is usually best, but try others if you have issues).
 3.  **🚀 Launch:** Click the card to open the app. TizenPortal will automatically inject the necessary fixes.
 
-### 🆕 What's New in 0.5.49
+### 🆕 What's New in 0100
 - **Verified Selectors from ABS Source**: All selectors now confirmed against actual Audiobookshelf Vue components
 - **Sidebar Navigation**: Uses `#siderail-buttons-container` from `SideRail.vue`, extracts library links correctly
 - **Appbar Integration**: Extracts library dropdown, settings link, and search from `#appbar`

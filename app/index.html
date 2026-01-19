@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TizenPortal 0103</title>
+  <title>TizenPortal 0104</title>
   <style>
     /* Reset and base styles */
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -57,7 +57,8 @@
     #tp-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 30px;
+      /* gap not supported in Chrome 47-69 for flexbox, use margins instead */
+      margin: -15px;
       flex: 1;
       align-content: flex-start;
     }
@@ -66,6 +67,7 @@
     .tp-card {
       width: 280px;
       height: 180px;
+      margin: 15px;
       background: #1a1a1a;
       border: 3px solid #333333;
       border-radius: 12px;
@@ -202,7 +204,6 @@
       left: 60px;
       right: 60px;
       display: flex;
-      gap: 40px;
       font-size: 16px;
       color: #666666;
     }
@@ -210,13 +211,14 @@
     .tp-hint {
       display: flex;
       align-items: center;
-      gap: 8px;
+      margin-right: 40px;
     }
     
     .tp-hint-key {
       width: 24px;
       height: 24px;
       border-radius: 4px;
+      margin-right: 8px;
     }
     
     .tp-hint-key.red { background: #e74c3c; }
@@ -274,18 +276,19 @@
       padding: 4px 0;
       border-bottom: 1px solid #1a1a1a;
       display: flex;
-      gap: 12px;
     }
     
     .tp-log-time {
       color: #666;
       flex-shrink: 0;
       width: 100px;
+      margin-right: 12px;
     }
     
     .tp-log-level {
       flex-shrink: 0;
       width: 60px;
+      margin-right: 12px;
       font-weight: bold;
     }
     
@@ -315,7 +318,7 @@
     <div id="tp-portal">
       <div id="tp-header">
         <h1>TizenPortal</h1>
-        <span class="version">v0103</span>
+        <span class="version">v0104</span>
       </div>
       <div id="tp-grid">
         <!-- Cards rendered by JavaScript -->

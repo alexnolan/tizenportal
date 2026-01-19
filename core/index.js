@@ -3,15 +3,33 @@
  * 
  * Main entry point. Initializes all subsystems and exposes the global API.
  * 
- * @version 0103
+ * @version 0104
  */
 
-// Import core-js polyfills first (provides ES6+ features for Chrome 47-69)
-// This matches TizenTube's approach for Tizen compatibility
+// ============================================================================
+// POLYFILLS - Must be imported first, before any other code
+// This matches TizenTube's approach for Tizen Chrome 47-69 compatibility
+// ============================================================================
+
+// Core-js provides ES6+ language features (Array.flat, Object.entries, etc.)
 import 'core-js/stable';
+
+// Fetch API polyfill
+import 'whatwg-fetch';
+
+// DOMRect polyfill (from Financial-Times via TizenTube)
+import '../polyfills/domrect-polyfill.js';
+
+// ============================================================================
+// SPATIAL NAVIGATION
+// ============================================================================
 
 // Import spatial navigation polyfill (sets up window.navigate)
 import '../navigation/spatial-navigation-polyfill.js';
+
+// ============================================================================
+// APPLICATION MODULES
+// ============================================================================
 
 // Import core modules
 import { configRead, configWrite, configOnChange, configInit } from './config.js';
@@ -25,7 +43,7 @@ import { initDiagnosticsPanel } from '../ui/diagnostics.js';
 /**
  * TizenPortal version
  */
-const VERSION = '0101';
+const VERSION = '0104';
 
 /**
  * Application state

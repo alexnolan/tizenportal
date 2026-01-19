@@ -3,7 +3,7 @@
  * 
  * Main entry point. Initializes all subsystems and exposes the global API.
  * 
- * @version 0101
+ * @version 0102
  */
 
 // Import spatial navigation polyfill (must be first - sets up window.navigate)
@@ -47,6 +47,12 @@ async function init() {
     // Step 1: Initialize polyfills based on feature detection
     const loadedPolyfills = await initPolyfills();
     log('Polyfills loaded: ' + (loadedPolyfills.length > 0 ? loadedPolyfills.join(', ') : 'none needed'));
+
+    // Check spatial navigation status
+    log('Spatial nav: window.navigate=' + (typeof window.navigate) + ', __spatialNavigation__=' + (typeof window.__spatialNavigation__));
+    if (window.__spatialNavigation__) {
+      log('Spatial nav keyMode: ' + window.__spatialNavigation__.keyMode);
+    }
 
     // Step 2: Initialize configuration
     configInit();

@@ -1,13 +1,35 @@
-# Default: ignore everything
-/*
+# Dependencies
+node_modules/
 
-# Keep this file tracked
-!.gitignore
+# Build artifacts (keep app/ tracked for TizenBrew)
+# app/tizenportal.js is built output but must be tracked
 
-# Allow only these files in the public repository
-!/package.json
-!/README.md
-!/index.html
-!/userScript.js
+# Internal documentation (not for public repo)
+docs/
 
-# End of allowlist
+# GitHub/Copilot instructions
+.github/
+
+# IDE and editor files
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Legacy dist folder (replaced by app/)
+dist/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test coverage
+coverage/

@@ -1,0 +1,23 @@
+/* TizenPortal Default Bundle Styles */
+
+/* Focus indicators */
+:focus {
+  outline: 3px solid #00a8ff !important;
+  outline-offset: 2px;
+}
+
+a:focus,
+button:focus,
+[role="button"]:focus,
+[role="link"]:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 3px solid #00a8ff !important;
+  outline-offset: 2px;
+}
+
+/* Ensure interactive elements are visible */
+a, button, [role="button"] {
+  cursor: pointer;
+}

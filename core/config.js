@@ -1,0 +1,180 @@
+/**
+ * TizenPortal Configuration System
+ * 
+ * Persistent configuration with localStorage and change events.
+ */
+
+/**
+ * Storage key for configuration
+ */
+var STORAGE_KEY = 'tp-configuration';
+
+/**
+ * Default configuration values
+ */
+var DEFAULT_CONFIG = {
+  pointerMode: false,
+  focusHighlight: true,
+  safeMode: false,
+  lastVisitedUrl: null,
+  diagnosticsEnabled: false,
+};
+
+/**
+ * In-memory configuration cache
+ */
+var configCache = null;
+
+/**
+ * Change event listeners
+ */
+var changeListeners = [];
+
+/**
+ * Load configuration from localStorage
+ * @returns {Object} Configuration object
+ */
+function loadConfig() {
+  if (configCache !== null) {
+    return configCache;
+  }
+
+  try {
+    var stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      configCache = JSON.parse(stored);
+      // Merge with defaults for any missing keys
+      for (var key in DEFAULT_CONFIG) {
+        if (DEFAULT_CONFIG.hasOwnProperty(key) && !configCache.hasOwnProperty(key)) {
+          configCache[key] = DEFAULT_CONFIG[key];
+        }
+      }
+    } else {
+      configCache = Object.assign({}, DEFAULT_CONFIG);
+    }
+  } catch (err) {
+    console.error('TizenPortal: Failed to load config:', err);
+    configCache = Object.assign({}, DEFAULT_CONFIG);
+  }
+
+  return configCache;
+}
+
+/**
+ * Save configuration to localStorage
+ */
+function saveConfig() {
+  if (configCache === null) return;
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(configCache));
+  } catch (err) {
+    console.error('TizenPortal: Failed to save config:', err);
+    // Handle quota exceeded
+    if (err.name === 'QuotaExceededError') {
+      console.warn('TizenPortal: Storage quota exceeded');
+    }
+  }
+}
+
+/**
+ * Initialize configuration system
+ */
+export function configInit() {
+  loadConfig();
+}
+
+/**
+ * Read a configuration value
+ * @param {string} key - Configuration key
+ * @returns {*} Configuration value
+ */
+export function configRead(key) {
+  var config = loadConfig();
+  return config.hasOwnProperty(key) ? config[key] : undefined;
+}
+
+/**
+ * Write a configuration value
+ * @param {string} key - Configuration key
+ * @param {*} value - Value to write
+ */
+export function configWrite(key, value) {
+  var config = loadConfig();
+  var oldValue = config[key];
+
+  if (oldValue === value) return; // No change
+
+  config[key] = value;
+  saveConfig();
+
+  // Emit change event
+  emitChange(key, value, oldValue);
+}
+
+/**
+ * Emit a configuration change event
+ * @param {string} key - Changed key
+ * @param {*} newValue - New value
+ * @param {*} oldValue - Previous value
+ */
+function emitChange(key, newValue, oldValue) {
+  var event = {
+    key: key,
+    value: newValue,
+    oldValue: oldValue,
+  };
+
+  for (var i = 0; i < changeListeners.length; i++) {
+    try {
+      changeListeners[i](event);
+    } catch (err) {
+      console.error('TizenPortal: Config change listener error:', err);
+    }
+  }
+}
+
+/**
+ * Subscribe to configuration changes
+ * @param {Function} callback - Callback function(event)
+ * @returns {Function} Unsubscribe function
+ */
+export function configOnChange(callback) {
+  if (typeof callback !== 'function') {
+    console.warn('TizenPortal: configOnChange requires a function');
+    return function() {};
+  }
+
+  changeListeners.push(callback);
+
+  // Return unsubscribe function
+  return function() {
+    var index = changeListeners.indexOf(callback);
+    if (index !== -1) {
+      changeListeners.splice(index, 1);
+    }
+  };
+}
+
+/**
+ * Reset configuration to defaults
+ */
+export function configReset() {
+  configCache = Object.assign({}, DEFAULT_CONFIG);
+  saveConfig();
+
+  // Emit changes for all keys
+  for (var key in DEFAULT_CONFIG) {
+    if (DEFAULT_CONFIG.hasOwnProperty(key)) {
+      emitChange(key, DEFAULT_CONFIG[key], undefined);
+    }
+  }
+}
+
+/**
+ * Get all configuration values
+ * @returns {Object} Copy of configuration object
+ */
+export function configGetAll() {
+  return Object.assign({}, loadConfig());
+}

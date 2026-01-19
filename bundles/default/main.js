@@ -1,0 +1,127 @@
+/**
+ * Default Bundle
+ * 
+ * Fallback bundle used when no site-specific bundle is configured.
+ * Provides basic functionality without site-specific customizations.
+ */
+
+export default {
+  name: 'default',
+
+  /**
+   * Called before iframe content loads
+   * @param {HTMLIFrameElement} iframe
+   * @param {Object} card
+   */
+  onBeforeLoad: function(iframe, card) {
+    console.log('TizenPortal [default]: Loading', card.url);
+  },
+
+  /**
+   * Called after iframe content has loaded
+   * @param {HTMLIFrameElement} iframe
+   * @param {Object} card
+   */
+  onAfterLoad: function(iframe, card) {
+    console.log('TizenPortal [default]: Loaded', card.url);
+
+    // Try to inject basic focusable styling
+    try {
+      var doc = iframe.contentDocument;
+      if (doc) {
+        this.injectBasicStyles(doc);
+        this.makeFocusable(doc);
+      }
+    } catch (err) {
+      console.warn('TizenPortal [default]: Cross-origin, limited access');
+    }
+  },
+
+  /**
+   * Called when bundle is activated
+   * @param {HTMLIFrameElement} iframe
+   * @param {Object} card
+   */
+  onActivate: function(iframe, card) {
+    console.log('TizenPortal [default]: Activated');
+  },
+
+  /**
+   * Called when bundle is deactivated
+   * @param {HTMLIFrameElement} iframe
+   * @param {Object} card
+   */
+  onDeactivate: function(iframe, card) {
+    console.log('TizenPortal [default]: Deactivated');
+  },
+
+  /**
+   * Called when navigation occurs within iframe
+   * @param {string} url
+   */
+  onNavigate: function(url) {
+    console.log('TizenPortal [default]: Navigated to', url);
+  },
+
+  /**
+   * Called on keydown events
+   * @param {KeyboardEvent} event
+   * @returns {boolean} True to consume event
+   */
+  onKeyDown: function(event) {
+    return false; // Let default handling proceed
+  },
+
+  // Helper methods
+
+  /**
+   * Inject basic focus styling
+   * @param {Document} doc
+   */
+  injectBasicStyles: function(doc) {
+    var style = doc.createElement('style');
+    style.id = 'tp-default-styles';
+    style.textContent = [
+      '/* TizenPortal Default Bundle Styles */',
+      ':focus {',
+      '  outline: 3px solid #00a8ff !important;',
+      '  outline-offset: 2px;',
+      '}',
+      '',
+      'a:focus, button:focus, [role="button"]:focus {',
+      '  outline: 3px solid #00a8ff !important;',
+      '  outline-offset: 2px;',
+      '}',
+    ].join('\n');
+
+    var head = doc.head || doc.documentElement;
+    head.appendChild(style);
+  },
+
+  /**
+   * Make interactive elements focusable
+   * @param {Document} doc
+   */
+  makeFocusable: function(doc) {
+    var selectors = [
+      'a[href]',
+      'button',
+      '[role="button"]',
+      '[role="link"]',
+      'input',
+      'select',
+      'textarea',
+    ];
+
+    var elements = doc.querySelectorAll(selectors.join(','));
+
+    for (var i = 0; i < elements.length; i++) {
+      var el = elements[i];
+      if (!el.hasAttribute('tabindex')) {
+        el.setAttribute('tabindex', '0');
+      }
+    }
+
+    console.log('TizenPortal [default]: Made', elements.length, 'elements focusable');
+  },
+};

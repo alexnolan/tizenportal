@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TizenPortal 0100</title>
+  <style>
+    /* Reset and base styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    /* Fixed 1920x1080 layout - NEVER use responsive */
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #0a0a0a;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #ffffff;
+    }
+    
+    /* Shell container */
+    #tp-shell {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    
+    /* Portal launcher grid */
+    #tp-portal {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 60px;
+    }
+    
+    /* Header */
+    #tp-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+    
+    #tp-header h1 {
+      font-size: 48px;
+      font-weight: 300;
+      color: #ffffff;
+    }
+    
+    #tp-header .version {
+      font-size: 20px;
+      color: #666666;
+      margin-left: 20px;
+    }
+    
+    /* Card grid container */
+    #tp-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      flex: 1;
+      align-content: flex-start;
+    }
+    
+    /* Site card */
+    .tp-card {
+      width: 280px;
+      height: 180px;
+      background: #1a1a1a;
+      border: 3px solid #333333;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    
+    .tp-card:focus {
+      outline: none;
+      border-color: #00a8ff;
+      transform: scale(1.05);
+    }
+    
+    .tp-card-icon {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      background: #333333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+    
+    .tp-card-name {
+      font-size: 18px;
+      font-weight: 500;
+      text-align: center;
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    /* Add card button */
+    .tp-card-add {
+      border-style: dashed;
+      border-color: #444444;
+    }
+    
+    .tp-card-add:focus {
+      border-color: #00a8ff;
+    }
+    
+    .tp-card-add .tp-card-icon {
+      background: transparent;
+      font-size: 48px;
+      color: #666666;
+    }
+    
+    /* Iframe container (hidden by default) */
+    #tp-iframe-container {
+      display: none;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 100;
+    }
+    
+    #tp-iframe-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    /* Loading state */
+    #tp-loading {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    
+    #tp-loading.active {
+      display: flex;
+    }
+    
+    .tp-spinner {
+      width: 64px;
+      height: 64px;
+      border: 4px solid #333333;
+      border-top-color: #00a8ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    #tp-loading-text {
+      margin-top: 24px;
+      font-size: 24px;
+      color: #888888;
+    }
+    
+    /* Toast notification */
+    #tp-toast {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333333;
+      padding: 16px 32px;
+      border-radius: 8px;
+      font-size: 18px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 300;
+    }
+    
+    #tp-toast.visible {
+      opacity: 1;
+    }
+    
+    /* Color button hints */
+    #tp-hints {
+      position: absolute;
+      bottom: 20px;
+      left: 60px;
+      right: 60px;
+      display: flex;
+      gap: 40px;
+      font-size: 16px;
+      color: #666666;
+    }
+    
+    .tp-hint {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .tp-hint-key {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+    }
+    
+    .tp-hint-key.red { background: #e74c3c; }
+    .tp-hint-key.green { background: #2ecc71; }
+    .tp-hint-key.yellow { background: #f1c40f; }
+    .tp-hint-key.blue { background: #3498db; }
+  </style>
+</head>
+<body>
+  <div id="tp-shell">
+    <!-- Portal launcher -->
+    <div id="tp-portal">
+      <div id="tp-header">
+        <h1>TizenPortal</h1>
+        <span class="version">v0100</span>
+      </div>
+      <div id="tp-grid">
+        <!-- Cards rendered by JavaScript -->
+      </div>
+    </div>
+    
+    <!-- Iframe container for sites -->
+    <div id="tp-iframe-container"></div>
+    
+    <!-- Loading overlay -->
+    <div id="tp-loading">
+      <div class="tp-spinner"></div>
+      <div id="tp-loading-text">Loading...</div>
+    </div>
+    
+    <!-- Toast notification -->
+    <div id="tp-toast"></div>
+    
+    <!-- Color button hints -->
+    <div id="tp-hints">
+      <div class="tp-hint">
+        <div class="tp-hint-key red"></div>
+        <span>Address Bar</span>
+      </div>
+      <div class="tp-hint">
+        <div class="tp-hint-key green"></div>
+        <span>Mouse Mode</span>
+      </div>
+      <div class="tp-hint">
+        <div class="tp-hint-key yellow"></div>
+        <span>Bundle Menu</span>
+      </div>
+      <div class="tp-hint">
+        <div class="tp-hint-key blue"></div>
+        <span>Diagnostics</span>
+      </div>
+    </div>
+  </div>
+  
+  <script src="tizenportal.js"></script>
+</body>
+</html>

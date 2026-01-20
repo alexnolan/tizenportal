@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TizenPortal 0122</title>
+  <title>TizenPortal 0123</title>
   <style>
     /* Reset and base styles */
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -513,7 +513,6 @@
     .tp-bundle-list {
       display: flex;
       flex-direction: column;
-      gap: 20px;
     }
     
     .tp-bundle-option {
@@ -523,8 +522,13 @@
       background: #1e1e1e;
       border: 2px solid #333;
       border-radius: 10px;
+      margin-bottom: 16px;
       cursor: pointer;
       transition: all 0.2s ease;
+    }
+    
+    .tp-bundle-option:last-child {
+      margin-bottom: 0;
     }
     
     .tp-bundle-option:focus {
@@ -584,13 +588,13 @@
     
     .tp-editor-footer-right {
       display: flex;
-      gap: 20px;
     }
     
     .tp-editor-btn {
       display: flex;
       align-items: center;
       padding: 14px 28px;
+      margin-left: 16px;
       font-size: 16px;
       font-weight: 500;
       border: 2px solid #444;
@@ -599,6 +603,10 @@
       transition: all 0.15s ease;
       background: #333;
       color: #fff;
+    }
+    
+    .tp-editor-btn:first-child {
+      margin-left: 0;
     }
     
     .tp-editor-btn:focus {
@@ -1089,7 +1097,7 @@
     <div id="tp-portal">
       <div id="tp-header">
         <h1>TizenPortal</h1>
-        <span class="version">v0122</span>
+        <span class="version">v0123</span>
       </div>
       <div id="tp-grid">
         <!-- Cards rendered by JavaScript -->

@@ -3,7 +3,7 @@
  * 
  * Main entry point. Initializes all subsystems and exposes the global API.
  * 
- * @version 0123
+ * @version 0124
  */
 
 // ============================================================================
@@ -50,7 +50,7 @@ import { getBundleNames } from '../bundles/registry.js';
 /**
  * TizenPortal version
  */
-const VERSION = '0123';
+const VERSION = '0124';
 
 /**
  * Application state
@@ -272,10 +272,40 @@ function loadSite(card) {
   iframe.id = 'tp-iframe';
   iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
   
+  // Track if we got meaningful content
+  var loadTimeout = null;
+  var hasContent = false;
+  
   // Handle load event
   iframe.onload = function() {
     log('Site loaded: ' + card.url);
     hideLoading();
+    
+    // Clear timeout since we got a load event
+    if (loadTimeout) {
+      clearTimeout(loadTimeout);
+      loadTimeout = null;
+    }
+    
+    // Check if we can access the iframe content (same-origin or allowed)
+    try {
+      var doc = iframe.contentDocument || iframe.contentWindow.document;
+      // If we can access the document and it has content, we're good
+      if (doc && doc.body && doc.body.innerHTML.length > 0) {
+        hasContent = true;
+      }
+    } catch (e) {
+      // Cross-origin - we can't check, but that's okay if it loaded
+      hasContent = true;
+    }
+    
+    // If iframe loaded but appears empty, the site may have blocked framing
+    if (!hasContent) {
+      warn('Site may have blocked iframe embedding: ' + card.url);
+      showIframeBlockedMessage(card);
+      return;
+    }
+    
     state.iframeActive = true;
     
     // Load bundle for this site
@@ -293,7 +323,11 @@ function loadSite(card) {
   iframe.onerror = function(err) {
     error('Failed to load site: ' + card.url);
     hideLoading();
-    showToast('Failed to load site');
+    if (loadTimeout) {
+      clearTimeout(loadTimeout);
+      loadTimeout = null;
+    }
+    showIframeBlockedMessage(card);
   };
 
   // Set URL and add to container
@@ -303,6 +337,124 @@ function loadSite(card) {
   // Show iframe container, hide portal
   hidePortal();
   container.style.display = 'block';
+  
+  // Set a timeout to detect if site refuses to load (X-Frame-Options, etc.)
+  loadTimeout = setTimeout(function() {
+    // Check if iframe is still empty after timeout
+    try {
+      var doc = iframe.contentDocument || iframe.contentWindow.document;
+      if (!doc || !doc.body || doc.body.innerHTML.length === 0) {
+        warn('Site load timeout - may be blocked: ' + card.url);
+        hideLoading();
+        showIframeBlockedMessage(card);
+      }
+    } catch (e) {
+      // Cross-origin but took too long - likely blocked
+      if (!hasContent) {
+        hideLoading();
+        showIframeBlockedMessage(card);
+      }
+    }
+  }, 8000);
+}
+
+/**
+ * Show message when iframe embedding is blocked
+ * @param {Object} card - The card that failed to load
+ */
+function showIframeBlockedMessage(card) {
+  var container = document.getElementById('tp-iframe-container');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  var messageDiv = document.createElement('div');
+  messageDiv.id = 'tp-iframe-blocked';
+  messageDiv.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#0a0a0a;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:Arial,sans-serif;text-align:center;padding:40px;';
+  
+  messageDiv.innerHTML = 
+    '<div style="font-size:48px;margin-bottom:24px;">🚫</div>' +
+    '<h2 style="font-size:28px;margin-bottom:16px;color:#fff;">Site Cannot Be Embedded</h2>' +
+    '<p style="font-size:18px;color:#888;margin-bottom:32px;max-width:600px;">' +
+      'This site blocks embedding in iframes for security reasons.<br>' +
+      'This is common for sites like Google, Facebook, banks, etc.' +
+    '</p>' +
+    '<div style="display:flex;flex-direction:column;gap:16px;">' +
+      '<button id="tp-open-tizen-browser" tabindex="0" style="padding:16px 32px;font-size:18px;background:#00a8ff;color:#fff;border:none;border-radius:8px;cursor:pointer;">Open in Tizen Browser</button>' +
+      '<button id="tp-back-to-portal" tabindex="0" style="padding:16px 32px;font-size:18px;background:#333;color:#fff;border:2px solid #444;border-radius:8px;cursor:pointer;">Back to Portal</button>' +
+    '</div>';
+  
+  container.appendChild(messageDiv);
+  
+  // Set up button handlers
+  var openBrowserBtn = document.getElementById('tp-open-tizen-browser');
+  var backBtn = document.getElementById('tp-back-to-portal');
+  
+  if (openBrowserBtn) {
+    openBrowserBtn.addEventListener('click', function() {
+      openInTizenBrowser(card.url);
+    });
+    openBrowserBtn.addEventListener('keydown', function(e) {
+      if (e.keyCode === 13) openInTizenBrowser(card.url);
+    });
+    // Focus the open browser button
+    setTimeout(function() { openBrowserBtn.focus(); }, 100);
+  }
+  
+  if (backBtn) {
+    backBtn.addEventListener('click', function() {
+      closeSite();
+    });
+    backBtn.addEventListener('keydown', function(e) {
+      if (e.keyCode === 13) closeSite();
+    });
+  }
+}
+
+/**
+ * Open URL in native Tizen browser
+ * @param {string} url - URL to open
+ */
+function openInTizenBrowser(url) {
+  log('Opening in Tizen browser: ' + url);
+  
+  // Try Tizen API first
+  if (typeof tizen !== 'undefined' && tizen.application && tizen.application.launchAppControl) {
+    try {
+      var appControl = new tizen.ApplicationControl(
+        'http://tizen.org/appcontrol/operation/view',
+        url,
+        null,
+        null,
+        null
+      );
+      
+      tizen.application.launchAppControl(
+        appControl,
+        null,
+        function() {
+          log('Tizen browser launched successfully');
+          showToast('Opening in browser...');
+        },
+        function(err) {
+          error('Failed to launch Tizen browser: ' + err.name);
+          showToast('Failed to open browser');
+        }
+      );
+      return;
+    } catch (e) {
+      error('Tizen API error: ' + e.message);
+    }
+  }
+  
+  // Fallback: try window.open (may not work on Tizen)
+  try {
+    window.open(url, '_blank');
+    showToast('Opening in browser...');
+  } catch (e) {
+    error('Could not open browser: ' + e.message);
+    showToast('Cannot open external browser');
+  }
 }
 
 /**
@@ -371,6 +523,7 @@ var TizenPortalAPI = {
   // Site management
   loadSite: loadSite,
   closeSite: closeSite,
+  openInTizenBrowser: openInTizenBrowser,
   getCurrentCard: function() {
     return state.currentCard;
   },

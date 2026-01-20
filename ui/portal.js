@@ -5,6 +5,7 @@
  */
 
 import { getCards, addCard, updateCard, deleteCard } from './cards.js';
+import { showAddCardModal, showEditCardModal, setRefreshPortalFn } from './modal.js';
 
 /**
  * Portal container element
@@ -33,6 +34,9 @@ export function initPortal() {
     return;
   }
 
+  // Set up modal refresh callback to avoid circular dependency
+  setRefreshPortalFn(refreshPortal);
+
   renderCards();
   focusCard(0);
 }
@@ -60,6 +64,11 @@ function renderCards() {
   var addCardEl = createAddCardElement(cards.length);
   gridElement.appendChild(addCardEl);
 }
+
+/**
+ * Long press threshold in milliseconds
+ */
+var LONG_PRESS_MS = 500;
 
 /**
  * Create a card element
@@ -101,16 +110,40 @@ function createCardElement(card, index) {
   nameEl.textContent = card.name || 'Untitled';
   el.appendChild(nameEl);
 
-  // Click handler
+  // Long press detection for edit
+  var pressStartTime = 0;
+  var pressTimer = null;
+
+  // Click handler (short press)
   el.addEventListener('click', function() {
     launchCard(card);
   });
 
-  // Keyboard handler
+  // Keyboard handler with long press detection
   el.addEventListener('keydown', function(event) {
-    if (event.keyCode === 13) { // Enter
+    if (event.keyCode === 13 && !event.repeat) { // Enter - first press only
       event.preventDefault();
-      launchCard(card);
+      pressStartTime = Date.now();
+      pressTimer = setTimeout(function() {
+        // Long press - show edit dialog
+        console.log('TizenPortal: Long press - edit card');
+        showEditCardModal(card);
+        pressTimer = null;
+      }, LONG_PRESS_MS);
+    }
+  });
+
+  el.addEventListener('keyup', function(event) {
+    if (event.keyCode === 13) { // Enter released
+      var pressDuration = Date.now() - pressStartTime;
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+        // Short press - launch
+        if (pressDuration < LONG_PRESS_MS) {
+          launchCard(card);
+        }
+      }
     }
   });
 
@@ -190,38 +223,10 @@ function launchCard(card) {
 
 /**
  * Show add card dialog
- * TODO: Implement proper modal
  */
 function showAddCardDialog() {
   console.log('TizenPortal: Add card dialog');
-
-  // For now, use simple prompt (will be replaced with modal)
-  var name = prompt('Site name:');
-  if (!name) return;
-
-  var url = prompt('Site URL:');
-  if (!url) return;
-
-  // Ensure URL has protocol
-  if (url.indexOf('://') === -1) {
-    url = 'http://' + url;
-  }
-
-  var newCard = addCard({
-    name: name,
-    url: url,
-    bundle: 'default',
-    userAgent: 'tizen',
-    icon: null,
-  });
-
-  console.log('TizenPortal: Added card:', newCard);
-
-  if (window.TizenPortal) {
-    window.TizenPortal.showToast('Added: ' + name);
-  }
-
-  refreshPortal();
+  showAddCardModal();
 }
 
 /**

@@ -7,6 +7,8 @@
 import { KEYS, COLOR_ACTIONS, isColorButton, getKeyName } from './keys.js';
 import { configRead, configWrite } from '../core/config.js';
 import { toggleDiagnosticsPanel, clearDiagnosticsLogs, isDiagnosticsPanelVisible } from '../ui/diagnostics.js';
+import { toggleAddressBar, isAddressBarVisible } from '../ui/addressbar.js';
+import { toggleBundleMenu, isBundleMenuVisible, cycleBundle } from '../ui/bundlemenu.js';
 
 /**
  * Long press detection threshold (milliseconds)
@@ -154,21 +156,28 @@ function handleColorButton(keyCode, isLongPress) {
 function executeColorAction(action) {
   switch (action) {
     case 'addressbar':
-      // TODO: Show address bar
-      console.log('TizenPortal: Address bar (not implemented)');
-      if (window.TizenPortal) {
-        window.TizenPortal.showToast('Address bar - coming soon');
-      }
+      // Toggle address bar
+      toggleAddressBar();
       break;
 
     case 'reload':
       // Reload current page
       var iframe = document.getElementById('tp-iframe');
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.location.reload();
+      if (iframe) {
         if (window.TizenPortal) {
           window.TizenPortal.showToast('Reloading...');
         }
+        try {
+          iframe.contentWindow.location.reload();
+        } catch (err) {
+          // Cross-origin - reload by resetting src
+          var src = iframe.src;
+          iframe.src = '';
+          iframe.src = src;
+        }
+      } else {
+        // No iframe, reload entire app
+        window.location.reload();
       }
       break;
 
@@ -199,20 +208,14 @@ function executeColorAction(action) {
           window.TizenPortal.showToast('Logs cleared');
         }
       } else {
-        // TODO: Show bundle menu
-        console.log('TizenPortal: Bundle menu (not implemented)');
-        if (window.TizenPortal) {
-          window.TizenPortal.showToast('Bundle menu - coming soon');
-        }
+        // Toggle bundle menu
+        toggleBundleMenu();
       }
       break;
 
     case 'cycleBundle':
-      // TODO: Cycle through bundles
-      console.log('TizenPortal: Cycle bundle (not implemented)');
-      if (window.TizenPortal) {
-        window.TizenPortal.showToast('Cycle bundle - coming soon');
-      }
+      // Cycle through bundles
+      cycleBundle();
       break;
 
     case 'diagnostics':

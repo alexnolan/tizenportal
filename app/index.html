@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TizenPortal 0104</title>
+  <title>TizenPortal 0105</title>
   <style>
     /* Reset and base styles */
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -310,6 +310,389 @@
       font-size: 14px;
       color: #666;
     }
+    
+    /* Modal System */
+    .tp-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+    }
+    
+    .tp-modal {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 12px;
+      width: 600px;
+      max-height: 800px;
+      overflow: hidden;
+    }
+    
+    .tp-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid #333;
+    }
+    
+    .tp-modal-header h3 {
+      font-size: 24px;
+      font-weight: 500;
+      color: #fff;
+    }
+    
+    .tp-modal-close {
+      background: none;
+      border: 2px solid #444;
+      border-radius: 6px;
+      color: #888;
+      font-size: 28px;
+      width: 44px;
+      height: 44px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    
+    .tp-modal-close:focus {
+      outline: none;
+      border-color: #00a8ff;
+      color: #fff;
+    }
+    
+    .tp-modal-content {
+      padding: 24px;
+    }
+    
+    .tp-modal-form {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .tp-form-group {
+      margin-bottom: 20px;
+    }
+    
+    .tp-form-group label {
+      display: block;
+      font-size: 16px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    
+    .tp-form-group input,
+    .tp-form-group select {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 18px;
+      background: #0a0a0a;
+      border: 2px solid #333;
+      border-radius: 8px;
+      color: #fff;
+      outline: none;
+    }
+    
+    .tp-form-group input:focus,
+    .tp-form-group select:focus {
+      border-color: #00a8ff;
+    }
+    
+    .tp-form-group input::placeholder {
+      color: #555;
+    }
+    
+    .tp-form-error {
+      display: none;
+      color: #e74c3c;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    
+    .tp-form-buttons {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    
+    .tp-btn {
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: 500;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-left: 12px;
+      outline: none;
+    }
+    
+    .tp-btn:first-child {
+      margin-left: 0;
+    }
+    
+    .tp-btn:focus {
+      transform: scale(1.05);
+    }
+    
+    .tp-btn-primary {
+      background: #00a8ff;
+      color: #fff;
+    }
+    
+    .tp-btn-primary:focus {
+      border-color: #fff;
+    }
+    
+    .tp-btn-secondary {
+      background: #333;
+      color: #fff;
+    }
+    
+    .tp-btn-secondary:focus {
+      border-color: #00a8ff;
+    }
+    
+    .tp-btn-danger {
+      background: #c0392b;
+      color: #fff;
+      margin-right: auto;
+    }
+    
+    .tp-btn-danger:focus {
+      border-color: #fff;
+    }
+    
+    /* Address Bar */
+    .tp-addressbar {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #1a1a1a;
+      border-bottom: 2px solid #333;
+      z-index: 450;
+      padding: 12px 24px;
+    }
+    
+    .tp-addressbar.visible {
+      display: block;
+    }
+    
+    .tp-addressbar-content {
+      display: flex;
+      align-items: center;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    
+    .tp-addressbar-btn {
+      width: 52px;
+      height: 52px;
+      background: #333;
+      border: 2px solid #444;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    
+    .tp-addressbar-btn:focus {
+      outline: none;
+      border-color: #00a8ff;
+      transform: scale(1.1);
+    }
+    
+    .tp-addressbar-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    .tp-btn-icon {
+      line-height: 1;
+    }
+    
+    .tp-addressbar-url {
+      flex: 1;
+      height: 52px;
+      padding: 0 16px;
+      font-size: 18px;
+      background: #0a0a0a;
+      border: 2px solid #444;
+      border-radius: 8px;
+      color: #fff;
+      margin-right: 8px;
+      outline: none;
+    }
+    
+    .tp-addressbar-url:focus {
+      border-color: #00a8ff;
+    }
+    
+    .tp-addressbar-url::placeholder {
+      color: #666;
+    }
+    
+    .tp-addressbar-go {
+      background: #00a8ff;
+      border-color: #00a8ff;
+    }
+    
+    .tp-addressbar-go:focus {
+      border-color: #fff;
+    }
+    
+    /* Bundle Menu */
+    .tp-bundlemenu {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 460;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .tp-bundlemenu.visible {
+      display: flex;
+    }
+    
+    .tp-bundlemenu-content {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 12px;
+      width: 600px;
+      max-height: 700px;
+      overflow: hidden;
+    }
+    
+    .tp-bundlemenu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid #333;
+    }
+    
+    .tp-bundlemenu-header h3 {
+      font-size: 24px;
+      font-weight: 500;
+      color: #f1c40f;
+    }
+    
+    .tp-bundlemenu-close {
+      background: none;
+      border: 2px solid #444;
+      border-radius: 6px;
+      color: #888;
+      font-size: 28px;
+      width: 44px;
+      height: 44px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .tp-bundlemenu-close:focus {
+      outline: none;
+      border-color: #f1c40f;
+      color: #fff;
+    }
+    
+    .tp-bundlemenu-current {
+      padding: 16px 24px;
+      background: #0f0f0f;
+      border-bottom: 1px solid #333;
+      font-size: 14px;
+      color: #888;
+    }
+    
+    .tp-bundlemenu-label {
+      color: #666;
+    }
+    
+    .tp-bundlemenu-site {
+      margin-bottom: 4px;
+    }
+    
+    .tp-bundlemenu-list {
+      padding: 16px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .tp-bundlemenu-item {
+      padding: 16px 20px;
+      background: #0f0f0f;
+      border: 2px solid #333;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .tp-bundlemenu-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .tp-bundlemenu-item:focus {
+      outline: none;
+      border-color: #f1c40f;
+      transform: scale(1.02);
+    }
+    
+    .tp-bundlemenu-item.active {
+      border-color: #f1c40f;
+    }
+    
+    .tp-bundlemenu-item-name {
+      font-size: 18px;
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    
+    .tp-bundlemenu-item-desc {
+      font-size: 14px;
+      color: #888;
+    }
+    
+    .tp-bundlemenu-item-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: #f1c40f;
+      color: #000;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    
+    .tp-bundlemenu-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #333;
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -318,7 +701,7 @@
     <div id="tp-portal">
       <div id="tp-header">
         <h1>TizenPortal</h1>
-        <span class="version">v0104</span>
+        <span class="version">v0105</span>
       </div>
       <div id="tp-grid">
         <!-- Cards rendered by JavaScript -->
@@ -366,6 +749,9 @@
         <span>Diagnostics</span>
       </div>
     </div>
+    
+    <!-- Modal container -->
+    <div id="tp-modal-container"></div>
   </div>
   
   <script src="tizenportal.js"></script>

@@ -37,13 +37,16 @@ import { initPolyfills, hasPolyfill, getLoadedPolyfills } from '../polyfills/ind
 import { KEYS } from '../input/keys.js';
 import { initInputHandler } from '../input/handler.js';
 import { initPortal, showPortal, hidePortal, refreshPortal } from '../ui/portal.js';
+import { initModal } from '../ui/modal.js';
+import { initAddressBar, showAddressBar, hideAddressBar, toggleAddressBar, isAddressBarVisible } from '../ui/addressbar.js';
+import { initBundleMenu, showBundleMenu, hideBundleMenu, toggleBundleMenu, isBundleMenuVisible, cycleBundle } from '../ui/bundlemenu.js';
 import { initDiagnostics, log, warn, error } from '../diagnostics/console.js';
 import { initDiagnosticsPanel } from '../ui/diagnostics.js';
 
 /**
  * TizenPortal version
  */
-const VERSION = '0104';
+const VERSION = '0105';
 
 /**
  * Application state
@@ -89,11 +92,23 @@ async function init() {
     initDiagnosticsPanel();
     log('Diagnostics panel initialized');
 
-    // Step 5: Initialize input handler
+    // Step 5: Initialize modal system
+    initModal();
+    log('Modal system initialized');
+
+    // Step 6: Initialize address bar
+    initAddressBar();
+    log('Address bar initialized');
+
+    // Step 7: Initialize bundle menu
+    initBundleMenu();
+    log('Bundle menu initialized');
+
+    // Step 8: Initialize input handler
     initInputHandler();
     log('Input handler initialized');
 
-    // Step 6: Initialize and render portal UI
+    // Step 9: Initialize and render portal UI
     initPortal();
     log('Portal UI initialized');
 

@@ -5,8 +5,17 @@
  * Provides basic functionality without site-specific customizations.
  */
 
+import defaultStyles from './style.css';
+
 export default {
   name: 'default',
+  displayName: 'Default',
+  description: 'Basic TV browser support with focus styling',
+  
+  /**
+   * CSS to inject into iframe
+   */
+  style: defaultStyles,
 
   /**
    * Called before iframe content loads

@@ -1,0 +1,347 @@
+/**
+ * TizenPortal Bundle Loader
+ * 
+ * Loads bundles into iframes and manages lifecycle hooks.
+ */
+
+import { getBundle, getDefaultBundle, getBundleNames } from '../bundles/registry.js';
+
+/**
+ * Currently active bundle instance
+ */
+var activeBundle = null;
+
+/**
+ * Currently active iframe
+ */
+var activeIframe = null;
+
+/**
+ * Currently active card
+ */
+var activeCard = null;
+
+/**
+ * Load a bundle for the given iframe and card
+ * @param {HTMLIFrameElement} iframe
+ * @param {Object} card - Card with bundle property
+ * @returns {Promise<Object|null>} Loaded bundle or null
+ */
+export async function loadBundle(iframe, card) {
+  if (!iframe || !card) {
+    console.warn('TizenPortal Loader: Invalid iframe or card');
+    return null;
+  }
+
+  var bundleName = card.bundle || 'default';
+  console.log('TizenPortal Loader: Loading bundle "' + bundleName + '" for ' + card.url);
+
+  // Get bundle from registry
+  var bundle = getBundle(bundleName);
+  
+  // Fallback to default if bundle not found
+  if (!bundle) {
+    console.warn('TizenPortal Loader: Bundle "' + bundleName + '" not found, using default');
+    bundle = getDefaultBundle();
+    bundleName = 'default';
+  }
+
+  if (!bundle) {
+    console.error('TizenPortal Loader: No default bundle available');
+    return null;
+  }
+
+  // Store active state
+  activeBundle = bundle;
+  activeIframe = iframe;
+  activeCard = card;
+
+  try {
+    // Step 1: Call onBeforeLoad (before we touch the iframe content)
+    if (typeof bundle.onBeforeLoad === 'function') {
+      console.log('TizenPortal Loader: Calling onBeforeLoad');
+      await bundle.onBeforeLoad(iframe, card);
+    }
+
+    // Step 2: Inject TizenPortal API into iframe (same-origin only)
+    injectAPI(iframe);
+
+    // Step 3: Inject bundle CSS
+    if (bundle.style) {
+      injectCSS(iframe, bundle.style);
+    }
+
+    // Step 4: Inject bundle JS (if bundle provides inline code)
+    if (bundle.code) {
+      injectJS(iframe, bundle.code);
+    }
+
+    // Step 5: Call onAfterLoad
+    if (typeof bundle.onAfterLoad === 'function') {
+      console.log('TizenPortal Loader: Calling onAfterLoad');
+      await bundle.onAfterLoad(iframe, card);
+    }
+
+    // Step 6: Call onActivate
+    if (typeof bundle.onActivate === 'function') {
+      console.log('TizenPortal Loader: Calling onActivate');
+      await bundle.onActivate(iframe, card);
+    }
+
+    console.log('TizenPortal Loader: Bundle "' + bundleName + '" loaded successfully');
+    return bundle;
+
+  } catch (err) {
+    console.error('TizenPortal Loader: Error loading bundle:', err.message);
+    return null;
+  }
+}
+
+/**
+ * Unload the current bundle
+ * @returns {Promise<void>}
+ */
+export async function unloadBundle() {
+  if (!activeBundle) {
+    return;
+  }
+
+  console.log('TizenPortal Loader: Unloading bundle "' + (activeBundle.name || 'unknown') + '"');
+
+  try {
+    // Call onDeactivate
+    if (typeof activeBundle.onDeactivate === 'function') {
+      console.log('TizenPortal Loader: Calling onDeactivate');
+      await activeBundle.onDeactivate(activeIframe, activeCard);
+    }
+  } catch (err) {
+    console.error('TizenPortal Loader: Error in onDeactivate:', err.message);
+  }
+
+  // Clear state
+  activeBundle = null;
+  activeIframe = null;
+  activeCard = null;
+}
+
+/**
+ * Notify bundle of navigation within iframe
+ * @param {string} url - New URL
+ */
+export function notifyNavigation(url) {
+  if (!activeBundle) return;
+
+  try {
+    if (typeof activeBundle.onNavigate === 'function') {
+      activeBundle.onNavigate(url);
+    }
+  } catch (err) {
+    console.error('TizenPortal Loader: Error in onNavigate:', err.message);
+  }
+}
+
+/**
+ * Forward keydown event to bundle
+ * @param {KeyboardEvent} event
+ * @returns {boolean} True if bundle consumed the event
+ */
+export function handleBundleKeyDown(event) {
+  if (!activeBundle) return false;
+
+  try {
+    if (typeof activeBundle.onKeyDown === 'function') {
+      return activeBundle.onKeyDown(event);
+    }
+  } catch (err) {
+    console.error('TizenPortal Loader: Error in onKeyDown:', err.message);
+  }
+
+  return false;
+}
+
+/**
+ * Get the currently active bundle
+ * @returns {Object|null}
+ */
+export function getActiveBundle() {
+  return activeBundle;
+}
+
+/**
+ * Get the active bundle name
+ * @returns {string|null}
+ */
+export function getActiveBundleName() {
+  return activeBundle ? (activeBundle.name || 'unknown') : null;
+}
+
+// ============================================================================
+// INJECTION HELPERS
+// ============================================================================
+
+/**
+ * Inject TizenPortal API into iframe
+ * @param {HTMLIFrameElement} iframe
+ */
+function injectAPI(iframe) {
+  try {
+    var contentWindow = iframe.contentWindow;
+    if (!contentWindow) {
+      console.warn('TizenPortal Loader: No contentWindow');
+      return;
+    }
+
+    // Create a minimal API for bundles running inside the iframe
+    contentWindow.TizenPortal = {
+      version: window.TizenPortal ? window.TizenPortal.version : 'unknown',
+      
+      // Logging (redirects to main window)
+      log: function(msg) {
+        if (window.TizenPortal && window.TizenPortal.log) {
+          window.TizenPortal.log('[Bundle] ' + msg);
+        } else {
+          console.log('[Bundle]', msg);
+        }
+      },
+      warn: function(msg) {
+        if (window.TizenPortal && window.TizenPortal.warn) {
+          window.TizenPortal.warn('[Bundle] ' + msg);
+        } else {
+          console.warn('[Bundle]', msg);
+        }
+      },
+      error: function(msg) {
+        if (window.TizenPortal && window.TizenPortal.error) {
+          window.TizenPortal.error('[Bundle] ' + msg);
+        } else {
+          console.error('[Bundle]', msg);
+        }
+      },
+
+      // Configuration (read-only from iframe)
+      config: {
+        read: function(key) {
+          return window.TizenPortal && window.TizenPortal.config 
+            ? window.TizenPortal.config.read(key) 
+            : undefined;
+        },
+      },
+
+      // Input state
+      input: {
+        isPointerMode: function() {
+          return window.TizenPortal && window.TizenPortal.input
+            ? window.TizenPortal.input.isPointerMode()
+            : false;
+        },
+        isIMEActive: function() {
+          return window.TizenPortal && window.TizenPortal.input
+            ? window.TizenPortal.input.isIMEActive()
+            : false;
+        },
+      },
+
+      // Key constants
+      keys: window.TizenPortal ? window.TizenPortal.keys : {},
+    };
+
+    console.log('TizenPortal Loader: API injected into iframe');
+
+  } catch (err) {
+    // Cross-origin - cannot inject API
+    console.log('TizenPortal Loader: Cannot inject API (cross-origin)');
+  }
+}
+
+/**
+ * Inject CSS into iframe
+ * @param {HTMLIFrameElement} iframe
+ * @param {string} css
+ */
+function injectCSS(iframe, css) {
+  if (!css) return;
+
+  try {
+    var doc = iframe.contentDocument;
+    if (!doc) {
+      console.warn('TizenPortal Loader: No contentDocument for CSS injection');
+      return;
+    }
+
+    // Check if we already injected styles
+    var existingStyle = doc.getElementById('tp-bundle-styles');
+    if (existingStyle) {
+      existingStyle.textContent = css;
+      console.log('TizenPortal Loader: Updated bundle CSS');
+      return;
+    }
+
+    var style = doc.createElement('style');
+    style.id = 'tp-bundle-styles';
+    style.textContent = css;
+
+    var head = doc.head || doc.documentElement;
+    head.appendChild(style);
+
+    console.log('TizenPortal Loader: Injected bundle CSS');
+
+  } catch (err) {
+    console.log('TizenPortal Loader: Cannot inject CSS (cross-origin)');
+  }
+}
+
+/**
+ * Inject JavaScript into iframe
+ * @param {HTMLIFrameElement} iframe
+ * @param {string} code
+ */
+function injectJS(iframe, code) {
+  if (!code) return;
+
+  try {
+    var doc = iframe.contentDocument;
+    if (!doc) {
+      console.warn('TizenPortal Loader: No contentDocument for JS injection');
+      return;
+    }
+
+    var script = doc.createElement('script');
+    script.textContent = code;
+    
+    // Append to body (or documentElement if no body)
+    var target = doc.body || doc.documentElement;
+    target.appendChild(script);
+
+    console.log('TizenPortal Loader: Injected bundle JS');
+
+  } catch (err) {
+    console.log('TizenPortal Loader: Cannot inject JS (cross-origin)');
+  }
+}
+
+/**
+ * Inject the spatial navigation polyfill into iframe
+ * @param {HTMLIFrameElement} iframe
+ */
+export function injectSpatialNavigation(iframe) {
+  try {
+    var doc = iframe.contentDocument;
+    if (!doc) return;
+
+    // Check if already present
+    if (iframe.contentWindow && iframe.contentWindow.__spatialNavigation__) {
+      console.log('TizenPortal Loader: Spatial navigation already present in iframe');
+      return;
+    }
+
+    // The spatial nav polyfill needs to be re-initialized in the iframe context
+    // For now, we'll inject it via the bundle's onAfterLoad hook
+    // Full injection would require including the polyfill source as a string
+    
+    console.log('TizenPortal Loader: Spatial navigation injection requires bundle implementation');
+
+  } catch (err) {
+    console.log('TizenPortal Loader: Cannot inject spatial nav (cross-origin)');
+  }
+}
+

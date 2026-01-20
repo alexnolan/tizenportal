@@ -5,14 +5,7 @@
  * Activated with Yellow button (short press).
  */
 
-/**
- * Available bundles (will be populated from registry in Phase 4)
- */
-var availableBundles = [
-  { name: 'default', displayName: 'Default', description: 'Basic browser support' },
-  { name: 'audiobookshelf', displayName: 'Audiobookshelf', description: 'Audiobookshelf TV support' },
-  { name: 'jellyfin', displayName: 'Jellyfin', description: 'Jellyfin media server support' },
-];
+import { getBundleNames, getBundle } from '../bundles/registry.js';
 
 /**
  * Bundle menu element
@@ -33,6 +26,29 @@ var selectedIndex = 0;
  * Previous focus element
  */
 var previousFocus = null;
+
+/**
+ * Get list of available bundles from registry
+ * @returns {Array} Array of bundle info objects
+ */
+function getAvailableBundlesFromRegistry() {
+  var names = getBundleNames();
+  var bundles = [];
+  
+  for (var i = 0; i < names.length; i++) {
+    var name = names[i];
+    var bundle = getBundle(name);
+    if (bundle) {
+      bundles.push({
+        name: name,
+        displayName: bundle.displayName || bundle.name || name,
+        description: bundle.description || 'No description',
+      });
+    }
+  }
+  
+  return bundles;
+}
 
 /**
  * Initialize the bundle menu
@@ -89,6 +105,9 @@ function renderBundleList() {
   var listEl = menuElement.querySelector('.tp-bundlemenu-list');
   var currentEl = menuElement.querySelector('.tp-bundlemenu-current');
   if (!listEl) return;
+  
+  // Get bundles from registry
+  var availableBundles = getAvailableBundlesFromRegistry();
   
   // Get current bundle from state
   var state = window.TizenPortal ? window.TizenPortal.getState() : null;
@@ -248,6 +267,7 @@ function selectBundle(bundleName) {
  * Cycle to next bundle
  */
 export function cycleBundle() {
+  var availableBundles = getAvailableBundlesFromRegistry();
   var state = window.TizenPortal ? window.TizenPortal.getState() : null;
   var currentBundle = state && state.currentBundle ? state.currentBundle : 'default';
   
@@ -268,31 +288,11 @@ export function cycleBundle() {
 }
 
 /**
- * Get available bundles
+ * Get available bundles from registry
  * @returns {Array}
  */
 export function getAvailableBundles() {
-  return availableBundles.slice();
-}
-
-/**
- * Register a bundle (called by bundle loader)
- * @param {Object} bundle - Bundle with name, displayName, description
- */
-export function registerBundle(bundle) {
-  if (!bundle || !bundle.name) return;
-  
-  // Check if already registered
-  for (var i = 0; i < availableBundles.length; i++) {
-    if (availableBundles[i].name === bundle.name) {
-      // Update existing
-      availableBundles[i] = bundle;
-      return;
-    }
-  }
-  
-  // Add new
-  availableBundles.push(bundle);
+  return getAvailableBundlesFromRegistry();
 }
 
 /**

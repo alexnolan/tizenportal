@@ -1,6 +1,6 @@
 /* TizenPortal Default Bundle Styles */
 
-/* Focus indicators */
+/* Focus indicators for all interactive elements */
 :focus {
   outline: 3px solid #00a8ff !important;
   outline-offset: 2px;
@@ -10,6 +10,10 @@ a:focus,
 button:focus,
 [role="button"]:focus,
 [role="link"]:focus,
+[role="menuitem"]:focus,
+[role="tab"]:focus,
+[role="option"]:focus,
+[tabindex]:focus,
 input:focus,
 select:focus,
 textarea:focus {
@@ -17,7 +21,51 @@ textarea:focus {
   outline-offset: 2px;
 }
 
-/* Ensure interactive elements are visible */
+/* Remove default outline styles that might interfere */
+*:focus {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ensure interactive elements are visible and clickable */
 a, button, [role="button"] {
   cursor: pointer;
+}
+
+/* Hide mobile-only navigation elements (common pattern) */
+.mobile-nav,
+.mobile-menu,
+.mobile-only,
+[class*="mobile-"] {
+  /* Don't force hide - bundles can override */
+}
+
+/* Scrollbar styling for TV (usually hidden but scrollable) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Prevent text selection on TV (can interfere with navigation) */
+* {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* But allow selection in input fields */
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
 }

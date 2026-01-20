@@ -3,7 +3,7 @@
  * 
  * Main entry point. Initializes all subsystems and exposes the global API.
  * 
- * @version 0109
+ * @version 0110
  */
 
 // ============================================================================
@@ -43,11 +43,13 @@ import { initAddressBar, showAddressBar, hideAddressBar, toggleAddressBar, isAdd
 import { initBundleMenu, showBundleMenu, hideBundleMenu, toggleBundleMenu, isBundleMenuVisible, cycleBundle } from '../ui/bundlemenu.js';
 import { initDiagnostics, log, warn, error } from '../diagnostics/console.js';
 import { initDiagnosticsPanel } from '../ui/diagnostics.js';
+import { loadBundle, unloadBundle, getActiveBundle, getActiveBundleName, handleBundleKeyDown } from './loader.js';
+import { getBundleNames } from '../bundles/registry.js';
 
 /**
  * TizenPortal version
  */
-const VERSION = '0108';
+const VERSION = '0110';
 
 /**
  * Application state
@@ -208,8 +210,15 @@ function loadSite(card) {
     hideLoading();
     state.iframeActive = true;
     
-    // TODO: Initialize bundle for this site
-    // loadBundle(iframe, card);
+    // Load bundle for this site
+    loadBundle(iframe, card).then(function(bundle) {
+      if (bundle) {
+        state.currentBundle = bundle.name || 'default';
+        log('Bundle active: ' + state.currentBundle);
+      }
+    }).catch(function(err) {
+      error('Bundle load failed: ' + err.message);
+    });
   };
 
   // Handle error
@@ -233,6 +242,13 @@ function loadSite(card) {
  */
 function closeSite() {
   log('Closing site');
+
+  // Unload bundle first
+  unloadBundle().then(function() {
+    log('Bundle unloaded');
+  }).catch(function(err) {
+    error('Bundle unload error: ' + err.message);
+  });
 
   var container = document.getElementById('tp-iframe-container');
   if (container) {
@@ -287,6 +303,13 @@ var TizenPortalAPI = {
   // Site management
   loadSite: loadSite,
   closeSite: closeSite,
+
+  // Bundle system
+  bundles: {
+    list: getBundleNames,
+    getActive: getActiveBundle,
+    getActiveName: getActiveBundleName,
+  },
 
   // UI helpers
   showToast: showToast,

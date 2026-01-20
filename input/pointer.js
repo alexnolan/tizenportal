@@ -45,6 +45,11 @@ var EDGE_THRESHOLD = 50;
 var pointerElement = null;
 
 /**
+ * Currently hovered element
+ */
+var hoveredElement = null;
+
+/**
  * Current pointer position (centered on init)
  */
 var posX = 960;
@@ -82,11 +87,12 @@ function createPointerElement() {
   pointerElement = document.createElement('div');
   pointerElement.id = 'tp-pointer';
   pointerElement.className = 'tp-pointer';
-  pointerElement.innerHTML = '' +
-    '<div class="tp-pointer-cursor"></div>' +
-    '<div class="tp-pointer-ring"></div>';
+  pointerElement.innerHTML = '<div class="tp-pointer-cursor"></div>';
   
   document.body.appendChild(pointerElement);
+  
+  // Set up mouse move tracking for hover highlights
+  document.addEventListener('mousemove', handleMouseMove, true);
   
   updatePointerPosition();
 }
@@ -99,6 +105,9 @@ function updatePointerPosition() {
   
   pointerElement.style.left = posX + 'px';
   pointerElement.style.top = posY + 'px';
+  
+  // Update hover highlight
+  updateHoverHighlight(posX, posY);
 }
 
 /**
@@ -134,6 +143,12 @@ export function disablePointer() {
   
   if (pointerElement) {
     pointerElement.classList.remove('visible');
+  }
+  
+  // Clear hover highlight
+  if (hoveredElement) {
+    hoveredElement.classList.remove('tp-pointer-hover');
+    hoveredElement = null;
   }
   
   // Clear key holds
@@ -437,4 +452,140 @@ export function setPointerPosition(x, y) {
   posX = Math.max(0, Math.min(screen.width - 1, x));
   posY = Math.max(0, Math.min(screen.height - 1, y));
   updatePointerPosition();
+}
+
+/**
+ * Update hover highlight for element at position
+ * @param {number} x
+ * @param {number} y
+ */
+function updateHoverHighlight(x, y) {
+  var element = findClickableElement(x, y);
+  
+  // Remove highlight from previous element
+  if (hoveredElement && hoveredElement !== element) {
+    hoveredElement.classList.remove('tp-pointer-hover');
+  }
+  
+  // Add highlight to new element
+  if (element && element !== hoveredElement) {
+    element.classList.add('tp-pointer-hover');
+  }
+  
+  hoveredElement = element;
+}
+
+/**
+ * Find clickable element at position
+ * @param {number} x
+ * @param {number} y
+ * @returns {Element|null}
+ */
+function findClickableElement(x, y) {
+  var targetElement = null;
+  var iframe = document.getElementById('tp-iframe');
+  
+  if (iframe) {
+    // Try inside iframe
+    try {
+      var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      var iframeRect = iframe.getBoundingClientRect();
+      var iframeX = x - iframeRect.left;
+      var iframeY = y - iframeRect.top;
+      targetElement = iframeDoc.elementFromPoint(iframeX, iframeY);
+    } catch (err) {
+      // Cross-origin
+      return null;
+    }
+  } else {
+    targetElement = document.elementFromPoint(x, y);
+  }
+  
+  if (!targetElement) return null;
+  
+  // Walk up to find clickable ancestor
+  return findClickableAncestor(targetElement);
+}
+
+/**
+ * Find nearest clickable ancestor
+ * @param {Element} element
+ * @returns {Element|null}
+ */
+function findClickableAncestor(element) {
+  var current = element;
+  var maxDepth = 10;
+  
+  while (current && maxDepth > 0) {
+    // Check if element is clickable
+    if (isClickable(current)) {
+      return current;
+    }
+    current = current.parentElement;
+    maxDepth--;
+  }
+  
+  return null;
+}
+
+/**
+ * Check if element is clickable
+ * @param {Element} element
+ * @returns {boolean}
+ */
+function isClickable(element) {
+  if (!element || !element.tagName) return false;
+  
+  var tag = element.tagName.toUpperCase();
+  
+  // Interactive elements
+  if (tag === 'A' || tag === 'BUTTON' || tag === 'INPUT' || 
+      tag === 'SELECT' || tag === 'TEXTAREA') {
+    return true;
+  }
+  
+  // Elements with click handlers or tabindex
+  if (element.onclick || element.getAttribute('tabindex') !== null) {
+    return true;
+  }
+  
+  // Elements with role="button" or similar
+  var role = element.getAttribute('role');
+  if (role === 'button' || role === 'link' || role === 'menuitem' || 
+      role === 'tab' || role === 'option') {
+    return true;
+  }
+  
+  // Elements with cursor pointer style
+  try {
+    var style = window.getComputedStyle(element);
+    if (style.cursor === 'pointer') {
+      return true;
+    }
+  } catch (err) {
+    // Ignore
+  }
+  
+  return false;
+}
+
+/**
+ * Handle mouse move for hover highlights (real mouse)
+ * @param {MouseEvent} event
+ */
+function handleMouseMove(event) {
+  // Only highlight when pointer mode is NOT active (for real mouse)
+  if (!isActive) {
+    updateHoverHighlight(event.clientX, event.clientY);
+  }
+}
+
+/**
+ * Clear hover highlight
+ */
+export function clearHoverHighlight() {
+  if (hoveredElement) {
+    hoveredElement.classList.remove('tp-pointer-hover');
+    hoveredElement = null;
+  }
 }

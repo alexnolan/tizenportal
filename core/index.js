@@ -47,7 +47,7 @@ import { initDiagnosticsPanel } from '../ui/diagnostics.js';
 /**
  * TizenPortal version
  */
-const VERSION = '0107';
+const VERSION = '0108';
 
 /**
  * Application state

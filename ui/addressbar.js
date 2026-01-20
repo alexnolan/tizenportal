@@ -168,8 +168,12 @@ export function showAddressBar() {
     
     // Focus URL input
     if (urlInputElement) {
-      urlInputElement.focus();
-      urlInputElement.select();
+      try {
+        urlInputElement.focus();
+        urlInputElement.select();
+      } catch (err) {
+        console.warn('TizenPortal: Address bar focus error:', err.message);
+      }
     }
   }
   
@@ -223,21 +227,28 @@ export function isAddressBarVisible() {
  * Update URL input from current iframe
  */
 function updateUrlFromIframe() {
+  if (!urlInputElement) return;
+  
   var iframe = document.getElementById('tp-iframe');
-  if (iframe && urlInputElement) {
+  if (iframe) {
     try {
+      // Try to get actual URL from contentWindow
       var url = iframe.contentWindow.location.href;
       urlInputElement.value = url;
     } catch (err) {
-      // Cross-origin - use src attribute
+      // Cross-origin - use src attribute instead
       urlInputElement.value = iframe.src || '';
     }
-  } else if (urlInputElement) {
-    // No iframe, clear URL
-    var state = window.TizenPortal ? window.TizenPortal.getState() : null;
-    if (state && state.currentCard) {
-      urlInputElement.value = state.currentCard.url || '';
-    } else {
+  } else {
+    // No iframe - get URL from state
+    try {
+      var state = window.TizenPortal ? window.TizenPortal.getState() : null;
+      if (state && state.currentCard) {
+        urlInputElement.value = state.currentCard.url || '';
+      } else {
+        urlInputElement.value = '';
+      }
+    } catch (err) {
       urlInputElement.value = '';
     }
   }

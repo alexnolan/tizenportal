@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TizenPortal 0127</title>
+  <title>TizenPortal 0128</title>
   <style>
     /* Reset and base styles */
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -454,6 +454,38 @@
     }
     
     /* Field Rows */
+    .tp-field-row-group {
+      display: flex;
+      align-items: stretch;
+      margin-bottom: 20px;
+    }
+    
+    .tp-field-row-group .tp-field-row {
+      flex: 1;
+      margin-bottom: 0;
+      margin-right: 12px;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    
+    .tp-editor-btn-fetch {
+      padding: 0 20px;
+      background: #2a4a3a;
+      border: 2px solid #3a6a4a;
+      border-radius: 0 10px 10px 0;
+      color: #8fc;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    
+    .tp-editor-btn-fetch:focus {
+      outline: none;
+      border-color: #00a8ff;
+      background: #3a5a4a;
+      box-shadow: 0 0 0 2px rgba(0, 168, 255, 0.3);
+    }
+    
     .tp-field-row {
       display: flex;
       align-items: center;
@@ -1143,7 +1175,7 @@
     <div id="tp-portal">
       <div id="tp-header">
         <h1>TizenPortal</h1>
-        <span class="version">v0127</span>
+        <span class="version">v0128</span>
       </div>
       <div id="tp-grid">
         <!-- Cards rendered by JavaScript -->

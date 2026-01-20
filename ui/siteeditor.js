@@ -374,6 +374,21 @@ function renderTextField(field, value) {
   var displayValue = value || field.placeholder || '(empty)';
   var isEmpty = !value;
   
+  // Special case for icon field - add fetch favicon button
+  if (field.name === 'icon') {
+    return '' +
+      '<div class="tp-field-row-group">' +
+        '<div class="tp-field-row" data-field="' + field.name + '" tabindex="0">' +
+          '<div class="tp-field-label">' + field.label + (field.required ? ' *' : '') + '</div>' +
+          '<div class="tp-field-value' + (isEmpty ? ' empty' : '') + '">' + escapeHtml(displayValue) + '</div>' +
+          '<div class="tp-field-edit">ENTER to edit</div>' +
+        '</div>' +
+        '<button type="button" class="tp-editor-btn tp-editor-btn-fetch" id="tp-editor-fetch-icon" tabindex="0">' +
+          'Fetch Favicon' +
+        '</button>' +
+      '</div>';
+  }
+  
   return '' +
     '<div class="tp-field-row" data-field="' + field.name + '" tabindex="0">' +
       '<div class="tp-field-label">' + field.label + (field.required ? ' *' : '') + '</div>' +
@@ -453,6 +468,18 @@ function setupFieldListeners(container) {
   for (var j = 0; j < bundleOptions.length; j++) {
     bundleOptions[j].addEventListener('click', function() {
       selectBundleOption(this);
+    });
+  }
+  
+  // Fetch favicon button
+  var fetchBtn = container.querySelector('#tp-editor-fetch-icon');
+  if (fetchBtn) {
+    fetchBtn.addEventListener('click', handleFetchFavicon);
+    fetchBtn.addEventListener('keydown', function(e) {
+      if (e.keyCode === 13) {
+        e.preventDefault();
+        handleFetchFavicon();
+      }
     });
   }
 }
@@ -599,6 +626,77 @@ function showEditorToast(message) {
   } else {
     console.log('TizenPortal:', message);
   }
+}
+
+/**
+ * Handle fetch favicon button click
+ */
+function handleFetchFavicon() {
+  var url = state.card.url;
+  
+  if (!url) {
+    showEditorToast('Enter a URL first');
+    return;
+  }
+  
+  // Extract base URL (protocol + domain)
+  var baseUrl = '';
+  var domain = '';
+  try {
+    var match = url.match(/^(https?:\/\/[^\/]+)/i);
+    if (match && match[1]) {
+      baseUrl = match[1];
+      domain = match[1].replace(/^https?:\/\//i, '');
+    }
+  } catch (err) {
+    showEditorToast('Invalid URL');
+    return;
+  }
+  
+  if (!baseUrl) {
+    showEditorToast('Could not extract domain');
+    return;
+  }
+  
+  showEditorToast('Trying site favicon...');
+  
+  // Try the site's own favicon first
+  var localFaviconUrl = baseUrl + '/favicon.ico';
+  
+  // Test if the local favicon exists by loading it in an Image
+  var img = new Image();
+  img.onload = function() {
+    // Local favicon works!
+    state.card.icon = localFaviconUrl;
+    renderFields();
+    updatePreview();
+    refocusFetchButton();
+    showEditorToast('Found site favicon');
+  };
+  img.onerror = function() {
+    // Local favicon failed, try Google's service
+    showEditorToast('Trying Google favicon service...');
+    var googleFaviconUrl = 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(domain) + '&sz=64';
+    
+    state.card.icon = googleFaviconUrl;
+    renderFields();
+    updatePreview();
+    refocusFetchButton();
+    showEditorToast('Using Google favicon');
+  };
+  img.src = localFaviconUrl;
+}
+
+/**
+ * Re-focus the fetch favicon button after update
+ */
+function refocusFetchButton() {
+  setTimeout(function() {
+    var fetchBtn = document.getElementById('tp-editor-fetch-icon');
+    if (fetchBtn) {
+      fetchBtn.focus();
+    }
+  }, 100);
 }
 
 /**

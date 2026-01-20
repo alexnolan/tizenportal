@@ -546,7 +546,8 @@ function initColorHints() {
 
 /**
  * Load a site - navigates the browser to the site URL
- * Passes card config via URL hash for the mod to pick up
+ * Builds payload with CSS/JS from bundle and passes via URL hash
+ * The dist/userScript.js mod will read and apply this
  * @param {Object} card - Card object with url, bundle, etc.
  */
 function loadSite(card) {
@@ -561,32 +562,50 @@ function loadSite(card) {
   // Store current card in state
   state.currentCard = card;
   
-  // Build URL with card config in hash
-  // This ensures the mod can read the config even if localStorage fails
+  // Get the bundle for this card
+  var bundleName = card.bundle || 'default';
+  var bundle = getBundle(bundleName);
+  
+  // Build payload in the format userScript.js expects: { css, js, ua }
   var targetUrl = card.url;
   try {
-    // Encode card data as base64 JSON in hash
-    var cardPayload = {
-      name: card.name,
-      bundle: card.bundle || 'default',
-      icon: card.icon
+    var payload = {
+      css: '',
+      js: '',
+      ua: ''
     };
-    var encoded = btoa(JSON.stringify(cardPayload));
     
-    // Append to URL hash (preserve existing hash if any)
+    // Add bundle CSS
+    if (bundle && bundle.style) {
+      payload.css = bundle.style;
+    }
+    
+    // Add bundle JS initialization code (if needed)
+    // The bundle object has methods, so we can't directly serialize it
+    // Instead, pass bundle name and let userScript look it up if needed
+    payload.bundleName = bundleName;
+    payload.cardName = card.name;
+    
+    // Encode payload
+    var json = JSON.stringify(payload);
+    var encoded = btoa(unescape(encodeURIComponent(json)));
+    
+    // Append to URL hash
     if (targetUrl.indexOf('#') === -1) {
       targetUrl += '#tp=' + encoded;
     } else {
       targetUrl += '&tp=' + encoded;
     }
+    
+    log('Payload size: ' + json.length + ' bytes, encoded: ' + encoded.length);
   } catch (e) {
-    error('Failed to encode card payload: ' + e.message);
-    // Continue without hash - mod will try localStorage
+    error('Failed to encode payload: ' + e.message);
+    // Continue without hash
   }
   
-  log('Final URL: ' + targetUrl);
+  log('Final URL: ' + targetUrl.substring(0, 100) + '...');
   
-  // Navigate to the site - TizenBrew mod injection will handle the rest
+  // Navigate to the site - userScript.js mod will handle injection
   window.location.href = targetUrl;
 }
 

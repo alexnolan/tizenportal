@@ -2,8 +2,9 @@
  * TizenPortal Core Runtime
  * 
  * Main entry point. Initializes all subsystems and exposes the global API.
+ * Supports both APP mode (portal launcher) and MOD mode (injected into sites).
  * 
- * @version 0124
+ * @version 0200
  */
 
 // ============================================================================
@@ -43,24 +44,38 @@ import { initSiteEditor, showAddSiteEditor, showEditSiteEditor, isSiteEditorOpen
 import { initAddressBar, showAddressBar, hideAddressBar, toggleAddressBar, isAddressBarVisible } from '../ui/addressbar.js';
 import { initBundleMenu, showBundleMenu, hideBundleMenu, toggleBundleMenu, isBundleMenuVisible, cycleBundle } from '../ui/bundlemenu.js';
 import { initDiagnostics, log, warn, error } from '../diagnostics/console.js';
-import { initDiagnosticsPanel } from '../ui/diagnostics.js';
+import { initDiagnosticsPanel, showDiagnosticsPanel, hideDiagnosticsPanel } from '../ui/diagnostics.js';
 import { loadBundle, unloadBundle, getActiveBundle, getActiveBundleName, handleBundleKeyDown } from './loader.js';
-import { getBundleNames } from '../bundles/registry.js';
+import { getBundleNames, getBundle } from '../bundles/registry.js';
 
 /**
  * TizenPortal version
  */
-const VERSION = '0124';
+const VERSION = '0200';
 
 /**
  * Application state
  */
 const state = {
   initialized: false,
+  mode: null, // 'app' or 'mod'
   currentCard: null,
   currentBundle: null,
-  iframeActive: false,
+  siteActive: false,
 };
+
+/**
+ * Check if we're running in MOD mode (injected into external site)
+ * vs APP mode (portal launcher)
+ */
+function detectMode() {
+  // If tp-shell exists, we're in APP mode (portal HTML loaded)
+  if (document.getElementById('tp-shell')) {
+    return 'app';
+  }
+  // Otherwise we're injected into an external site
+  return 'mod';
+}
 
 /**
  * Initialize TizenPortal
@@ -71,8 +86,73 @@ async function init() {
     return;
   }
 
-  log('TizenPortal ' + VERSION + ' initializing...');
+  // Detect which mode we're in
+  state.mode = detectMode();
+  
+  log('TizenPortal ' + VERSION + ' initializing in ' + state.mode.toUpperCase() + ' mode...');
 
+  if (state.mode === 'mod') {
+    await initModMode();
+  } else {
+    await initAppMode();
+  }
+}
+
+/**
+ * Initialize MOD mode - injected into external site
+ */
+async function initModMode() {
+  try {
+    // Step 1: Initialize polyfills
+    const loadedPolyfills = await initPolyfills();
+    log('Polyfills loaded: ' + (loadedPolyfills.length > 0 ? loadedPolyfills.join(', ') : 'none needed'));
+
+    // Step 2: Initialize configuration (to read tp_apps)
+    configInit();
+
+    // Step 3: Initialize diagnostics
+    initDiagnostics();
+
+    // Step 4: Find matching card for current URL
+    var matchedCard = findMatchingCard(window.location.href);
+    
+    if (matchedCard) {
+      log('Matched card: ' + matchedCard.name + ' (bundle: ' + (matchedCard.bundle || 'default') + ')');
+      state.currentCard = matchedCard;
+    } else {
+      log('No matching card for: ' + window.location.href);
+      // Create a pseudo-card with default bundle
+      matchedCard = {
+        name: document.title || 'Unknown Site',
+        url: window.location.href,
+        bundle: 'default'
+      };
+      state.currentCard = matchedCard;
+    }
+
+    // Step 5: Apply bundle to the current page
+    await applyBundleToPage(matchedCard);
+
+    // Step 6: Initialize input handler for color buttons
+    initInputHandler();
+    log('Input handler initialized');
+
+    // Step 7: Create minimal overlay UI (diagnostics, return to portal)
+    createModOverlay();
+
+    state.initialized = true;
+    log('TizenPortal MOD mode ready');
+
+  } catch (err) {
+    error('MOD mode initialization failed: ' + err.message);
+    console.error(err);
+  }
+}
+
+/**
+ * Initialize APP mode - portal launcher
+ */
+async function initAppMode() {
   try {
     // Step 1: Initialize polyfills based on feature detection
     const loadedPolyfills = await initPolyfills();
@@ -80,9 +160,6 @@ async function init() {
 
     // Check spatial navigation status
     log('Spatial nav: window.navigate=' + (typeof window.navigate) + ', __spatialNavigation__=' + (typeof window.__spatialNavigation__));
-    if (window.__spatialNavigation__) {
-      log('Spatial nav keyMode: ' + window.__spatialNavigation__.keyMode);
-    }
 
     // Step 2: Initialize configuration
     configInit();
@@ -129,58 +206,192 @@ async function init() {
     log('Color hints initialized');
 
     state.initialized = true;
-    log('TizenPortal ' + VERSION + ' ready');
+    log('TizenPortal ' + VERSION + ' APP mode ready');
 
     // Show startup toast
     showToast('TizenPortal ' + VERSION);
 
   } catch (err) {
-    error('Initialization failed: ' + err.message);
+    error('APP mode initialization failed: ' + err.message);
     console.error(err);
   }
 }
 
 /**
- * Show a toast notification
- * @param {string} message - Message to display
- * @param {number} duration - Duration in milliseconds (default 3000)
+ * Find a card that matches the given URL
+ * @param {string} url - URL to match
+ * @returns {Object|null} Matching card or null
  */
-function showToast(message, duration) {
-  duration = duration || 3000;
-  var toast = document.getElementById('tp-toast');
-  if (!toast) return;
-
-  toast.textContent = message;
-  toast.classList.add('visible');
-
-  setTimeout(function() {
-    toast.classList.remove('visible');
-  }, duration);
-}
-
-/**
- * Show loading overlay
- * @param {string} text - Loading text to display
- */
-function showLoading(text) {
-  var loading = document.getElementById('tp-loading');
-  var loadingText = document.getElementById('tp-loading-text');
-  if (loading) {
-    if (loadingText && text) {
-      loadingText.textContent = text;
+function findMatchingCard(url) {
+  var apps = [];
+  try {
+    apps = JSON.parse(localStorage.getItem('tp_apps') || '[]');
+  } catch (e) {
+    return null;
+  }
+  
+  if (!Array.isArray(apps) || apps.length === 0) {
+    return null;
+  }
+  
+  // Normalize URL for comparison
+  var normalizedUrl = url.toLowerCase().replace(/\/$/, '');
+  
+  for (var i = 0; i < apps.length; i++) {
+    var card = apps[i];
+    if (!card.url) continue;
+    
+    var cardUrl = card.url.toLowerCase().replace(/\/$/, '');
+    
+    // Check if current URL starts with card URL (handles subpages)
+    if (normalizedUrl.indexOf(cardUrl) === 0) {
+      return card;
     }
-    loading.classList.add('active');
+    
+    // Also check if card URL starts with current URL (handles base domain matching)
+    if (cardUrl.indexOf(normalizedUrl.split('?')[0].split('#')[0]) === 0) {
+      return card;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * Apply bundle directly to the current page (MOD mode)
+ * @param {Object} card - Card with bundle info
+ */
+async function applyBundleToPage(card) {
+  var bundleName = card.bundle || 'default';
+  var bundle = getBundle(bundleName);
+  
+  if (!bundle) {
+    log('Bundle not found: ' + bundleName + ', using default');
+    bundle = getBundle('default');
+  }
+  
+  if (!bundle) {
+    warn('No bundle available');
+    return;
+  }
+  
+  log('Applying bundle: ' + bundle.name);
+  state.currentBundle = bundle.name;
+  
+  // Inject bundle CSS
+  if (bundle.css) {
+    var style = document.createElement('style');
+    style.id = 'tp-bundle-css';
+    style.textContent = bundle.css;
+    document.head.appendChild(style);
+    log('Bundle CSS injected');
+  }
+  
+  // Call lifecycle hooks with window instead of iframe
+  try {
+    if (bundle.onBeforeLoad) {
+      bundle.onBeforeLoad(window, card);
+    }
+  } catch (e) {
+    error('onBeforeLoad error: ' + e.message);
+  }
+  
+  // Wait for DOM ready if needed
+  if (document.readyState === 'loading') {
+    await new Promise(function(resolve) {
+      document.addEventListener('DOMContentLoaded', resolve);
+    });
+  }
+  
+  try {
+    if (bundle.onAfterLoad) {
+      bundle.onAfterLoad(window, card);
+    }
+  } catch (e) {
+    error('onAfterLoad error: ' + e.message);
+  }
+  
+  try {
+    if (bundle.onActivate) {
+      bundle.onActivate(window, card);
+    }
+  } catch (e) {
+    error('onActivate error: ' + e.message);
+  }
+  
+  log('Bundle applied successfully');
+}
+
+/**
+ * Create minimal overlay UI for MOD mode
+ */
+function createModOverlay() {
+  // Create a minimal diagnostics container that can be toggled
+  var overlay = document.createElement('div');
+  overlay.id = 'tp-mod-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999999;';
+  
+  // Create diagnostics panel container (hidden by default)
+  var diagContainer = document.createElement('div');
+  diagContainer.id = 'tp-mod-diagnostics';
+  diagContainer.style.cssText = 'display:none;position:absolute;top:20px;right:20px;width:500px;max-height:80%;background:rgba(0,0,0,0.9);border:2px solid #333;border-radius:8px;color:#fff;font-family:monospace;font-size:12px;overflow:auto;pointer-events:auto;padding:16px;';
+  
+  var diagHeader = document.createElement('div');
+  diagHeader.style.cssText = 'font-size:14px;font-weight:bold;margin-bottom:12px;color:#00a8ff;';
+  diagHeader.textContent = 'TizenPortal ' + VERSION + ' (MOD)';
+  diagContainer.appendChild(diagHeader);
+  
+  var diagInfo = document.createElement('div');
+  diagInfo.id = 'tp-mod-diag-info';
+  diagInfo.style.cssText = 'margin-bottom:12px;padding:8px;background:#111;border-radius:4px;';
+  diagInfo.innerHTML = 
+    '<div>URL: ' + window.location.href.substring(0, 60) + '...</div>' +
+    '<div>Card: ' + (state.currentCard ? state.currentCard.name : 'None') + '</div>' +
+    '<div>Bundle: ' + (state.currentBundle || 'default') + '</div>';
+  diagContainer.appendChild(diagInfo);
+  
+  var diagLog = document.createElement('div');
+  diagLog.id = 'tp-mod-diag-log';
+  diagLog.style.cssText = 'max-height:300px;overflow:auto;';
+  diagContainer.appendChild(diagLog);
+  
+  var diagButtons = document.createElement('div');
+  diagButtons.style.cssText = 'margin-top:12px;display:flex;gap:8px;';
+  diagButtons.innerHTML = 
+    '<button id="tp-mod-return" style="flex:1;padding:12px;background:#00a8ff;border:none;border-radius:4px;color:#fff;font-size:14px;cursor:pointer;">Return to Portal</button>' +
+    '<button id="tp-mod-close-diag" style="flex:1;padding:12px;background:#333;border:none;border-radius:4px;color:#fff;font-size:14px;cursor:pointer;">Close</button>';
+  diagContainer.appendChild(diagButtons);
+  
+  overlay.appendChild(diagContainer);
+  document.body.appendChild(overlay);
+  
+  // Set up button handlers
+  document.getElementById('tp-mod-return').addEventListener('click', returnToPortal);
+  document.getElementById('tp-mod-close-diag').addEventListener('click', function() {
+    diagContainer.style.display = 'none';
+  });
+  
+  // Store reference for toggling
+  window._tpModDiagnostics = diagContainer;
+}
+
+/**
+ * Toggle MOD mode diagnostics panel
+ */
+function toggleModDiagnostics() {
+  var diag = window._tpModDiagnostics;
+  if (diag) {
+    diag.style.display = diag.style.display === 'none' ? 'block' : 'none';
   }
 }
 
 /**
- * Hide loading overlay
+ * Return to the TizenPortal portal
  */
-function hideLoading() {
-  var loading = document.getElementById('tp-loading');
-  if (loading) {
-    loading.classList.remove('active');
-  }
+function returnToPortal() {
+  log('Returning to portal...');
+  // Navigate to the portal - relative path works since we're in the same TizenBrew context
+  window.location.href = 'app/index.html';
 }
 
 /**
@@ -243,7 +454,8 @@ function initColorHints() {
 }
 
 /**
- * Load a site in the iframe
+ * Load a site - navigates the browser to the site URL
+ * The TizenPortal mod will be injected by TizenBrew and apply the bundle
  * @param {Object} card - Card object with url, bundle, etc.
  */
 function loadSite(card) {
@@ -252,236 +464,93 @@ function loadSite(card) {
     return;
   }
 
-  log('Loading site: ' + card.url);
-  showLoading('Loading ' + (card.name || card.url) + '...');
+  log('Navigating to site: ' + card.url);
+  showToast('Loading ' + (card.name || card.url) + '...');
 
+  // Store current card in state (will be read by mod on next page)
   state.currentCard = card;
   
-  var container = document.getElementById('tp-iframe-container');
-  if (!container) {
-    error('Iframe container not found');
-    hideLoading();
-    return;
-  }
-
-  // Clear existing iframe
-  container.innerHTML = '';
-
-  // Create new iframe
-  var iframe = document.createElement('iframe');
-  iframe.id = 'tp-iframe';
-  iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
-  
-  // Track if we got meaningful content
-  var loadTimeout = null;
-  var hasContent = false;
-  
-  // Handle load event
-  iframe.onload = function() {
-    log('Site loaded: ' + card.url);
-    hideLoading();
-    
-    // Clear timeout since we got a load event
-    if (loadTimeout) {
-      clearTimeout(loadTimeout);
-      loadTimeout = null;
-    }
-    
-    // Check if we can access the iframe content (same-origin or allowed)
-    try {
-      var doc = iframe.contentDocument || iframe.contentWindow.document;
-      // If we can access the document and it has content, we're good
-      if (doc && doc.body && doc.body.innerHTML.length > 0) {
-        hasContent = true;
-      }
-    } catch (e) {
-      // Cross-origin - we can't check, but that's okay if it loaded
-      hasContent = true;
-    }
-    
-    // If iframe loaded but appears empty, the site may have blocked framing
-    if (!hasContent) {
-      warn('Site may have blocked iframe embedding: ' + card.url);
-      showIframeBlockedMessage(card);
-      return;
-    }
-    
-    state.iframeActive = true;
-    
-    // Load bundle for this site
-    loadBundle(iframe, card).then(function(bundle) {
-      if (bundle) {
-        state.currentBundle = bundle.name || 'default';
-        log('Bundle active: ' + state.currentBundle);
-      }
-    }).catch(function(err) {
-      error('Bundle load failed: ' + err.message);
-    });
-  };
-
-  // Handle error
-  iframe.onerror = function(err) {
-    error('Failed to load site: ' + card.url);
-    hideLoading();
-    if (loadTimeout) {
-      clearTimeout(loadTimeout);
-      loadTimeout = null;
-    }
-    showIframeBlockedMessage(card);
-  };
-
-  // Set URL and add to container
-  iframe.src = card.url;
-  container.appendChild(iframe);
-
-  // Show iframe container, hide portal
-  hidePortal();
-  container.style.display = 'block';
-  
-  // Set a timeout to detect if site refuses to load (X-Frame-Options, etc.)
-  loadTimeout = setTimeout(function() {
-    // Check if iframe is still empty after timeout
-    try {
-      var doc = iframe.contentDocument || iframe.contentWindow.document;
-      if (!doc || !doc.body || doc.body.innerHTML.length === 0) {
-        warn('Site load timeout - may be blocked: ' + card.url);
-        hideLoading();
-        showIframeBlockedMessage(card);
-      }
-    } catch (e) {
-      // Cross-origin but took too long - likely blocked
-      if (!hasContent) {
-        hideLoading();
-        showIframeBlockedMessage(card);
-      }
-    }
-  }, 8000);
-}
-
-/**
- * Show message when iframe embedding is blocked
- * @param {Object} card - The card that failed to load
- */
-function showIframeBlockedMessage(card) {
-  var container = document.getElementById('tp-iframe-container');
-  if (!container) return;
-  
-  container.innerHTML = '';
-  
-  var messageDiv = document.createElement('div');
-  messageDiv.id = 'tp-iframe-blocked';
-  messageDiv.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#0a0a0a;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:Arial,sans-serif;text-align:center;padding:40px;';
-  
-  messageDiv.innerHTML = 
-    '<div style="font-size:48px;margin-bottom:24px;">🚫</div>' +
-    '<h2 style="font-size:28px;margin-bottom:16px;color:#fff;">Site Cannot Be Embedded</h2>' +
-    '<p style="font-size:18px;color:#888;margin-bottom:32px;max-width:600px;">' +
-      'This site blocks embedding in iframes for security reasons.<br>' +
-      'This is common for sites like Google, Facebook, banks, etc.' +
-    '</p>' +
-    '<div style="display:flex;flex-direction:column;gap:16px;">' +
-      '<button id="tp-open-tizen-browser" tabindex="0" style="padding:16px 32px;font-size:18px;background:#00a8ff;color:#fff;border:none;border-radius:8px;cursor:pointer;">Open in Tizen Browser</button>' +
-      '<button id="tp-back-to-portal" tabindex="0" style="padding:16px 32px;font-size:18px;background:#333;color:#fff;border:2px solid #444;border-radius:8px;cursor:pointer;">Back to Portal</button>' +
-    '</div>';
-  
-  container.appendChild(messageDiv);
-  
-  // Set up button handlers
-  var openBrowserBtn = document.getElementById('tp-open-tizen-browser');
-  var backBtn = document.getElementById('tp-back-to-portal');
-  
-  if (openBrowserBtn) {
-    openBrowserBtn.addEventListener('click', function() {
-      openInTizenBrowser(card.url);
-    });
-    openBrowserBtn.addEventListener('keydown', function(e) {
-      if (e.keyCode === 13) openInTizenBrowser(card.url);
-    });
-    // Focus the open browser button
-    setTimeout(function() { openBrowserBtn.focus(); }, 100);
-  }
-  
-  if (backBtn) {
-    backBtn.addEventListener('click', function() {
-      closeSite();
-    });
-    backBtn.addEventListener('keydown', function(e) {
-      if (e.keyCode === 13) closeSite();
-    });
-  }
-}
-
-/**
- * Open URL in native Tizen browser
- * @param {string} url - URL to open
- */
-function openInTizenBrowser(url) {
-  log('Opening in Tizen browser: ' + url);
-  
-  // Try Tizen API first
-  if (typeof tizen !== 'undefined' && tizen.application && tizen.application.launchAppControl) {
-    try {
-      var appControl = new tizen.ApplicationControl(
-        'http://tizen.org/appcontrol/operation/view',
-        url,
-        null,
-        null,
-        null
-      );
-      
-      tizen.application.launchAppControl(
-        appControl,
-        null,
-        function() {
-          log('Tizen browser launched successfully');
-          showToast('Opening in browser...');
-        },
-        function(err) {
-          error('Failed to launch Tizen browser: ' + err.name);
-          showToast('Failed to open browser');
-        }
-      );
-      return;
-    } catch (e) {
-      error('Tizen API error: ' + e.message);
-    }
-  }
-  
-  // Fallback: try window.open (may not work on Tizen)
-  try {
-    window.open(url, '_blank');
-    showToast('Opening in browser...');
-  } catch (e) {
-    error('Could not open browser: ' + e.message);
-    showToast('Cannot open external browser');
-  }
+  // Navigate to the site - TizenBrew mod injection will handle the rest
+  window.location.href = card.url;
 }
 
 /**
  * Close current site and return to portal
+ * In mod mode, this navigates back to the portal
  */
 function closeSite() {
-  log('Closing site');
+  log('Closing site, returning to portal');
+  returnToPortal();
+}
 
-  // Unload bundle first
-  unloadBundle().then(function() {
-    log('Bundle unloaded');
-  }).catch(function(err) {
-    error('Bundle unload error: ' + err.message);
-  });
-
-  var container = document.getElementById('tp-iframe-container');
-  if (container) {
-    container.innerHTML = '';
-    container.style.display = 'none';
+/**
+ * Show a toast notification
+ * Works in both APP and MOD modes
+ * @param {string} message - Message to display
+ * @param {number} duration - Duration in milliseconds (default 3000)
+ */
+function showToast(message, duration) {
+  duration = duration || 3000;
+  
+  // In MOD mode, create a temporary toast
+  if (state.mode === 'mod') {
+    var existingToast = document.getElementById('tp-mod-toast');
+    if (existingToast) {
+      existingToast.remove();
+    }
+    
+    var toast = document.createElement('div');
+    toast.id = 'tp-mod-toast';
+    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);color:#fff;padding:16px 32px;border-radius:8px;font-size:18px;z-index:999999;transition:opacity 0.3s;';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(function() {
+      toast.style.opacity = '0';
+      setTimeout(function() { toast.remove(); }, 300);
+    }, duration);
+    return;
   }
+  
+  // APP mode - use existing toast element
+  var toast = document.getElementById('tp-toast');
+  if (!toast) return;
 
-  state.currentCard = null;
-  state.currentBundle = null;
-  state.iframeActive = false;
+  toast.textContent = message;
+  toast.classList.add('visible');
 
-  showPortal();
-  refreshPortal();
+  setTimeout(function() {
+    toast.classList.remove('visible');
+  }, duration);
+}
+
+/**
+ * Show loading overlay (APP mode only)
+ * @param {string} text - Loading text to display
+ */
+function showLoading(text) {
+  if (state.mode === 'mod') return; // No loading in mod mode
+  
+  var loading = document.getElementById('tp-loading');
+  var loadingText = document.getElementById('tp-loading-text');
+  if (loading) {
+    if (loadingText && text) {
+      loadingText.textContent = text;
+    }
+    loading.classList.add('active');
+  }
+}
+
+/**
+ * Hide loading overlay (APP mode only)
+ */
+function hideLoading() {
+  if (state.mode === 'mod') return;
+  
+  var loading = document.getElementById('tp-loading');
+  if (loading) {
+    loading.classList.remove('active');
+  }
 }
 
 /**
@@ -491,6 +560,9 @@ function closeSite() {
 var TizenPortalAPI = {
   // Version
   version: VERSION,
+
+  // Mode (app or mod)
+  get mode() { return state.mode; },
 
   // Logging
   log: log,
@@ -523,7 +595,7 @@ var TizenPortalAPI = {
   // Site management
   loadSite: loadSite,
   closeSite: closeSite,
-  openInTizenBrowser: openInTizenBrowser,
+  returnToPortal: returnToPortal,
   getCurrentCard: function() {
     return state.currentCard;
   },
@@ -539,14 +611,16 @@ var TizenPortalAPI = {
   showToast: showToast,
   showLoading: showLoading,
   hideLoading: hideLoading,
+  toggleModDiagnostics: toggleModDiagnostics,
 
   // State access (read-only)
   getState: function() {
     return {
       initialized: state.initialized,
+      mode: state.mode,
       currentCard: state.currentCard,
       currentBundle: state.currentBundle,
-      iframeActive: state.iframeActive,
+      siteActive: state.siteActive,
     };
   },
 

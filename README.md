@@ -1,63 +1,87 @@
 # 📺 TizenPortal
 
-![Version](https://img.shields.io/badge/version-0100-blue) ![Tizen](https://img.shields.io/badge/Tizen-3.0%2B-blueviolet) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-0200-blue) ![Tizen](https://img.shields.io/badge/Tizen-3.0%2B-blueviolet) ![License](https://img.shields.io/badge/license-MIT-green)
 
-**TizenPortal** is a universal launcher and compatibility layer designed for Samsung Smart TVs running Tizen OS. It allows you to run modern self-hosted web applications (like **Audiobookshelf**, **Jellyfin**, etc.) on older TVs that might otherwise struggle with broken layouts or incompatible interfaces.
+**TizenPortal** is a universal browser shell and compatibility layer for Samsung Smart TVs running Tizen OS. It provides a launcher for managing self-hosted web applications (like **Audiobookshelf**, **Jellyfin**, etc.) and applies site-specific fixes for better TV compatibility.
 
 ---
 
 ## ✨ Features
 
-### 🚀 Universal Launcher
-A clean, grid-based interface to manage all your self-hosted web apps in one place.
+### 🚀 Universal Launcher (App Mode)
+A clean, dark gradient interface to manage all your self-hosted web apps in one place.
+- Grid-based layout optimized for TV remote navigation
+- Site editor for adding/editing apps with custom names and icons
+- Bundle selector for choosing compatibility fixes per-site
 
-### 🛟 "Lifeboat" Mode
-Automatically rescues broken apps by injecting a TV-friendly compatibility layer.
-*   **📖 Readable Layouts:** Scrapes content from incompatible pages and renders them in a large, remote-friendly grid.
-*   **⌨️ Input Proxying:** Provides a working keyboard interface for login screens and search bars on legacy devices.
-*   **🧭 Navigation:** Adds persistent "Home" and "Back" buttons to keep you in control.
+### 🔧 Site Compatibility Layer (Mod Mode)
+Runs alongside your sites to apply TV-friendly fixes.
+- Direct DOM injection for full compatibility
+- Per-site bundles for targeted fixes
+- Works with TizenBrew's mod system
 
-### 🎭 Device Spoofing
-Choose from various **User Agent** presets to ensure the server serves the best possible content for your device:
-*   📺 **Smart TVs:** Tizen 5.5, WebOS 6, Android TV
-*   🎮 **Consoles:** PlayStation 5, Xbox Series X
-*   📱 **Mobile:** Android, iOS
+### 🎮 Remote Control Support
+- **D-pad navigation** with spatial focus
+- **Color buttons** for quick actions:
+  - 🔴 Red: Address bar / Return to portal (when on a site)
+  - 🟢 Green: Mouse mode toggle
+  - 🟡 Yellow: Bundle menu
+  - 🔵 Blue: Diagnostics panel
 
 ---
 
 ## 📥 Installation
 
-This project is designed to be loaded via **TizenBrew** or a similar userscript manager on your Tizen TV.
+This project is designed to be loaded via **TizenBrew** on your Samsung TV.
 
-1.  **Open TizenBrew** on your Samsung TV.
-2.  **Add Module:** Enter the repository URL:
-    *   `alexnolan/tizenportal`
-3.  **Launch:** Select **"TizenPortal"** from your TizenBrew dashboard.
+1. **Open TizenBrew** on your Samsung TV
+2. **Add Module:** `alexnolan/tizenportal@0200`
+3. **Launch** TizenPortal from your TizenBrew dashboard
+
+The same package provides both the portal launcher (app) and site injection (mod).
 
 ---
 
 ## 🎮 Usage
 
-1.  **➕ Add App:** Click the "+" card on the home screen.
-2.  **⚙️ Configure:**
-    *   **Name:** The display name for your dashboard.
-    *   **URL:** The address of your self-hosted service (e.g., `http://192.168.1.50:13378`).
-    *   **Preset:** Select a "Rescue Strategy" if the app is known to be broken (e.g., "Audiobookshelf").
-    *   **User Agent:** Select a device profile (Default Tizen is usually best, but try others if you have issues).
-3.  **🚀 Launch:** Click the card to open the app. TizenPortal will automatically inject the necessary fixes.
+### Adding Sites
+1. Press **Enter** on the "+" card
+2. Fill in the site details:
+   - **Name:** Display name for the card
+   - **URL:** Full URL including `http://` or `https://`
+   - **Bundle:** Select a compatibility bundle (or "default")
+   - **Icon:** Optional - click "Fetch Favicon" or enter a custom URL
 
-### 🆕 What's New in 0100
-- **Verified Selectors from ABS Source**: All selectors now confirmed against actual Audiobookshelf Vue components
-- **Sidebar Navigation**: Uses `#siderail-buttons-container` from `SideRail.vue`, extracts library links correctly
-- **Appbar Integration**: Extracts library dropdown, settings link, and search from `#appbar`
-- **Login Form Fix**: Now uses `input[name="username"]` and `input[name="password"]` (from `login.vue`)
-- **Improved Content Hiding**: Hides `#app-content` AND `#__nuxt` for reliable overlay
-- **Native UI Suppression**: Hides ABS siderail/appbar via ARIA role selectors to prevent overlap
+### Navigating Sites
+1. Select a site card and press **Enter** to open
+2. Use **D-pad** for navigation or press **🟢 Green** for mouse mode
+3. Press **🔴 Red** to return to the portal launcher
 
-### Previous: 0.5.48
-- Fixed book detection (`cy-id` is Vue directive, not HTML attribute)
-- Correct selectors: `[id^="book-card-"]`, `[id^="series-card-"]`
-- Event-driven architecture with MutationObserver, state machine, caching
+### Color Button Reference
+| Button | Short Press | Long Press |
+|--------|-------------|------------|
+| 🔴 Red | Return to Portal | Reload Page |
+| 🟢 Green | Toggle Mouse | Focus Highlight |
+| 🟡 Yellow | Bundle Menu | Cycle Bundles |
+| 🔵 Blue | Diagnostics | Safe Mode |
+
+---
+
+## 🆕 What's New in 0200
+
+### Dual-Mode Architecture
+- **App Mode:** Portal launcher UI with card grid, site editor
+- **Mod Mode:** Injected into sites for bundle application
+- Same codebase, different TizenBrew package types
+
+### Direct Site Navigation
+- Sites now open in the main browser (not iframes)
+- Full DOM access for bundle injection
+- Better compatibility with complex SPAs
+
+### Improved Input Handling
+- Mode-aware key handling
+- Red button returns to portal from any site
 
 ---
 
@@ -65,9 +89,17 @@ This project is designed to be loaded via **TizenBrew** or a similar userscript 
 
 | Feature | Support Level |
 | :--- | :--- |
-| **Target OS** | Samsung Tizen 3.0 - 5.5 |
-| **Browser Engine** | Optimized for legacy Chromium (Chrome 47+) |
+| **Target OS** | Samsung Tizen 3.0 - 6.5 |
+| **Browser Engine** | Chrome 47 - 69 (Tizen's Chromium) |
 | **Tested Apps** | ✅ Audiobookshelf<br>⚠️ Jellyfin (Basic) |
+
+---
+
+## 🙏 Acknowledgments
+
+This project uses code from:
+- **[TizenTube](https://github.com/reisxd/TizenTube)** — Spatial navigation polyfill and DOMRect polyfill
+- **[TizenBrew](https://github.com/nicholasmordecai/nicholasmordecai.github.io)** — Module loading platform
 
 ---
 

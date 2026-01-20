@@ -176,17 +176,30 @@ function handleColorButton(keyCode, isLongPress) {
 export function executeColorAction(action) {
   switch (action) {
     case 'addressbar':
-      // Toggle address bar
+      // In MOD mode, Red button returns to portal
+      if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
+        window.TizenPortal.returnToPortal();
+        break;
+      }
+      // In APP mode, toggle address bar
       toggleAddressBar();
       break;
 
     case 'reload':
       // Reload current page
+      if (window.TizenPortal) {
+        window.TizenPortal.showToast('Reloading...');
+      }
+      
+      // In MOD mode, just reload the page
+      if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
+        window.location.reload();
+        break;
+      }
+      
+      // In APP mode, reload the iframe if present, otherwise the app
       var iframe = document.getElementById('tp-iframe');
       if (iframe) {
-        if (window.TizenPortal) {
-          window.TizenPortal.showToast('Reloading...');
-        }
         try {
           iframe.contentWindow.location.reload();
         } catch (err) {
@@ -220,6 +233,10 @@ export function executeColorAction(action) {
       break;
 
     case 'bundleMenu':
+      // APP mode only - skip in MOD mode
+      if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
+        break;
+      }
       // If diagnostics panel is open, clear logs instead
       if (isDiagnosticsPanelVisible()) {
         clearDiagnosticsLogs();
@@ -233,6 +250,10 @@ export function executeColorAction(action) {
       break;
 
     case 'editSite':
+      // APP mode only - skip in MOD mode
+      if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
+        break;
+      }
       // If site editor is open, Yellow = Save
       if (isSiteEditorOpen()) {
         var saveBtn = document.getElementById('tp-editor-save');
@@ -262,6 +283,10 @@ export function executeColorAction(action) {
       break;
 
     case 'addSite':
+      // APP mode only - skip in MOD mode
+      if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
+        break;
+      }
       // Quick add new site
       if (isSiteEditorOpen()) {
         return;
@@ -280,17 +305,29 @@ export function executeColorAction(action) {
 
     case 'diagnostics':
       // Toggle diagnostics panel
-      toggleDiagnosticsPanel();
+      // In MOD mode, use the mod-specific diagnostics
+      if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
+        if (window.TizenPortal.toggleModDiagnostics) {
+          window.TizenPortal.toggleModDiagnostics();
+        }
+      } else {
+        toggleDiagnosticsPanel();
+      }
       break;
 
     case 'safeMode':
-      // Enter safe mode (reload without bundles)
+      // Enter safe mode
       configWrite('safeMode', true);
       if (window.TizenPortal) {
         window.TizenPortal.showToast('Entering safe mode...');
       }
       setTimeout(function() {
-        window.location.reload();
+        // In MOD mode, return to portal in safe mode
+        if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
+          window.TizenPortal.returnToPortal();
+        } else {
+          window.location.reload();
+        }
       }, 500);
       break;
 

@@ -461,19 +461,32 @@ export function setPointerPosition(x, y) {
  * @param {number} y
  */
 function updateHoverHighlight(x, y) {
-  var element = findClickableElement(x, y);
-  
-  // Remove highlight from previous element
-  if (hoveredElement && hoveredElement !== element) {
-    hoveredElement.classList.remove('tp-pointer-hover');
+  try {
+    var element = findClickableElement(x, y);
+    
+    // Remove highlight from previous element
+    if (hoveredElement && hoveredElement !== element) {
+      try {
+        hoveredElement.classList.remove('tp-pointer-hover');
+      } catch (err) {
+        // Element may be from cross-origin iframe
+      }
+    }
+    
+    // Add highlight to new element
+    if (element && element !== hoveredElement) {
+      try {
+        element.classList.add('tp-pointer-hover');
+      } catch (err) {
+        // Element may be from cross-origin iframe
+      }
+    }
+    
+    hoveredElement = element;
+  } catch (err) {
+    // Ignore hover highlight errors
+    hoveredElement = null;
   }
-  
-  // Add highlight to new element
-  if (element && element !== hoveredElement) {
-    element.classList.add('tp-pointer-hover');
-  }
-  
-  hoveredElement = element;
 }
 
 /**
@@ -559,12 +572,16 @@ function isClickable(element) {
   
   // Elements with cursor pointer style
   try {
-    var style = window.getComputedStyle(element);
-    if (style.cursor === 'pointer') {
-      return true;
+    // Use the element's owner document's defaultView for getComputedStyle
+    var win = element.ownerDocument ? element.ownerDocument.defaultView : window;
+    if (win) {
+      var style = win.getComputedStyle(element);
+      if (style && style.cursor === 'pointer') {
+        return true;
+      }
     }
   } catch (err) {
-    // Ignore
+    // Cross-origin or other error - ignore
   }
   
   return false;
@@ -586,7 +603,11 @@ function handleMouseMove(event) {
  */
 export function clearHoverHighlight() {
   if (hoveredElement) {
-    hoveredElement.classList.remove('tp-pointer-hover');
+    try {
+      hoveredElement.classList.remove('tp-pointer-hover');
+    } catch (err) {
+      // Element may be from cross-origin iframe
+    }
     hoveredElement = null;
   }
 }

@@ -66,23 +66,26 @@ export async function loadBundle(iframe, card) {
     // Step 2: Inject TizenPortal API into iframe (same-origin only)
     injectAPI(iframe);
 
-    // Step 3: Inject bundle CSS
+    // Step 3: Inject key event forwarder (forwards color buttons to shell)
+    injectKeyForwarder(iframe);
+
+    // Step 4: Inject bundle CSS
     if (bundle.style) {
       injectCSS(iframe, bundle.style);
     }
 
-    // Step 4: Inject bundle JS (if bundle provides inline code)
+    // Step 5: Inject bundle JS (if bundle provides inline code)
     if (bundle.code) {
       injectJS(iframe, bundle.code);
     }
 
-    // Step 5: Call onAfterLoad
+    // Step 6: Call onAfterLoad
     if (typeof bundle.onAfterLoad === 'function') {
       console.log('TizenPortal Loader: Calling onAfterLoad');
       await bundle.onAfterLoad(iframe, card);
     }
 
-    // Step 6: Call onActivate
+    // Step 7: Call onActivate
     if (typeof bundle.onActivate === 'function') {
       console.log('TizenPortal Loader: Calling onActivate');
       await bundle.onActivate(iframe, card);
@@ -250,6 +253,86 @@ function injectAPI(iframe) {
   } catch (err) {
     // Cross-origin - cannot inject API
     console.log('TizenPortal Loader: Cannot inject API (cross-origin)');
+  }
+}
+
+/**
+ * Inject key event forwarder into iframe
+ * This forwards color button and other shell keys from iframe to parent
+ * @param {HTMLIFrameElement} iframe
+ */
+function injectKeyForwarder(iframe) {
+  try {
+    var contentWindow = iframe.contentWindow;
+    var contentDocument = iframe.contentDocument;
+    if (!contentWindow || !contentDocument) {
+      console.warn('TizenPortal Loader: Cannot inject key forwarder');
+      return;
+    }
+
+    // Color button key codes that should be forwarded to shell
+    var forwardKeyCodes = [
+      403,   // RED
+      404,   // GREEN
+      405,   // YELLOW
+      406,   // BLUE
+      10182, // EXIT
+    ];
+
+    // Keydown forwarder
+    contentDocument.addEventListener('keydown', function(event) {
+      var keyCode = event.keyCode;
+      
+      // Forward color buttons and exit to parent
+      if (forwardKeyCodes.indexOf(keyCode) !== -1) {
+        // Dispatch equivalent event on parent document
+        var parentEvent = new KeyboardEvent('keydown', {
+          keyCode: keyCode,
+          which: keyCode,
+          key: event.key,
+          code: event.code,
+          bubbles: true,
+          cancelable: true,
+        });
+        
+        // Mark as forwarded to avoid loops
+        parentEvent._forwarded = true;
+        
+        window.document.dispatchEvent(parentEvent);
+        
+        // Prevent default in iframe
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }, true);
+
+    // Keyup forwarder
+    contentDocument.addEventListener('keyup', function(event) {
+      var keyCode = event.keyCode;
+      
+      if (forwardKeyCodes.indexOf(keyCode) !== -1) {
+        var parentEvent = new KeyboardEvent('keyup', {
+          keyCode: keyCode,
+          which: keyCode,
+          key: event.key,
+          code: event.code,
+          bubbles: true,
+          cancelable: true,
+        });
+        
+        parentEvent._forwarded = true;
+        
+        window.document.dispatchEvent(parentEvent);
+        
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }, true);
+
+    console.log('TizenPortal Loader: Key forwarder injected into iframe');
+
+  } catch (err) {
+    console.log('TizenPortal Loader: Cannot inject key forwarder (cross-origin)');
   }
 }
 

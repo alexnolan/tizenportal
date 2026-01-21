@@ -216,8 +216,14 @@ export function executeColorAction(action) {
       break;
 
     case 'bundleMenu':
-      // Portal only
-      if (!isOnPortal) break;
+      // Portal only - bundle menu doesn't exist on target sites
+      if (!isOnPortal) {
+        // On target sites, Yellow returns to portal
+        if (window.TizenPortal && window.TizenPortal.returnToPortal) {
+          window.TizenPortal.returnToPortal();
+        }
+        break;
+      }
       // If diagnostics panel is open, clear logs instead
       if (isDiagnosticsPanelVisible()) {
         clearDiagnosticsLogs();

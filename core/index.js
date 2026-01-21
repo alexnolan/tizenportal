@@ -25,7 +25,7 @@ import '../polyfills/domrect-polyfill.js';
 // SPATIAL NAVIGATION
 // ============================================================================
 
-// Import spatial navigation polyfill (sets up window.navigate)
+// Import spatial navigation polyfill (local copy with fixes, sets up window.navigate)
 import '../navigation/spatial-navigation-polyfill.js';
 
 // ============================================================================
@@ -469,6 +469,7 @@ function injectOverlayStyles() {
     '.tp-addressbar-url-container {',
     '  flex: 1;',
     '  height: 50px;',
+    '  margin-right: 12px;',
     '  background: #000;',
     '  border: 2px solid rgba(255,255,255,0.1);',
     '  border-radius: 8px;',
@@ -508,10 +509,8 @@ function injectOverlayStyles() {
     '.tp-site-hints {',
     '  position: fixed;',
     '  bottom: 20px;',
-    '  left: 50%;',
-    '  transform: translateX(-50%);',
+    '  left: 60px;',
     '  display: flex;',
-    '  gap: 24px;',
     '  background: rgba(0,0,0,0.85);',
     '  padding: 12px 24px;',
     '  border-radius: 12px;',
@@ -521,12 +520,13 @@ function injectOverlayStyles() {
     '.tp-site-hint {',
     '  display: flex;',
     '  align-items: center;',
-    '  gap: 8px;',
+    '  margin-right: 40px;',
     '}',
     '.tp-site-hint-key {',
     '  width: 24px;',
     '  height: 24px;',
     '  border-radius: 4px;',
+    '  margin-right: 8px;',
     '}',
     '.tp-site-hint-key.red { background: #e91e63; }',
     '.tp-site-hint-key.green { background: #4caf50; }',

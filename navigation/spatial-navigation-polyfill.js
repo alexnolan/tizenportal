@@ -1,8 +1,7 @@
+// Source: https://github.com/WICG/spatial-navigation (npm: spatial-navigation-polyfill)
+// Local modifications:
+// - Line 85: Guard parent.__spatialNavigation__ access to prevent errors in cross-origin contexts
 //
-// https://raw.githubusercontent.com/WICG/spatial-navigation/183f0146b6741007e46fa64ab0950447defdf8af/polyfill/spatial-navigation-polyfill.js
-// License: MIT
-//
-
 /* Spatial Navigation Polyfill
  *
  * It follows W3C official specification
@@ -86,7 +85,8 @@
      * If arrow key pressed, get the next focusing element and send it to focusing controller
      */
     window.addEventListener('keydown', (e) => {
-      const currentKeyMode = (parent && parent.__spatialNavigation__.keyMode) || window.__spatialNavigation__.keyMode;
+      // Fix: Guard against parent.__spatialNavigation__ being undefined (e.g., cross-origin)
+      const currentKeyMode = (parent && parent.__spatialNavigation__ && parent.__spatialNavigation__.keyMode) || (window.__spatialNavigation__ && window.__spatialNavigation__.keyMode);
       const eventTarget = document.activeElement;
       const dir = ARROW_KEY_CODE[e.keyCode];
 
@@ -190,12 +190,7 @@
     let container = null;
     if ((isContainer(eventTarget) || eventTarget.nodeName === 'BODY') && !(eventTarget.nodeName === 'INPUT')) {
       if (eventTarget.nodeName === 'IFRAME') {
-        try {
-          eventTarget = eventTarget.contentDocument.documentElement;
-        } catch (e) {
-          // Cross-origin iframe, skip
-          return;
-        }
+        eventTarget = eventTarget.contentDocument.documentElement;
       }
       container = eventTarget;
       let bestInsideCandidate = null;
@@ -480,14 +475,7 @@
     } else {
       return candidates.filter(candidate => {
         const candidateRect = getBoundingClientRect(candidate);
-        let candidateBody = null;
-        if (candidate.nodeName === 'IFRAME') {
-          try {
-            candidateBody = candidate.contentDocument.body;
-          } catch (e) {
-            // Cross-origin iframe
-          }
-        }
+        const candidateBody = (candidate.nodeName === 'IFRAME') ? candidate.contentDocument.body : null;
         return container.contains(candidate) &&
           candidate !== currentElm && candidateBody !== currentElm &&
           isOutside(candidateRect, eventTargetRect, dir) &&
@@ -682,8 +670,7 @@
    * @returns {string} The value of the css custom property
    */
   function readCssVar(element, varName) {
-    // 20210606 fix getPropertyValue returning null ~inf
-    return (element.style.getPropertyValue(`--${varName}`) || '').trim();
+    return element.style.getPropertyValue(`--${varName}`).trim();
   }
 
   /**
@@ -1528,6 +1515,8 @@
     const SPINNABLE_INPUT_TYPES = ['email', 'date', 'month', 'number', 'time', 'week'],
       TEXT_INPUT_TYPES = ['password', 'text', 'search', 'tel', 'url', null];
     const eventTarget = document.activeElement;
+    const startPosition = eventTarget.selectionStart;
+    const endPosition = eventTarget.selectionEnd;
     const focusNavigableArrowKey = {left: false, up: false, right: false, down: false};
 
     const dir = ARROW_KEY_CODE[e.keyCode];
@@ -1539,9 +1528,6 @@
       (dir === 'up' || dir === 'down')) {
       focusNavigableArrowKey[dir] = true;
     } else if (TEXT_INPUT_TYPES.includes(eventTarget.getAttribute('type')) || eventTarget.nodeName === 'TEXTAREA') {
-      // 20210606 fix selectionStart unavailable on checkboxes ~inf
-      const startPosition = eventTarget.selectionStart;
-      const endPosition = eventTarget.selectionEnd;
       if (startPosition === endPosition) { // if there isn't any selected text
         if (startPosition === 0) {
           focusNavigableArrowKey.left = true;
@@ -1626,14 +1612,8 @@
       // If startingPoint is either a scroll container or the document,
       // find the best candidate within startingPoint
       if ((isContainer(eventTarget) || eventTarget.nodeName === 'BODY') && !(eventTarget.nodeName === 'INPUT')) {
-        if (eventTarget.nodeName === 'IFRAME') {
-          try {
-            eventTarget = eventTarget.contentDocument.body;
-          } catch (e) {
-            // Cross-origin iframe, skip
-            return null;
-          }
-        }
+        if (eventTarget.nodeName === 'IFRAME')
+          eventTarget = eventTarget.contentDocument.body;
 
         const candidates = getSpatialNavigationCandidates(eventTarget, option);
 

@@ -10,7 +10,7 @@
  * 3. Handle color button input
  * 4. Provide minimal overlay UI
  * 
- * @version 0201
+ * Version is injected from package.json at build time
  */
 
 // Skip if we're on the portal itself
@@ -20,7 +20,7 @@ if (window.location.hostname.indexOf('github.io') > -1) {
   (function() {
     'use strict';
 
-    var VERSION = '0201';
+    var VERSION = '__VERSION__';
     var HOME_URL = 'https://alexnolan.github.io/tizenportal/dist/index.html';
 
     // ========================================================================

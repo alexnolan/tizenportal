@@ -1,12 +1,12 @@
 {
   "name": "@alexnolan/tizenportal",
   "appName": "TizenPortal",
-  "version": "0204",
+  "version": "0205",
   "description": "Universal Tizen Browser Shell",
   "type": "module",
   "packageType": "mods",
   "websiteURL": "https://alexnolan.github.io/tizenportal/dist/index.html",
-  "main": "dist/userScript.js",
+  "main": "dist/tizenportal.js",
   "keys": [
     "MediaPlayPause",
     "MediaPlay",
@@ -38,6 +38,7 @@
     "@rollup/plugin-babel": "^6.0.0",
     "@rollup/plugin-commonjs": "^25.0.0",
     "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-replace": "^6.0.3",
     "@rollup/plugin-terser": "^0.4.0",
     "rollup": "^4.0.0",
     "rollup-plugin-string": "^3.0.0"

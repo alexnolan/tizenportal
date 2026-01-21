@@ -2,7 +2,7 @@
  * TizenPortal Core Runtime
  * 
  * Main entry point. Initializes all subsystems and exposes the global API.
- * Supports both APP mode (portal launcher) and MOD mode (injected into sites).
+ * Runs on both the portal page and injected into target sites.
  * 
  * @version 0200
  */
@@ -49,9 +49,9 @@ import { loadBundle, unloadBundle, getActiveBundle, getActiveBundleName, handleB
 import { getBundleNames, getBundle } from '../bundles/registry.js';
 
 /**
- * TizenPortal version
+ * TizenPortal version - injected from package.json at build time
  */
-const VERSION = '0200';
+const VERSION = '__VERSION__';
 
 /**
  * Early debug HUD - shows immediately before full init
@@ -86,23 +86,18 @@ tpHud('Script loaded, waiting for DOM...');
  */
 const state = {
   initialized: false,
-  mode: null, // 'app' or 'mod'
+  isPortalPage: false, // true when on portal, false when injected into site
   currentCard: null,
   currentBundle: null,
   siteActive: false,
 };
 
 /**
- * Check if we're running in MOD mode (injected into external site)
- * vs APP mode (portal launcher)
+ * Check if we're on the portal page vs injected into a target site
  */
-function detectMode() {
-  // If tp-shell exists, we're in APP mode (portal HTML loaded)
-  if (document.getElementById('tp-shell')) {
-    return 'app';
-  }
-  // Otherwise we're injected into an external site
-  return 'mod';
+function detectContext() {
+  // If tp-shell exists, we're on the portal page
+  return !!document.getElementById('tp-shell');
 }
 
 /**
@@ -114,116 +109,21 @@ async function init() {
     return;
   }
 
-  // Detect which mode we're in
-  state.mode = detectMode();
-  tpHud('Mode: ' + state.mode.toUpperCase());
+  // Detect where we are
+  state.isPortalPage = detectContext();
+  tpHud(state.isPortalPage ? 'Portal page' : 'Target site');
   
-  log('TizenPortal ' + VERSION + ' initializing in ' + state.mode.toUpperCase() + ' mode...');
+  log('TizenPortal ' + VERSION + ' initializing...');
 
-  if (state.mode === 'mod') {
-    await initModMode();
-  } else {
-    await initAppMode();
-  }
-}
-
-/**
- * Initialize MOD mode - injected into external site
- */
-async function initModMode() {
   try {
-    tpHud('MOD: Loading polyfills...');
-    
     // Step 1: Initialize polyfills
+    tpHud('Loading polyfills...');
     const loadedPolyfills = await initPolyfills();
     log('Polyfills loaded: ' + (loadedPolyfills.length > 0 ? loadedPolyfills.join(', ') : 'none needed'));
-
-    tpHud('MOD: Config init...');
-    
-    // Step 2: Initialize configuration (to read tp_apps)
-    configInit();
-
-    // Step 3: Initialize diagnostics
-    initDiagnostics();
-
-    tpHud('MOD: Finding card...');
-    
-    // Step 4: Try to get card config from URL hash first, then localStorage
-    var matchedCard = null;
-    
-    // Try URL hash (passed by portal when navigating)
-    var hashCard = getCardFromHash();
-    if (hashCard) {
-      log('Card from URL hash: ' + hashCard.name);
-      matchedCard = hashCard;
-      tpHud('Card (hash): ' + hashCard.name);
-      // Clear hash after reading (clean URL)
-      try {
-        var cleanUrl = window.location.href.replace(/[#&]tp=[^&#]+/, '');
-        history.replaceState(null, document.title, cleanUrl);
-      } catch (e) {
-        // Ignore - some sites may block history manipulation
-      }
-    }
-    
-    // Fallback to localStorage match
-    if (!matchedCard) {
-      matchedCard = findMatchingCard(window.location.href);
-      if (matchedCard) {
-        log('Matched card from localStorage: ' + matchedCard.name + ' (bundle: ' + (matchedCard.bundle || 'default') + ')');
-        state.currentCard = matchedCard;
-        tpHud('Card (storage): ' + matchedCard.name);
-      }
-    }
-    
-    // Final fallback - create pseudo-card
-    if (!matchedCard) {
-      log('No matching card for: ' + window.location.href);
-      tpHud('No card - using default');
-      matchedCard = {
-        name: document.title || 'Unknown Site',
-        url: window.location.href,
-        bundle: 'default'
-      };
-    }
-    
-    state.currentCard = matchedCard;
-
-    tpHud('MOD: Applying bundle...');
-    
-    // Step 5: Apply bundle to the current page
-    await applyBundleToPage(matchedCard);
-
-    // Step 6: Initialize input handler for color buttons
-    initInputHandler();
-    log('Input handler initialized');
-
-    // Step 7: Create minimal overlay UI (diagnostics, return to portal)
-    createModOverlay();
-
-    state.initialized = true;
-    tpHud('MOD Ready!');
-    log('TizenPortal MOD mode ready');
-
-  } catch (err) {
-    error('MOD mode initialization failed: ' + err.message);
-    console.error(err);
-  }
-}
-
-/**
- * Initialize APP mode - portal launcher
- */
-async function initAppMode() {
-  try {
-    // Step 1: Initialize polyfills based on feature detection
-    const loadedPolyfills = await initPolyfills();
-    log('Polyfills loaded: ' + (loadedPolyfills.length > 0 ? loadedPolyfills.join(', ') : 'none needed'));
-
-    // Check spatial navigation status
     log('Spatial nav: window.navigate=' + (typeof window.navigate) + ', __spatialNavigation__=' + (typeof window.__spatialNavigation__));
 
     // Step 2: Initialize configuration
+    tpHud('Config init...');
     configInit();
     log('Configuration initialized');
 
@@ -235,48 +135,114 @@ async function initAppMode() {
     initDiagnosticsPanel();
     log('Diagnostics panel initialized');
 
-    // Step 5: Initialize modal system (legacy)
-    initModal();
-    log('Modal system initialized');
-
-    // Step 5b: Initialize new site editor
-    initSiteEditor();
-    log('Site editor initialized');
-
-    // Step 6: Initialize address bar
-    initAddressBar();
-    log('Address bar initialized');
-
-    // Step 7: Initialize bundle menu
-    initBundleMenu();
-    log('Bundle menu initialized');
-
-    // Step 8: Initialize pointer/mouse mode
+    // Step 5: Initialize pointer/mouse mode
     initPointer();
     log('Pointer mode initialized');
 
-    // Step 9: Initialize input handler
+    // Step 6: Initialize input handler
     initInputHandler();
     log('Input handler initialized');
 
-    // Step 10: Initialize and render portal UI
-    initPortal();
-    log('Portal UI initialized');
-
-    // Step 11: Initialize color button hints (make clickable)
-    initColorHints();
-    log('Color hints initialized');
+    if (state.isPortalPage) {
+      // Portal-specific initialization
+      await initPortalPage();
+    } else {
+      // Target site initialization
+      await initTargetSite();
+    }
 
     state.initialized = true;
-    log('TizenPortal ' + VERSION + ' APP mode ready');
-
-    // Show startup toast
+    tpHud('Ready!');
+    log('TizenPortal ' + VERSION + ' ready');
     showToast('TizenPortal ' + VERSION);
 
   } catch (err) {
-    error('APP mode initialization failed: ' + err.message);
+    error('Initialization failed: ' + err.message);
     console.error(err);
   }
+}
+
+/**
+ * Initialize when on the portal page
+ */
+async function initPortalPage() {
+  // Initialize modal system
+  initModal();
+  log('Modal system initialized');
+
+  // Initialize site editor
+  initSiteEditor();
+  log('Site editor initialized');
+
+  // Initialize address bar
+  initAddressBar();
+  log('Address bar initialized');
+
+  // Initialize bundle menu
+  initBundleMenu();
+  log('Bundle menu initialized');
+
+  // Initialize and render portal UI (card grid)
+  initPortal();
+  log('Portal UI initialized');
+
+  // Initialize color button hints (make clickable)
+  initColorHints();
+  log('Color hints initialized');
+}
+
+/**
+ * Initialize when injected into a target site
+ */
+async function initTargetSite() {
+  tpHud('Finding card...');
+  
+  // Try to get card config from URL hash first, then localStorage
+  var matchedCard = null;
+  
+  // Try URL hash (passed by portal when navigating)
+  var hashCard = getCardFromHash();
+  if (hashCard) {
+    log('Card from URL hash: ' + hashCard.name);
+    matchedCard = hashCard;
+    tpHud('Card (hash): ' + hashCard.name);
+    // Clear hash after reading (clean URL)
+    try {
+      var cleanUrl = window.location.href.replace(/[#&]tp=[^&#]+/, '');
+      history.replaceState(null, document.title, cleanUrl);
+    } catch (e) {
+      // Ignore - some sites may block history manipulation
+    }
+  }
+  
+  // Fallback to localStorage match
+  if (!matchedCard) {
+    matchedCard = findMatchingCard(window.location.href);
+    if (matchedCard) {
+      log('Matched card from localStorage: ' + matchedCard.name + ' (bundle: ' + (matchedCard.bundle || 'default') + ')');
+      tpHud('Card (storage): ' + matchedCard.name);
+    }
+  }
+  
+  // Final fallback - create pseudo-card
+  if (!matchedCard) {
+    log('No matching card for: ' + window.location.href);
+    tpHud('No card - using default');
+    matchedCard = {
+      name: document.title || 'Unknown Site',
+      url: window.location.href,
+      bundle: 'default'
+    };
+  }
+  
+  state.currentCard = matchedCard;
+
+  // Apply bundle to the current page
+  tpHud('Applying bundle...');
+  await applyBundleToPage(matchedCard);
+
+  // Create overlay UI (address bar, diagnostics, etc.)
+  createSiteOverlay();
 }
 
 /**
@@ -414,63 +380,124 @@ async function applyBundleToPage(card) {
 }
 
 /**
- * Create minimal overlay UI for MOD mode
+ * Create overlay UI for target sites
+ * Full-featured overlay with address bar, diagnostics, navigation
  */
-function createModOverlay() {
-  // Create a minimal diagnostics container that can be toggled
+function createSiteOverlay() {
+  // Main overlay container
   var overlay = document.createElement('div');
-  overlay.id = 'tp-mod-overlay';
-  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999999;';
+  overlay.id = 'tp-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2147483640;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;';
   
-  // Create diagnostics panel container (hidden by default)
-  var diagContainer = document.createElement('div');
-  diagContainer.id = 'tp-mod-diagnostics';
-  diagContainer.style.cssText = 'display:none;position:absolute;top:20px;right:20px;width:500px;max-height:80%;background:rgba(0,0,0,0.9);border:2px solid #333;border-radius:8px;color:#fff;font-family:monospace;font-size:12px;overflow:auto;pointer-events:auto;padding:16px;';
+  // ========== Address Bar ==========
+  var addressBar = document.createElement('div');
+  addressBar.id = 'tp-site-addressbar';
+  addressBar.style.cssText = 'display:none;position:absolute;top:0;left:0;right:0;height:60px;background:linear-gradient(180deg,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.9) 100%);border-bottom:2px solid #00a8ff;pointer-events:auto;';
+  addressBar.innerHTML = [
+    '<div style="display:flex;align-items:center;height:100%;padding:0 20px;gap:12px;">',
+    '  <button id="tp-btn-home" style="width:44px;height:44px;background:linear-gradient(145deg,#1a1a2e,#0d0d1a);border:2px solid #00a8ff;border-radius:8px;color:#00a8ff;font-size:20px;cursor:pointer;transition:all 0.15s;" title="Return to Portal">🏠</button>',
+    '  <button id="tp-btn-back" style="width:44px;height:44px;background:linear-gradient(145deg,#1a1a2e,#0d0d1a);border:2px solid #444;border-radius:8px;color:#fff;font-size:20px;cursor:pointer;transition:all 0.15s;" title="Back">←</button>',
+    '  <button id="tp-btn-fwd" style="width:44px;height:44px;background:linear-gradient(145deg,#1a1a2e,#0d0d1a);border:2px solid #444;border-radius:8px;color:#fff;font-size:20px;cursor:pointer;transition:all 0.15s;" title="Forward">→</button>',
+    '  <button id="tp-btn-reload" style="width:44px;height:44px;background:linear-gradient(145deg,#1a1a2e,#0d0d1a);border:2px solid #444;border-radius:8px;color:#fff;font-size:20px;cursor:pointer;transition:all 0.15s;" title="Reload">↻</button>',
+    '  <input id="tp-site-url" type="text" style="flex:1;height:44px;background:#000;border:2px solid #333;border-radius:8px;color:#fff;padding:0 16px;font-size:16px;font-family:monospace;" value="' + window.location.href + '">',
+    '  <div style="color:#666;font-size:12px;padding:0 8px;">' + (state.currentCard ? state.currentCard.name : 'Unknown') + '</div>',
+    '</div>'
+  ].join('');
+  overlay.appendChild(addressBar);
   
-  var diagHeader = document.createElement('div');
-  diagHeader.style.cssText = 'font-size:14px;font-weight:bold;margin-bottom:12px;color:#00a8ff;';
-  diagHeader.textContent = 'TizenPortal ' + VERSION + ' (MOD)';
-  diagContainer.appendChild(diagHeader);
+  // ========== Diagnostics Panel ==========
+  var diagPanel = document.createElement('div');
+  diagPanel.id = 'tp-site-diagnostics';
+  diagPanel.style.cssText = 'display:none;position:absolute;top:20px;right:20px;width:600px;max-height:80%;background:rgba(0,0,0,0.95);border:2px solid #00a8ff;border-radius:12px;pointer-events:auto;overflow:hidden;box-shadow:0 8px 32px rgba(0,168,255,0.3);';
+  diagPanel.innerHTML = [
+    '<div style="background:linear-gradient(90deg,#00a8ff,#0066cc);color:#fff;padding:16px 20px;font-weight:bold;font-size:16px;display:flex;justify-content:space-between;align-items:center;">',
+    '  <span>TizenPortal ' + VERSION + '</span>',
+    '  <span style="font-weight:normal;font-size:12px;opacity:0.8;">Diagnostics</span>',
+    '</div>',
+    '<div id="tp-site-diag-info" style="padding:16px 20px;border-bottom:1px solid #333;font-size:13px;color:#aaa;background:#0a0a0f;">',
+    '  <div style="display:grid;grid-template-columns:80px 1fr;gap:8px;">',
+    '    <span style="color:#666;">URL:</span><span style="color:#fff;word-break:break-all;">' + window.location.href.substring(0, 80) + (window.location.href.length > 80 ? '...' : '') + '</span>',
+    '    <span style="color:#666;">Card:</span><span style="color:#00a8ff;">' + (state.currentCard ? state.currentCard.name : 'None') + '</span>',
+    '    <span style="color:#666;">Bundle:</span><span style="color:#0f0;">' + (state.currentBundle || 'default') + '</span>',
+    '  </div>',
+    '</div>',
+    '<div id="tp-site-diag-log" style="padding:12px 20px;max-height:400px;overflow-y:auto;font-size:12px;font-family:monospace;background:#050508;"></div>',
+    '<div style="padding:16px 20px;display:flex;gap:12px;background:#0a0a0f;border-top:1px solid #222;">',
+    '  <button id="tp-btn-portal" style="flex:1;padding:14px;background:linear-gradient(145deg,#00a8ff,#0066cc);border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;">Return to Portal</button>',
+    '  <button id="tp-btn-clear-log" style="flex:1;padding:14px;background:#222;border:2px solid #444;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;">Clear Logs</button>',
+    '  <button id="tp-btn-close-diag" style="flex:1;padding:14px;background:#333;border:none;border-radius:8px;color:#fff;font-size:15px;cursor:pointer;">Close</button>',
+    '</div>'
+  ].join('');
+  overlay.appendChild(diagPanel);
   
-  var diagInfo = document.createElement('div');
-  diagInfo.id = 'tp-mod-diag-info';
-  diagInfo.style.cssText = 'margin-bottom:12px;padding:8px;background:#111;border-radius:4px;';
-  diagInfo.innerHTML = 
-    '<div>URL: ' + window.location.href.substring(0, 60) + '...</div>' +
-    '<div>Card: ' + (state.currentCard ? state.currentCard.name : 'None') + '</div>' +
-    '<div>Bundle: ' + (state.currentBundle || 'default') + '</div>';
-  diagContainer.appendChild(diagInfo);
+  // ========== Toast ==========
+  var toast = document.createElement('div');
+  toast.id = 'tp-site-toast';
+  toast.style.cssText = 'position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.95);color:#fff;padding:16px 32px;border-radius:12px;font-size:18px;opacity:0;transition:opacity 0.3s;pointer-events:none;border:1px solid #333;';
+  overlay.appendChild(toast);
   
-  var diagLog = document.createElement('div');
-  diagLog.id = 'tp-mod-diag-log';
-  diagLog.style.cssText = 'max-height:300px;overflow:auto;';
-  diagContainer.appendChild(diagLog);
+  // ========== Color Button Hints ==========
+  var hints = document.createElement('div');
+  hints.id = 'tp-site-hints';
+  hints.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:24px;background:rgba(0,0,0,0.8);padding:12px 24px;border-radius:12px;pointer-events:none;';
+  hints.innerHTML = [
+    '<div style="display:flex;align-items:center;gap:8px;"><div style="width:24px;height:24px;background:#e91e63;border-radius:4px;"></div><span style="color:#fff;font-size:13px;">Address</span></div>',
+    '<div style="display:flex;align-items:center;gap:8px;"><div style="width:24px;height:24px;background:#4caf50;border-radius:4px;"></div><span style="color:#fff;font-size:13px;">Mouse</span></div>',
+    '<div style="display:flex;align-items:center;gap:8px;"><div style="width:24px;height:24px;background:#ffeb3b;border-radius:4px;"></div><span style="color:#fff;font-size:13px;">Portal</span></div>',
+    '<div style="display:flex;align-items:center;gap:8px;"><div style="width:24px;height:24px;background:#2196f3;border-radius:4px;"></div><span style="color:#fff;font-size:13px;">Diagnostics</span></div>',
+  ].join('');
+  overlay.appendChild(hints);
   
-  var diagButtons = document.createElement('div');
-  diagButtons.style.cssText = 'margin-top:12px;display:flex;gap:8px;';
-  diagButtons.innerHTML = 
-    '<button id="tp-mod-return" style="flex:1;padding:12px;background:#00a8ff;border:none;border-radius:4px;color:#fff;font-size:14px;cursor:pointer;">Return to Portal</button>' +
-    '<button id="tp-mod-close-diag" style="flex:1;padding:12px;background:#333;border:none;border-radius:4px;color:#fff;font-size:14px;cursor:pointer;">Close</button>';
-  diagContainer.appendChild(diagButtons);
-  
-  overlay.appendChild(diagContainer);
+  // Add to page
   document.body.appendChild(overlay);
   
-  // Set up button handlers
-  document.getElementById('tp-mod-return').addEventListener('click', returnToPortal);
-  document.getElementById('tp-mod-close-diag').addEventListener('click', function() {
-    diagContainer.style.display = 'none';
+  // ========== Wire up event handlers ==========
+  document.getElementById('tp-btn-home').addEventListener('click', returnToPortal);
+  document.getElementById('tp-btn-back').addEventListener('click', function() { history.back(); });
+  document.getElementById('tp-btn-fwd').addEventListener('click', function() { history.forward(); });
+  document.getElementById('tp-btn-reload').addEventListener('click', function() { location.reload(); });
+  document.getElementById('tp-site-url').addEventListener('keydown', function(e) {
+    if (e.keyCode === 13) {
+      window.location.href = this.value;
+    }
+  });
+  document.getElementById('tp-btn-portal').addEventListener('click', returnToPortal);
+  document.getElementById('tp-btn-clear-log').addEventListener('click', function() {
+    document.getElementById('tp-site-diag-log').innerHTML = '';
+  });
+  document.getElementById('tp-btn-close-diag').addEventListener('click', function() {
+    diagPanel.style.display = 'none';
   });
   
-  // Store reference for toggling
-  window._tpModDiagnostics = diagContainer;
+  // Store references for toggling
+  window._tpSiteAddressBar = addressBar;
+  window._tpSiteDiagnostics = diagPanel;
+  window._tpSiteToast = toast;
+  window._tpSiteHints = hints;
+  
+  log('Site overlay created');
 }
 
 /**
- * Toggle MOD mode diagnostics panel
+ * Toggle site overlay address bar
  */
-function toggleModDiagnostics() {
-  var diag = window._tpModDiagnostics;
+function toggleSiteAddressBar() {
+  var bar = window._tpSiteAddressBar;
+  if (bar) {
+    var visible = bar.style.display !== 'none';
+    bar.style.display = visible ? 'none' : 'block';
+    if (!visible) {
+      var urlInput = document.getElementById('tp-site-url');
+      if (urlInput) urlInput.focus();
+    }
+  }
+}
+
+/**
+ * Toggle site overlay diagnostics panel
+ */
+function toggleSiteDiagnostics() {
+  var diag = window._tpSiteDiagnostics;
   if (diag) {
     diag.style.display = diag.style.display === 'none' ? 'block' : 'none';
   }
@@ -481,8 +508,8 @@ function toggleModDiagnostics() {
  */
 function returnToPortal() {
   log('Returning to portal...');
-  // Navigate to the portal - relative path works since we're in the same TizenBrew context
-  window.location.href = 'app/index.html';
+  // Navigate to portal using absolute URL (works from any site)
+  window.location.href = 'https://alexnolan.github.io/tizenportal/dist/index.html';
 }
 
 /**
@@ -611,7 +638,6 @@ function loadSite(card) {
 
 /**
  * Close current site and return to portal
- * In mod mode, this navigates back to the portal
  */
 function closeSite() {
   log('Closing site, returning to portal');
@@ -620,34 +646,36 @@ function closeSite() {
 
 /**
  * Show a toast notification
- * Works in both APP and MOD modes
  * @param {string} message - Message to display
  * @param {number} duration - Duration in milliseconds (default 3000)
  */
 function showToast(message, duration) {
   duration = duration || 3000;
   
-  // In MOD mode, create a temporary toast
-  if (state.mode === 'mod') {
-    var existingToast = document.getElementById('tp-mod-toast');
-    if (existingToast) {
-      existingToast.remove();
+  // On target sites, use the site overlay toast
+  if (!state.isPortalPage) {
+    var toast = window._tpSiteToast || document.getElementById('tp-site-toast');
+    if (toast) {
+      toast.textContent = message;
+      toast.style.opacity = '1';
+      setTimeout(function() {
+        toast.style.opacity = '0';
+      }, duration);
+      return;
     }
-    
-    var toast = document.createElement('div');
-    toast.id = 'tp-mod-toast';
-    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);color:#fff;padding:16px 32px;border-radius:8px;font-size:18px;z-index:999999;transition:opacity 0.3s;';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    
+    // Fallback: create temporary toast
+    var tempToast = document.createElement('div');
+    tempToast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.95);color:#fff;padding:16px 32px;border-radius:12px;font-size:18px;z-index:2147483647;transition:opacity 0.3s;';
+    tempToast.textContent = message;
+    document.body.appendChild(tempToast);
     setTimeout(function() {
-      toast.style.opacity = '0';
-      setTimeout(function() { toast.remove(); }, 300);
+      tempToast.style.opacity = '0';
+      setTimeout(function() { tempToast.remove(); }, 300);
     }, duration);
     return;
   }
   
-  // APP mode - use existing toast element
+  // On portal page, use existing toast element
   var toast = document.getElementById('tp-toast');
   if (!toast) return;
 
@@ -660,11 +688,11 @@ function showToast(message, duration) {
 }
 
 /**
- * Show loading overlay (APP mode only)
+ * Show loading overlay (portal page only)
  * @param {string} text - Loading text to display
  */
 function showLoading(text) {
-  if (state.mode === 'mod') return; // No loading in mod mode
+  if (!state.isPortalPage) return;
   
   var loading = document.getElementById('tp-loading');
   var loadingText = document.getElementById('tp-loading-text');
@@ -677,10 +705,10 @@ function showLoading(text) {
 }
 
 /**
- * Hide loading overlay (APP mode only)
+ * Hide loading overlay (portal page only)
  */
 function hideLoading() {
-  if (state.mode === 'mod') return;
+  if (!state.isPortalPage) return;
   
   var loading = document.getElementById('tp-loading');
   if (loading) {
@@ -696,8 +724,8 @@ var TizenPortalAPI = {
   // Version
   version: VERSION,
 
-  // Mode (app or mod)
-  get mode() { return state.mode; },
+  // Context (portal page or target site)
+  get isPortalPage() { return state.isPortalPage; },
 
   // Logging
   log: log,
@@ -746,13 +774,16 @@ var TizenPortalAPI = {
   showToast: showToast,
   showLoading: showLoading,
   hideLoading: hideLoading,
-  toggleModDiagnostics: toggleModDiagnostics,
+  
+  // Site overlay controls
+  toggleSiteAddressBar: toggleSiteAddressBar,
+  toggleSiteDiagnostics: toggleSiteDiagnostics,
 
   // State access (read-only)
   getState: function() {
     return {
       initialized: state.initialized,
-      mode: state.mode,
+      isPortalPage: state.isPortalPage,
       currentCard: state.currentCard,
       currentBundle: state.currentBundle,
       siteActive: state.siteActive,

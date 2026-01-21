@@ -174,14 +174,18 @@ function handleColorButton(keyCode, isLongPress) {
  * @param {string} action
  */
 export function executeColorAction(action) {
+  var isOnPortal = window.TizenPortal && window.TizenPortal.isPortalPage;
+  
   switch (action) {
     case 'addressbar':
-      // In MOD mode, Red button returns to portal
-      if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
-        window.TizenPortal.returnToPortal();
+      // On target sites, toggle the site address bar
+      if (!isOnPortal) {
+        if (window.TizenPortal && window.TizenPortal.toggleSiteAddressBar) {
+          window.TizenPortal.toggleSiteAddressBar();
+        }
         break;
       }
-      // In APP mode, toggle address bar
+      // On portal page, toggle address bar
       toggleAddressBar();
       break;
 
@@ -190,28 +194,7 @@ export function executeColorAction(action) {
       if (window.TizenPortal) {
         window.TizenPortal.showToast('Reloading...');
       }
-      
-      // In MOD mode, just reload the page
-      if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
-        window.location.reload();
-        break;
-      }
-      
-      // In APP mode, reload the iframe if present, otherwise the app
-      var iframe = document.getElementById('tp-iframe');
-      if (iframe) {
-        try {
-          iframe.contentWindow.location.reload();
-        } catch (err) {
-          // Cross-origin - reload by resetting src
-          var src = iframe.src;
-          iframe.src = '';
-          iframe.src = src;
-        }
-      } else {
-        // No iframe, reload entire app
-        window.location.reload();
-      }
+      window.location.reload();
       break;
 
     case 'pointerMode':
@@ -233,10 +216,8 @@ export function executeColorAction(action) {
       break;
 
     case 'bundleMenu':
-      // APP mode only - skip in MOD mode
-      if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
-        break;
-      }
+      // Portal only
+      if (!isOnPortal) break;
       // If diagnostics panel is open, clear logs instead
       if (isDiagnosticsPanelVisible()) {
         clearDiagnosticsLogs();
@@ -250,8 +231,12 @@ export function executeColorAction(action) {
       break;
 
     case 'editSite':
-      // APP mode only - skip in MOD mode
-      if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
+      // Portal only
+      if (!isOnPortal) {
+        // On target site, Yellow returns to portal
+        if (window.TizenPortal && window.TizenPortal.returnToPortal) {
+          window.TizenPortal.returnToPortal();
+        }
         break;
       }
       // If site editor is open, Yellow = Save
@@ -283,10 +268,8 @@ export function executeColorAction(action) {
       break;
 
     case 'addSite':
-      // APP mode only - skip in MOD mode
-      if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
-        break;
-      }
+      // Portal only
+      if (!isOnPortal) break;
       // Quick add new site
       if (isSiteEditorOpen()) {
         return;
@@ -305,10 +288,10 @@ export function executeColorAction(action) {
 
     case 'diagnostics':
       // Toggle diagnostics panel
-      // In MOD mode, use the mod-specific diagnostics
-      if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
-        if (window.TizenPortal.toggleModDiagnostics) {
-          window.TizenPortal.toggleModDiagnostics();
+      if (!isOnPortal) {
+        // On target sites, use the site overlay diagnostics
+        if (window.TizenPortal && window.TizenPortal.toggleSiteDiagnostics) {
+          window.TizenPortal.toggleSiteDiagnostics();
         }
       } else {
         toggleDiagnosticsPanel();
@@ -322,8 +305,8 @@ export function executeColorAction(action) {
         window.TizenPortal.showToast('Entering safe mode...');
       }
       setTimeout(function() {
-        // In MOD mode, return to portal in safe mode
-        if (window.TizenPortal && window.TizenPortal.mode === 'mod') {
+        // On target site, return to portal in safe mode
+        if (window.TizenPortal && !window.TizenPortal.isPortalPage) {
           window.TizenPortal.returnToPortal();
         } else {
           window.location.reload();

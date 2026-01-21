@@ -3,9 +3,23 @@ import terser from '@rollup/plugin-terser';
 import babel from '@rollup/plugin-babel';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import replace from '@rollup/plugin-replace';
+import { readFileSync } from 'fs';
+
+// Read version from package.json - single source of truth
+const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
+const VERSION = pkg.version;
 
 // Shared plugins
 const plugins = [
+  // Replace __VERSION__ placeholder with actual version from package.json
+  replace({
+    preventAssignment: true,
+    values: {
+      '__VERSION__': VERSION,
+    },
+  }),
+
   // Import CSS files as strings
   string({
     include: '**/*.css',
@@ -48,27 +62,24 @@ const plugins = [
 ];
 
 export default [
-  // Build 1: Portal app (app/tizenportal.js)
+  // Build: TizenPortal runtime
+  // Output to both app/ (for development) and dist/ (for deployment)
   {
     input: 'core/index.js',
-    output: {
-      file: 'app/tizenportal.js',
-      format: 'iife',
-      name: 'TizenPortal',
-      sourcemap: false,
-    },
-    plugins,
-  },
-  
-  // Build 2: Mod injection script (dist/userScript.js)
-  {
-    input: 'mods/index.js',
-    output: {
-      file: 'dist/userScript.js',
-      format: 'iife',
-      name: 'TizenPortalMod',
-      sourcemap: false,
-    },
+    output: [
+      {
+        file: 'app/tizenportal.js',
+        format: 'iife',
+        name: 'TizenPortal',
+        sourcemap: false,
+      },
+      {
+        file: 'dist/tizenportal.js',
+        format: 'iife',
+        name: 'TizenPortal',
+        sourcemap: false,
+      },
+    ],
     plugins,
   },
 ];

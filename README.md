@@ -1,31 +1,31 @@
 # 📺 TizenPortal
 
-![Version](https://img.shields.io/badge/version-0200-blue) ![Tizen](https://img.shields.io/badge/Tizen-3.0%2B-blueviolet) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-0204-blue) ![Tizen](https://img.shields.io/badge/Tizen-3.0%2B-blueviolet) ![License](https://img.shields.io/badge/license-MIT-green)
 
-**TizenPortal** is a universal browser shell and compatibility layer for Samsung Smart TVs running Tizen OS. It provides a launcher for managing self-hosted web applications (like **Audiobookshelf**, **Jellyfin**, etc.) and applies site-specific fixes for better TV compatibility.
+**TizenPortal** is a browser shell for Samsung Smart TVs running Tizen OS. It provides a launcher for managing self-hosted web applications (like **Audiobookshelf**, **Jellyfin**, etc.) and injects site-specific fixes for TV compatibility.
 
 ---
 
 ## ✨ Features
 
-### 🚀 Universal Launcher (App Mode)
+### 🚀 Portal Launcher
 A clean, dark gradient interface to manage all your self-hosted web apps in one place.
 - Grid-based layout optimized for TV remote navigation
 - Site editor for adding/editing apps with custom names and icons
 - Bundle selector for choosing compatibility fixes per-site
 
-### 🔧 Site Compatibility Layer (Mod Mode)
-Runs alongside your sites to apply TV-friendly fixes.
-- Direct DOM injection for full compatibility
-- Per-site bundles for targeted fixes
-- Works with TizenBrew's mod system
+### 🔧 Site Modification (MOD Mode)
+Runs as a TizenBrew `mods` module to inject fixes into any site.
+- Bundle CSS/JS passed via URL payload
+- Viewport locking for responsive sites
+- Works universally (no cross-origin restrictions)
 
 ### 🎮 Remote Control Support
 - **D-pad navigation** with spatial focus
 - **Color buttons** for quick actions:
-  - 🔴 Red: Address bar / Return to portal (when on a site)
+  - 🔴 Red: Address bar overlay
   - 🟢 Green: Mouse mode toggle
-  - 🟡 Yellow: Bundle menu
+  - 🟡 Yellow: Return to portal
   - 🔵 Blue: Diagnostics panel
 
 ---
@@ -35,10 +35,10 @@ Runs alongside your sites to apply TV-friendly fixes.
 This project is designed to be loaded via **TizenBrew** on your Samsung TV.
 
 1. **Open TizenBrew** on your Samsung TV
-2. **Add Module:** `alexnolan/tizenportal@0200`
+2. **Add Module:** `alexnolan/tizenportal@0204`
 3. **Launch** TizenPortal from your TizenBrew dashboard
 
-The same package provides both the portal launcher (app) and site injection (mod).
+TizenBrew will open the portal and inject the userScript into all navigated pages.
 
 ---
 
@@ -55,33 +55,51 @@ The same package provides both the portal launcher (app) and site injection (mod
 ### Navigating Sites
 1. Select a site card and press **Enter** to open
 2. Use **D-pad** for navigation or press **🟢 Green** for mouse mode
-3. Press **🔴 Red** to return to the portal launcher
+3. Press **🟡 Yellow** to return to the portal
 
 ### Color Button Reference
 | Button | Short Press | Long Press |
 |--------|-------------|------------|
-| 🔴 Red | Return to Portal | Reload Page |
+| 🔴 Red | Address Bar | Reload Page |
 | 🟢 Green | Toggle Mouse | Focus Highlight |
-| 🟡 Yellow | Bundle Menu | Cycle Bundles |
+| 🟡 Yellow | Return to Portal | Cycle Bundles |
 | 🔵 Blue | Diagnostics | Safe Mode |
 
 ---
 
-## 🆕 What's New in 0200
+## 🏗️ Architecture (MOD Mode)
 
-### Dual-Mode Architecture
-- **App Mode:** Portal launcher UI with card grid, site editor
-- **Mod Mode:** Injected into sites for bundle application
-- Same codebase, different TizenBrew package types
+TizenPortal operates as a **TizenBrew Site Modification Module** (`packageType: "mods"`):
 
-### Direct Site Navigation
-- Sites now open in the main browser (not iframes)
-- Full DOM access for bundle injection
-- Better compatibility with complex SPAs
+```
+Portal (GitHub Pages)          Target Site
+─────────────────────          ───────────
+1. User selects card
+2. Build payload (CSS/JS)
+3. Navigate to:
+   site.url#tp=BASE64
+                               4. TizenBrew injects userScript.js
+                               5. userScript reads #tp= payload
+                               6. Applies bundle CSS/JS
+                               7. YELLOW returns to portal
+```
 
-### Improved Input Handling
-- Mode-aware key handling
-- Red button returns to portal from any site
+### Why MOD Mode?
+
+- **No cross-origin issues** — Payload passed via URL hash
+- **Full DOM access** — userScript runs in site context  
+- **SPA compatible** — sessionStorage fallback for hash changes
+- **Lightweight** — userScript.js is only ~8KB
+
+---
+
+## 🆕 What's New in v0204
+
+- **MOD Mode Architecture** — Simplified injection via TizenBrew mods
+- **Payload System** — Bundle CSS/JS passed via URL hash (`#tp=`)
+- **Dual Build** — Portal runtime (~314KB) + userScript (~8KB)
+- **Version Injection** — Centralized version in package.json
+- **YELLOW returns home** — Press Yellow button to return to portal from any site
 
 ---
 

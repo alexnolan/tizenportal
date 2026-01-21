@@ -28,23 +28,33 @@
   // TizenPortal: Helper to safely check if we're in an iframe (cross-origin safe)
   function isInIframe() {
     try {
-      return window.location !== window.parent.location;
+      return window.self !== window.top;
     } catch (e) {
-      // Cross-origin: we can't access parent.location, so assume we're not in a navigable iframe context
+      // Cross-origin: we can't access top, but that means we ARE in a cross-origin iframe
+      return true;
+    }
+  }
+  
+  // TizenPortal: Helper to check if we can access the parent document (same-origin only)
+  function canAccessParent() {
+    try {
+      // This will throw if cross-origin
+      return window.parent && window.parent.document && true;
+    } catch (e) {
       return false;
     }
   }
   
   // TizenPortal: Helper to safely get parent document (returns null if cross-origin)
   function getParentDocument() {
-    try {
-      if (window.location !== window.parent.location) {
-        return window.parent.document;
-      }
-    } catch (e) {
-      // Cross-origin access denied
+    if (!canAccessParent()) {
+      return null;
     }
-    return null;
+    try {
+      return window.parent.document;
+    } catch (e) {
+      return null;
+    }
   }
   let mapOfBoundRect = null;
   let startingPoint = null; // Saves spatial navigation starting point
@@ -804,21 +814,32 @@
 
     if (!searchOrigin || (searchOrigin === document.body && !document.querySelector(':focus'))) {
       // When the previous search origin lost its focus by blur: (1) disable attribute (2) visibility: hidden
+      // TizenPortal: Wrap in try-catch for cross-origin safety
       if (savedSearchOrigin.element && (searchOrigin !== savedSearchOrigin.element)) {
-        const elementStyle = window.getComputedStyle(savedSearchOrigin.element, null);
-        const invisibleStyle = ['hidden', 'collapse'];
+        try {
+          const elementStyle = window.getComputedStyle(savedSearchOrigin.element, null);
+          const invisibleStyle = ['hidden', 'collapse'];
 
-        if (savedSearchOrigin.element.disabled || invisibleStyle.includes(elementStyle.getPropertyValue('visibility'))) {
-          searchOrigin = savedSearchOrigin.element;
-          return searchOrigin;
+          if (savedSearchOrigin.element.disabled || invisibleStyle.includes(elementStyle.getPropertyValue('visibility'))) {
+            searchOrigin = savedSearchOrigin.element;
+            return searchOrigin;
+          }
+        } catch (e) {
+          // Cross-origin element - ignore
         }
       }
       searchOrigin = document.documentElement;
     }
     // When the previous search origin lost its focus by blur: (1) display:none () element size turned into zero
-    if (savedSearchOrigin.element &&
-      ((getBoundingClientRect(savedSearchOrigin.element).height === 0) || (getBoundingClientRect(savedSearchOrigin.element).width === 0))) {
-      searchOriginRect = savedSearchOrigin.rect;
+    // TizenPortal: Wrap in try-catch for cross-origin safety
+    if (savedSearchOrigin.element) {
+      try {
+        if ((getBoundingClientRect(savedSearchOrigin.element).height === 0) || (getBoundingClientRect(savedSearchOrigin.element).width === 0)) {
+          searchOriginRect = savedSearchOrigin.rect;
+        }
+      } catch (e) {
+        // Cross-origin element - ignore
+      }
     }
     
     if (!isVisibleInScroller(searchOrigin)) {
@@ -1102,12 +1123,18 @@
    * @returns {boolean}
    */
   function isBeingRendered(element) {
-    if (!isVisibleStyleProperty(element.parentElement))
-      return false;
-    if (!isVisibleStyleProperty(element) || (element.style.opacity === '0') ||
-        (window.getComputedStyle(element).height === '0px' || window.getComputedStyle(element).width === '0px'))
-      return false;
-    return true;
+    // TizenPortal: Guard against cross-origin elements
+    try {
+      if (!isVisibleStyleProperty(element.parentElement))
+        return false;
+      if (!isVisibleStyleProperty(element) || (element.style.opacity === '0') ||
+          (window.getComputedStyle(element).height === '0px' || window.getComputedStyle(element).width === '0px'))
+        return false;
+      return true;
+    } catch (e) {
+      // Cross-origin or detached element - assume rendered
+      return true;
+    }
   }
 
   /**
@@ -1147,12 +1174,19 @@
    * @returns {boolean}
    */
   function isVisibleStyleProperty(element) {
-    const elementStyle = window.getComputedStyle(element, null);
-    const thisVisibility = elementStyle.getPropertyValue('visibility');
-    const thisDisplay = elementStyle.getPropertyValue('display');
-    const invisibleStyle = ['hidden', 'collapse'];
+    // TizenPortal: Guard against cross-origin elements
+    if (!element) return true;
+    try {
+      const elementStyle = window.getComputedStyle(element, null);
+      const thisVisibility = elementStyle.getPropertyValue('visibility');
+      const thisDisplay = elementStyle.getPropertyValue('display');
+      const invisibleStyle = ['hidden', 'collapse'];
 
-    return (thisDisplay !== 'none' && !invisibleStyle.includes(thisVisibility));
+      return (thisDisplay !== 'none' && !invisibleStyle.includes(thisVisibility));
+    } catch (e) {
+      // Cross-origin or detached element - assume visible
+      return true;
+    }
   }
 
   /**
@@ -1601,16 +1635,22 @@
     // memoization
     let rect = mapOfBoundRect && mapOfBoundRect.get(element);
     if (!rect) {
-      const boundingClientRect = element.getBoundingClientRect();
-      rect = {
-        top: Number(boundingClientRect.top.toFixed(2)),
-        right: Number(boundingClientRect.right.toFixed(2)),
-        bottom: Number(boundingClientRect.bottom.toFixed(2)),
-        left: Number(boundingClientRect.left.toFixed(2)),
-        width: Number(boundingClientRect.width.toFixed(2)),
-        height: Number(boundingClientRect.height.toFixed(2))
-      };
-      mapOfBoundRect && mapOfBoundRect.set(element, rect);
+      // TizenPortal: Guard against cross-origin elements
+      try {
+        const boundingClientRect = element.getBoundingClientRect();
+        rect = {
+          top: Number(boundingClientRect.top.toFixed(2)),
+          right: Number(boundingClientRect.right.toFixed(2)),
+          bottom: Number(boundingClientRect.bottom.toFixed(2)),
+          left: Number(boundingClientRect.left.toFixed(2)),
+          width: Number(boundingClientRect.width.toFixed(2)),
+          height: Number(boundingClientRect.height.toFixed(2))
+        };
+        mapOfBoundRect && mapOfBoundRect.set(element, rect);
+      } catch (e) {
+        // Cross-origin element - return empty rect
+        rect = { top: 0, right: 0, bottom: 0, left: 0, width: 0, height: 0 };
+      }
     }
     return rect;
   }

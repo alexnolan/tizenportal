@@ -99,6 +99,50 @@ img {
 }
 
 /* ==========================================================================
+   VUE/NUXT HIDDEN ELEMENTS
+   Force-hide elements that Vue renders with display:none inline style.
+   Chrome 47 may have issues with Vue's conditional rendering.
+   ========================================================================== */
+
+/* Ensure inline display:none is respected */
+[style*="display: none"],
+[style*="display:none"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Hidden menus and dropdowns */
+.librariesDropdownMenu[style*="display: none"],
+.globalSearchMenu[style*="display: none"],
+.globalTaskRunningMenu[style*="display: none"],
+[role="menu"][style*="display: none"] {
+  display: none !important;
+}
+
+/* Modal hidden state */
+.modal.hidden,
+.modal[style*="display: none"],
+.modal.opacity-0 {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Cover background when not needed */
+[cy-id="coverBg"][style*="display: none"] {
+  display: none !important;
+}
+
+/* Title placeholder when image is ready */
+[cy-id="titleImageNotReady"][style*="display: none"] {
+  display: none !important;
+}
+
+/* Selection mode toolbar (when no items selected) */
+.absolute[style*="display: none"] {
+  display: none !important;
+}
+
+/* ==========================================================================
    VIEWPORT LOCK
    Force 1920px width to disable Tailwind responsive breakpoints.
    ABS uses sm:, md:, lg: breakpoints that we want to bypass.
@@ -136,7 +180,20 @@ body {
   outline-offset: 2px !important;
 }
 
-/* Bookshelf book covers */
+/* Book cards (divs with id="book-card-N") */
+[id^="book-card-"]:focus {
+  outline: 4px solid #1ad691 !important;
+  outline-offset: 4px !important;
+  z-index: 100 !important;
+}
+
+/* Scale up focused book cards */
+[id^="book-card-"]:focus [id^="cover-area-"] {
+  transform: scale(1.05) !important;
+  transition: transform 0.15s ease-out !important;
+}
+
+/* Legacy bookshelf link focus (if any links exist) */
 .bookshelfRow a:focus,
 .categorizedBookshelfRow a:focus,
 #bookshelf a:focus {

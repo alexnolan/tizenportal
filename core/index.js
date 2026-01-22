@@ -355,13 +355,23 @@ async function applyBundleToPage(card) {
   log('Applying bundle: ' + bundle.name);
   state.currentBundle = bundle.name;
   
-  // Inject bundle CSS
-  if (bundle.css) {
+  // Inject bundle CSS (bundles export as 'style' property)
+  var cssContent = bundle.style || '';
+  
+  // Also check for payload CSS from URL hash
+  if (card._payload && card._payload.css) {
+    log('Adding payload CSS from URL hash');
+    cssContent += '\n\n/* Payload CSS */\n' + card._payload.css;
+  }
+  
+  if (cssContent) {
     var style = document.createElement('style');
     style.id = 'tp-bundle-css';
-    style.textContent = bundle.css;
+    style.textContent = cssContent;
     document.head.appendChild(style);
-    log('Bundle CSS injected');
+    log('Bundle CSS injected (' + cssContent.length + ' chars)');
+  } else {
+    warn('No CSS to inject for bundle: ' + bundle.name);
   }
   
   // Call lifecycle hooks with window instead of iframe

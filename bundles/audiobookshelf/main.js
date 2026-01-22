@@ -45,12 +45,13 @@ var SELECTORS = {
   // Search
   searchInput: 'input[placeholder*="Search"], [role="search"] input',
   
-  // Bookshelf content
+  // Bookshelf content - book cards are DIVs with id="book-card-N", not links
   bookshelfRow: '.bookshelfRow, .categorizedBookshelfRow',
+  bookCards: '[id^="book-card-"]',
   bookshelfLinks: '.bookshelfRow a[href], .categorizedBookshelfRow a[href], #bookshelf a[href]',
   
   // Appbar buttons
-  appbarButtons: '#appbar button, #appbar a',
+  appbarButtons: '#appbar button, #appbar a[href]',
   
   // Generic interactive
   buttons: 'button:not([disabled]):not([aria-hidden="true"])',
@@ -171,21 +172,25 @@ export default {
         }
       }
       
-      // Bookshelf items (book covers) - these are the main content
-      var bookLinks = document.querySelectorAll(SELECTORS.bookshelfLinks);
-      for (var j = 0; j < bookLinks.length; j++) {
-        var book = bookLinks[j];
-        if (book.getAttribute('tabindex') !== '0') {
-          book.setAttribute('tabindex', '0');
+      // Book cards (main content) - these are divs with id="book-card-N"
+      var bookCards = document.querySelectorAll(SELECTORS.bookCards);
+      for (var j = 0; j < bookCards.length; j++) {
+        var card = bookCards[j];
+        // Already have tabindex="0" in HTML but ensure it's set
+        if (card.getAttribute('tabindex') !== '0') {
+          card.setAttribute('tabindex', '0');
           count++;
         }
       }
       
-      // Appbar interactive elements
+      // Appbar interactive elements (buttons and links with href)
       var appbarEls = document.querySelectorAll(SELECTORS.appbarButtons);
       for (var k = 0; k < appbarEls.length; k++) {
         var appEl = appbarEls[k];
-        if (appEl.getAttribute('tabindex') !== '0' && !appEl.closest('[style*="display: none"]')) {
+        // Skip hidden elements and aria-hidden elements
+        if (appEl.getAttribute('tabindex') !== '0' && 
+            !appEl.closest('[style*="display: none"]') &&
+            appEl.getAttribute('aria-hidden') !== 'true') {
           appEl.setAttribute('tabindex', '0');
           count++;
         }
@@ -233,11 +238,11 @@ export default {
           return;
         }
         
-        // Fallback to first bookshelf link
-        var firstBook = document.querySelector(SELECTORS.bookshelfLinks);
+        // Fallback to first book card
+        var firstBook = document.querySelector(SELECTORS.bookCards);
         if (firstBook) {
           firstBook.focus();
-          console.log('TizenPortal [ABS]: Focused first book');
+          console.log('TizenPortal [ABS]: Focused first book card');
           return;
         }
         

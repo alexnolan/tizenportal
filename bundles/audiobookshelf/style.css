@@ -6,6 +6,99 @@
  */
 
 /* ==========================================================================
+   CSS VARIABLE POLYFILL FOR CHROME 47
+   Chrome 47 doesn't support CSS custom properties (var()).
+   Tailwind CSS v4 uses calc(var(--spacing)*N) for all utility classes.
+   We must provide explicit fallback values.
+   --spacing: 0.25rem = 4px (at 16px base font-size)
+   ========================================================================== */
+
+/* Image constraints - CRITICAL for Chrome 47 */
+img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Logo sizing (appbar) - w-8 h-8, sm:w-10 sm:h-10 */
+#appbar img,
+.nuxt-link-active img {
+  width: 40px !important;
+  min-width: 40px !important;
+  height: 40px !important;
+  max-width: 40px !important;
+}
+
+/* Width utilities that use var(--spacing) */
+.w-8 { width: 32px !important; }
+.w-10 { width: 40px !important; }
+.w-12 { width: 48px !important; }
+.w-16 { width: 64px !important; }
+.w-full { width: 100% !important; }
+
+/* Height utilities */
+.h-8 { height: 32px !important; }
+.h-10 { height: 40px !important; }
+.h-12 { height: 48px !important; }
+.h-16 { height: 64px !important; }
+.h-full { height: 100% !important; }
+
+/* Min/max width */
+.min-w-8 { min-width: 32px !important; }
+.min-w-10 { min-width: 40px !important; }
+.max-w-full { max-width: 100% !important; }
+
+/* Spacing/margins */
+.mr-2 { margin-right: 8px !important; }
+.mr-4 { margin-right: 16px !important; }
+.mr-6 { margin-right: 24px !important; }
+.mx-2 { margin-left: 8px !important; margin-right: 8px !important; }
+.mx-2e { margin-left: 0.5em !important; margin-right: 0.5em !important; }
+
+/* Padding */
+.p-2 { padding: 8px !important; }
+.p-4 { padding: 16px !important; }
+.px-2 { padding-left: 8px !important; padding-right: 8px !important; }
+.px-6 { padding-left: 24px !important; padding-right: 24px !important; }
+.py-1 { padding-top: 4px !important; padding-bottom: 4px !important; }
+.pt-6e { padding-top: 1.5em !important; }
+
+/* Appbar height - h-16 = 64px */
+.w-full.h-16.bg-primary {
+  height: 64px !important;
+}
+
+/* Book card images - object-fill within constrained parent */
+[cy-id="coverImage"],
+.object-fill {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: fill !important;
+}
+
+/* Book card container - inline styles have min/max 192px */
+[id^="book-card-"] {
+  width: 192px !important;
+  min-width: 192px !important;
+  max-width: 192px !important;
+}
+
+/* Cover area container */
+[id^="cover-area-"] {
+  width: 192px !important;
+  height: 192px !important;
+  overflow: hidden !important;
+}
+
+/* Ensure images inside cover area respect bounds */
+[id^="cover-area-"] img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: fill !important;
+}
+
+/* ==========================================================================
    VIEWPORT LOCK
    Force 1920px width to disable Tailwind responsive breakpoints.
    ABS uses sm:, md:, lg: breakpoints that we want to bypass.

@@ -9,7 +9,7 @@ import { configRead, configWrite } from '../core/config.js';
 import { toggleDiagnosticsPanel, clearDiagnosticsLogs, isDiagnosticsPanelVisible, scrollDiagnosticsLogs } from '../ui/diagnostics.js';
 import { toggleAddressBar, isAddressBarVisible } from '../ui/addressbar.js';
 import { toggleBundleMenu, isBundleMenuVisible, cycleBundle } from '../ui/bundlemenu.js';
-import { showAddSiteEditor, showEditSiteEditor, isSiteEditorOpen } from '../ui/siteeditor.js';
+import { showAddSiteEditor, showEditSiteEditor, isSiteEditorOpen, closeSiteEditor } from '../ui/siteeditor.js';
 import { getFocusedCard } from '../ui/portal.js';
 import { isPointerActive, handlePointerKeyDown, handlePointerKeyUp, togglePointer } from './pointer.js';
 
@@ -55,36 +55,82 @@ function handleKeyDown(event) {
     keyDownTimes[keyCode] = Date.now();
   }
 
-  // Log key for diagnostics
-  var keyName = getKeyName(keyCode);
-  if (keyName) {
-    console.log('TizenPortal: Key down - ' + keyName + ' (' + keyCode + ')');
-  }
-
-  // Check IME keys
-  if (keyCode === KEYS.IME_DONE || keyCode === KEYS.IME_CANCEL) {
-    imeActive = false;
-    return;
-  }
-
-  // If IME is active, let text input handle most keys
-  if (imeActive && !isColorButton(keyCode)) {
-    return;
-  }
-
-  // Diagnostics panel: up/down scrolls the log history, block left/right
-  // Address bar and bundle menu: let arrow keys through for native focus navigation
+  // Check if diagnostics panel is open - handle scrolling BEFORE logging
+  // to avoid log entries that would scroll the view back down
   var isArrowKey = keyCode === KEYS.LEFT || keyCode === KEYS.RIGHT || 
                    keyCode === KEYS.UP || keyCode === KEYS.DOWN;
   if (isArrowKey && isDiagnosticsPanelVisible()) {
     event.preventDefault();
     event.stopPropagation();
+    // Don't log UP/DOWN when scrolling diagnostics - it would scroll back to bottom
     if (keyCode === KEYS.UP) {
       scrollDiagnosticsLogs(-100); // Scroll up
     } else if (keyCode === KEYS.DOWN) {
       scrollDiagnosticsLogs(100);  // Scroll down
     }
     // Left/Right do nothing for now
+    return;
+  }
+
+  // Log key for diagnostics (after diagnostics scroll check)
+  var keyName = getKeyName(keyCode);
+  if (keyName) {
+    console.log('TizenPortal: Key down - ' + keyName + ' (' + keyCode + ')');
+  }
+
+  // Check IME keys - must prevent propagation to avoid system handling
+  if (keyCode === KEYS.IME_DONE || keyCode === KEYS.IME_CANCEL) {
+    event.preventDefault();
+    event.stopPropagation();
+    imeActive = false;
+    return;
+  }
+
+  // EXIT key (10182) - Tizen IME Cancel button may send this
+  // If we're in an input context, just cancel the input, don't exit the app
+  if (keyCode === KEYS.EXIT) {
+    // Check if we're in a text input or modal context
+    var activeEl = document.activeElement;
+    var isInputActive = activeEl && (
+      activeEl.tagName === 'INPUT' ||
+      activeEl.tagName === 'TEXTAREA' ||
+      activeEl.isContentEditable
+    );
+    
+    // Check if site editor is open
+    var editorOpen = isSiteEditorOpen();
+    
+    // Check if any modal/overlay is visible
+    var modalOpen = isDiagnosticsPanelVisible() || isAddressBarVisible() || isBundleMenuVisible();
+    
+    if (isInputActive || editorOpen || modalOpen) {
+      // Don't exit - just close the current context
+      event.preventDefault();
+      event.stopPropagation();
+      console.log('TizenPortal: EXIT suppressed (input/modal active)');
+      
+      // Close the site editor if open
+      if (editorOpen) {
+        closeSiteEditor();
+      }
+      // Close other panels if open
+      if (isDiagnosticsPanelVisible()) {
+        toggleDiagnosticsPanel();
+      }
+      if (isAddressBarVisible()) {
+        toggleAddressBar();
+      }
+      if (isBundleMenuVisible()) {
+        toggleBundleMenu();
+      }
+      return;
+    }
+    // Otherwise let EXIT propagate to system (will exit app)
+    return;
+  }
+
+  // If IME is active, let text input handle most keys
+  if (imeActive && !isColorButton(keyCode)) {
     return;
   }
 

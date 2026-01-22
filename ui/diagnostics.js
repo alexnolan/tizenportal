@@ -253,3 +253,12 @@ function scrollToBottom() {
     logsElement.scrollTop = logsElement.scrollHeight;
   }, 0);
 }
+
+/**
+ * Scroll the diagnostics logs by a given amount
+ * @param {number} amount - Positive for down, negative for up
+ */
+export function scrollDiagnosticsLogs(amount) {
+  if (!logsElement) return;
+  logsElement.scrollTop += amount;
+}

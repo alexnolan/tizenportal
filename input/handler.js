@@ -6,7 +6,7 @@
 
 import { KEYS, COLOR_ACTIONS, isColorButton, getKeyName } from './keys.js';
 import { configRead, configWrite } from '../core/config.js';
-import { toggleDiagnosticsPanel, clearDiagnosticsLogs, isDiagnosticsPanelVisible } from '../ui/diagnostics.js';
+import { toggleDiagnosticsPanel, clearDiagnosticsLogs, isDiagnosticsPanelVisible, scrollDiagnosticsLogs } from '../ui/diagnostics.js';
 import { toggleAddressBar, isAddressBarVisible } from '../ui/addressbar.js';
 import { toggleBundleMenu, isBundleMenuVisible, cycleBundle } from '../ui/bundlemenu.js';
 import { showAddSiteEditor, showEditSiteEditor, isSiteEditorOpen } from '../ui/siteeditor.js';
@@ -69,6 +69,31 @@ function handleKeyDown(event) {
   // If IME is active, let text input handle most keys
   if (imeActive && !isColorButton(keyCode)) {
     return;
+  }
+
+  // Block arrow keys when overlays are open (diagnostics, address bar, bundle menu)
+  // This prevents background scrolling/navigation while overlays are visible
+  var isArrowKey = keyCode === KEYS.LEFT || keyCode === KEYS.RIGHT || 
+                   keyCode === KEYS.UP || keyCode === KEYS.DOWN;
+  if (isArrowKey) {
+    // Diagnostics panel: up/down scrolls the log history
+    if (isDiagnosticsPanelVisible()) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (keyCode === KEYS.UP) {
+        scrollDiagnosticsLogs(-100); // Scroll up
+      } else if (keyCode === KEYS.DOWN) {
+        scrollDiagnosticsLogs(100);  // Scroll down
+      }
+      // Left/Right do nothing for now
+      return;
+    }
+    // Other overlays: just block the event
+    if (isAddressBarVisible() || isBundleMenuVisible()) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
   }
 
   // Give custom handlers a chance to consume the event

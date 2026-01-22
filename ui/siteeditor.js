@@ -146,6 +146,30 @@ function handleEditorKeyDown(event) {
   if (keyCode === 13) {
     var active = document.activeElement;
     
+    // If on the save button, save and close
+    if (active && active.id === 'tp-editor-save') {
+      event.preventDefault();
+      event.stopPropagation();
+      saveAndClose();
+      return;
+    }
+    
+    // If on the cancel button, close
+    if (active && active.id === 'tp-editor-cancel') {
+      event.preventDefault();
+      event.stopPropagation();
+      closeSiteEditor();
+      return;
+    }
+    
+    // If on the delete button, delete
+    if (active && active.id === 'tp-editor-delete') {
+      event.preventDefault();
+      event.stopPropagation();
+      deleteAndClose();
+      return;
+    }
+    
     // If on a field row, open input mode
     if (active && active.classList.contains('tp-field-row')) {
       event.preventDefault();

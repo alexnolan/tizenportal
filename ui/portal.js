@@ -268,3 +268,32 @@ export function hidePortal() {
     portalElement.style.display = 'none';
   }
 }
+
+/**
+ * Get the currently focused card data
+ * Returns null if the Add Site button is focused
+ * @returns {Object|null}
+ */
+export function getFocusedCard() {
+  var focusedElement = document.activeElement;
+  if (!focusedElement) return null;
+  
+  // Check if it's the Add Site card
+  if (focusedElement.classList.contains('tp-card-add')) {
+    return null;
+  }
+  
+  // Check if it's a card with a card ID
+  var cardId = focusedElement.getAttribute('data-card-id');
+  if (!cardId) return null;
+  
+  // Find the card in our stored cards
+  var cards = getCards();
+  for (var i = 0; i < cards.length; i++) {
+    if (cards[i].id === cardId) {
+      return cards[i];
+    }
+  }
+  
+  return null;
+}

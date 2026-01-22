@@ -10,6 +10,7 @@ import { toggleDiagnosticsPanel, clearDiagnosticsLogs, isDiagnosticsPanelVisible
 import { toggleAddressBar, isAddressBarVisible } from '../ui/addressbar.js';
 import { toggleBundleMenu, isBundleMenuVisible, cycleBundle } from '../ui/bundlemenu.js';
 import { showAddSiteEditor, showEditSiteEditor, isSiteEditorOpen } from '../ui/siteeditor.js';
+import { getFocusedCard } from '../ui/portal.js';
 import { isPointerActive, handlePointerKeyDown, handlePointerKeyUp, togglePointer } from './pointer.js';
 
 /**
@@ -269,23 +270,22 @@ export function executeColorAction(action) {
         }
         return;
       }
-      // Edit current site (opens site editor)
-      if (window.TizenPortal && window.TizenPortal.getCurrentCard) {
-        var currentCard = window.TizenPortal.getCurrentCard();
-        if (currentCard) {
-          showEditSiteEditor(currentCard, function() {
-            if (window.TizenPortal && window.TizenPortal._refreshPortal) {
-              window.TizenPortal._refreshPortal();
-            }
-          });
-        } else {
-          // No current card, show add instead
-          showAddSiteEditor(function() {
-            if (window.TizenPortal && window.TizenPortal._refreshPortal) {
-              window.TizenPortal._refreshPortal();
-            }
-          });
-        }
+      // On portal page, use focused card (not currentCard which is for target sites)
+      var focusedCard = getFocusedCard();
+      if (focusedCard) {
+        // Edit the focused card
+        showEditSiteEditor(focusedCard, function() {
+          if (window.TizenPortal && window.TizenPortal._refreshPortal) {
+            window.TizenPortal._refreshPortal();
+          }
+        });
+      } else {
+        // No card focused (Add Site button focused, or no focus), show add instead
+        showAddSiteEditor(function() {
+          if (window.TizenPortal && window.TizenPortal._refreshPortal) {
+            window.TizenPortal._refreshPortal();
+          }
+        });
       }
       break;
 

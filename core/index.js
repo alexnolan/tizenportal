@@ -651,7 +651,7 @@ function initColorHints() {
   var hintConfig = {
     'red': 'addressbar',
     'green': 'pointerMode',
-    'yellow': 'bundleMenu',
+    'yellow': 'editSite',
     'blue': 'diagnostics'
   };
 
@@ -696,6 +696,46 @@ function initColorHints() {
       this.style.color = '';
     });
   }
+  
+  // Set up focus tracking to update yellow hint contextually
+  document.addEventListener('focusin', updateYellowHint);
+  updateYellowHint(); // Initial update
+}
+
+/**
+ * Update the yellow hint text based on current context
+ */
+function updateYellowHint() {
+  var hintText = document.getElementById('tp-hint-yellow-text');
+  if (!hintText) return;
+  
+  // Check if site editor is open
+  if (isSiteEditorOpen()) {
+    hintText.textContent = 'Save';
+    return;
+  }
+  
+  // Check what's focused
+  var focused = document.activeElement;
+  if (!focused) {
+    hintText.textContent = 'Add Site';
+    return;
+  }
+  
+  // If Add Site button is focused
+  if (focused.classList.contains('tp-card-add')) {
+    hintText.textContent = 'Add Site';
+    return;
+  }
+  
+  // If a site card is focused
+  if (focused.classList.contains('tp-card') && focused.hasAttribute('data-card-id')) {
+    hintText.textContent = 'Edit Site';
+    return;
+  }
+  
+  // Default
+  hintText.textContent = 'Add Site';
 }
 
 /**

@@ -133,6 +133,7 @@ function setupEventListeners(editor) {
  */
 function handleEditorKeyDown(event) {
   var keyCode = event.keyCode;
+  console.log('TizenPortal: Editor keydown received, keyCode =', keyCode);
 
   // Escape/Back - close
   if (keyCode === 27 || keyCode === 10009) {
@@ -145,9 +146,14 @@ function handleEditorKeyDown(event) {
   // Enter on focusable
   if (keyCode === 13) {
     var active = document.activeElement;
+    console.log('TizenPortal: Enter in editor, activeElement:', active);
+    console.log('TizenPortal: - id:', active ? active.id : 'null');
+    console.log('TizenPortal: - className:', active ? active.className : 'null');
+    console.log('TizenPortal: - tagName:', active ? active.tagName : 'null');
     
     // If on the save button, save and close
     if (active && active.id === 'tp-editor-save') {
+      console.log('TizenPortal: Enter on save button, calling saveAndClose');
       event.preventDefault();
       event.stopPropagation();
       saveAndClose();
@@ -156,6 +162,7 @@ function handleEditorKeyDown(event) {
     
     // If on the cancel button, close
     if (active && active.id === 'tp-editor-cancel') {
+      console.log('TizenPortal: Enter on cancel button');
       event.preventDefault();
       event.stopPropagation();
       closeSiteEditor();
@@ -164,6 +171,7 @@ function handleEditorKeyDown(event) {
     
     // If on the delete button, delete
     if (active && active.id === 'tp-editor-delete') {
+      console.log('TizenPortal: Enter on delete button');
       event.preventDefault();
       event.stopPropagation();
       deleteAndClose();
@@ -171,7 +179,8 @@ function handleEditorKeyDown(event) {
     }
     
     // If on a field row, open input mode
-    if (active && active.classList.contains('tp-field-row')) {
+    if (active && active.classList && active.classList.contains('tp-field-row')) {
+      console.log('TizenPortal: Enter on field row');
       event.preventDefault();
       event.stopPropagation();
       activateFieldInput(active);
@@ -179,12 +188,24 @@ function handleEditorKeyDown(event) {
     }
 
     // If on a bundle option, select it
-    if (active && active.classList.contains('tp-bundle-option')) {
+    if (active && active.classList && active.classList.contains('tp-bundle-option')) {
+      console.log('TizenPortal: Enter on bundle option');
       event.preventDefault();
       event.stopPropagation();
       selectBundleOption(active);
       return;
     }
+    
+    // If on fetch favicon button
+    if (active && active.id === 'tp-editor-fetch-icon') {
+      console.log('TizenPortal: Enter on fetch icon button');
+      event.preventDefault();
+      event.stopPropagation();
+      handleFetchFavicon();
+      return;
+    }
+    
+    console.log('TizenPortal: Enter not handled - no matching element');
   }
 }
 
@@ -261,6 +282,8 @@ function openEditor() {
     if (firstField) {
       firstField.focus();
     }
+    // Update yellow hint to show "Save"
+    updateYellowHintText('Save');
   }, 100);
 }
 
@@ -273,20 +296,35 @@ export function closeSiteEditor() {
     editor.classList.remove('visible');
   }
   state.active = false;
+  // Update yellow hint back to context-appropriate text
+  updateYellowHintText('Add Site');
+}
+
+/**
+ * Update the yellow hint text
+ * @param {string} text
+ */
+function updateYellowHintText(text) {
+  var hintText = document.getElementById('tp-hint-yellow-text');
+  if (hintText) {
+    hintText.textContent = text;
+  }
 }
 
 /**
  * Save and close
  */
 function saveAndClose() {
+  console.log('TizenPortal: saveAndClose called, state.card =', JSON.stringify(state.card));
+  
   // Validate
-  if (!state.card.name.trim()) {
+  if (!state.card.name || !state.card.name.trim()) {
     showEditorToast('Please enter a site name');
     focusField('name');
     return;
   }
 
-  if (!state.card.url.trim()) {
+  if (!state.card.url || !state.card.url.trim()) {
     showEditorToast('Please enter a URL');
     focusField('url');
     return;

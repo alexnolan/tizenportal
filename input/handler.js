@@ -148,7 +148,8 @@ function handleKeyDown(event) {
   }
 
   // Handle pointer mode - intercepts arrow keys and enter
-  if (isPointerActive()) {
+  // BUT NOT when site editor is open - editor needs Enter to work
+  if (isPointerActive() && !isSiteEditorOpen()) {
     if (handlePointerKeyDown(event)) {
       event.preventDefault();
       event.stopPropagation();
@@ -310,7 +311,9 @@ export function executeColorAction(action) {
       }
       // If site editor is open, Yellow = Save
       if (isSiteEditorOpen()) {
+        console.log('TizenPortal: Yellow pressed in editor, triggering save');
         var saveBtn = document.getElementById('tp-editor-save');
+        console.log('TizenPortal: Save button found:', saveBtn);
         if (saveBtn) {
           saveBtn.click();
         }
@@ -318,8 +321,10 @@ export function executeColorAction(action) {
       }
       // On portal page, use focused card (not currentCard which is for target sites)
       var focusedCard = getFocusedCard();
+      console.log('TizenPortal: Yellow pressed on portal, focusedCard =', focusedCard);
       if (focusedCard) {
         // Edit the focused card
+        console.log('TizenPortal: Opening edit editor for card:', focusedCard.name);
         showEditSiteEditor(focusedCard, function() {
           if (window.TizenPortal && window.TizenPortal._refreshPortal) {
             window.TizenPortal._refreshPortal();
@@ -327,6 +332,7 @@ export function executeColorAction(action) {
         });
       } else {
         // No card focused (Add Site button focused, or no focus), show add instead
+        console.log('TizenPortal: Opening add editor (no card focused)');
         showAddSiteEditor(function() {
           if (window.TizenPortal && window.TizenPortal._refreshPortal) {
             window.TizenPortal._refreshPortal();

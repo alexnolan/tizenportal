@@ -544,20 +544,54 @@ span.material-symbols {
 }
 
 /* ==========================================================================
-   VIEWPORT LOCK
-   Force 1920px width to disable Tailwind responsive breakpoints.
-   ABS uses sm:, md:, lg: breakpoints that we want to bypass.
+   VIEWPORT AND LAYOUT FIX
+   ABS uses h-screen max-h-screen overflow-hidden on main container.
+   This cuts off content beyond viewport height.
+   We need to allow scrolling while maintaining proper layout.
    ========================================================================== */
 
+/* DON'T lock html/body to fixed width - it breaks layout */
 html {
-  min-width: 1920px !important;
-  max-width: 1920px !important;
+  /* Let browser determine proper width based on viewport */
   overflow-x: hidden !important;
+  overflow-y: auto !important;
 }
 
 body {
-  min-width: 1920px !important;
   overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+/* CRITICAL: Override the main content container's overflow-hidden */
+/* This is the div with "text-white max-h-screen h-screen overflow-hidden" */
+.text-white.max-h-screen.h-screen.overflow-hidden,
+#__layout > div.text-white {
+  max-height: none !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  overflow: visible !important;
+  overflow-y: auto !important;
+}
+
+/* Also override the h-screen and max-h-screen classes directly */
+.h-screen {
+  height: auto !important;
+  min-height: 100vh !important;
+}
+.max-h-screen {
+  max-height: none !important;
+}
+
+/* Ensure overflow-hidden doesn't apply to main layout */
+#__layout .overflow-hidden {
+  overflow: visible !important;
+}
+
+/* But keep overflow-hidden on elements that need it (cover images, etc) */
+[id^="cover-area-"] .overflow-hidden,
+.rounded-sm.overflow-hidden,
+.bookshelfRow .overflow-hidden {
+  overflow: hidden !important;
 }
 
 /* ==========================================================================
@@ -933,10 +967,16 @@ a[href]:focus:not(#appbar a):not([role="toolbar"] a):not(.bookshelfRow a):not(.c
    ========================================================================== */
 
 /* Main content should be offset by appbar and siderail */
-.text-white.max-h-screen {
+/* Target the specific layout div, not h-screen which we've overridden */
+#__layout > div > div:not(.w-full.h-16):not([role="toolbar"]) {
   padding-top: 64px !important; /* Appbar height */
   padding-left: 80px !important; /* Siderail width */
   box-sizing: border-box !important;
+}
+
+/* Alternative selector for the content below appbar */
+.text-white.max-h-screen > div:not(.w-full.h-16):not([role="toolbar"]) {
+  margin-top: 0 !important;
 }
 
 /* ==========================================================================

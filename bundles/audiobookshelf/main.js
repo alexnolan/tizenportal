@@ -355,7 +355,8 @@ export default {
   },
 
   /**
-   * Lock viewport to 1920px to disable Tailwind responsive breakpoints
+   * Adjust viewport for TV display
+   * Instead of forcing a fixed width, we ensure proper scaling
    */
   lockViewport: function() {
     try {
@@ -367,17 +368,18 @@ export default {
         if (original) {
           viewport.setAttribute('data-tp-original', original);
         }
-        viewport.setAttribute('content', 'width=1920, initial-scale=1, user-scalable=no');
+        // Use device width but disable user scaling
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1, user-scalable=no');
       } else {
         viewport = document.createElement('meta');
         viewport.name = 'viewport';
-        viewport.content = 'width=1920, initial-scale=1, user-scalable=no';
+        viewport.content = 'width=device-width, initial-scale=1, user-scalable=no';
         document.head.appendChild(viewport);
       }
       
-      console.log('TizenPortal [ABS]: Viewport locked to 1920px');
+      console.log('TizenPortal [ABS]: Viewport adjusted for TV');
     } catch (err) {
-      console.warn('TizenPortal [ABS]: Could not lock viewport:', err.message);
+      console.warn('TizenPortal [ABS]: Could not adjust viewport:', err.message);
     }
   },
 

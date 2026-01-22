@@ -70,9 +70,9 @@ img {
 /* Book card images - object-fill within constrained parent */
 [cy-id="coverImage"],
 .object-fill {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: fill !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: cover !important;
 }
 
 /* ==========================================================================
@@ -153,16 +153,30 @@ img {
 [id^="cover-area-"] {
   width: 192px !important;
   height: 192px !important;
+  max-width: 192px !important;
+  max-height: 192px !important;
   overflow: hidden !important;
+  position: relative !important;
 }
 
-/* Ensure images inside cover area respect bounds */
-[id^="cover-area-"] img {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
-  object-fit: fill !important;
+/* Ensure images inside cover area respect bounds - use explicit pixels */
+[id^="cover-area-"] img,
+[id^="cover-area-"] [cy-id="coverImage"] {
+  width: 192px !important;
+  height: 192px !important;
+  max-width: 192px !important;
+  max-height: 192px !important;
+  object-fit: cover !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+/* Series card cover areas are wider */
+[id^="series-card-"] [cy-id="covers-area"] {
+  width: 384px !important;
+  max-width: 384px !important;
+  overflow: hidden !important;
 }
 
 /* ==========================================================================

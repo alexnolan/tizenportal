@@ -30,37 +30,285 @@ img {
 
 /* Width utilities that use var(--spacing) */
 .w-8 { width: 32px !important; }
+.w-9 { width: 36px !important; }
 .w-10 { width: 40px !important; }
 .w-12 { width: 48px !important; }
 .w-16 { width: 64px !important; }
+.w-20 { width: 80px !important; }
+.w-32 { width: 128px !important; }
+.w-40 { width: 160px !important; }
+.w-48 { width: 192px !important; }
+.w-52 { width: 208px !important; }
+.w-64 { width: 256px !important; }
+.w-80 { width: 320px !important; }
 .w-full { width: 100% !important; }
 
 /* Height utilities */
+.h-4 { height: 16px !important; }
+.h-5 { height: 20px !important; }
 .h-8 { height: 32px !important; }
+.h-9 { height: 36px !important; }
 .h-10 { height: 40px !important; }
 .h-12 { height: 48px !important; }
 .h-16 { height: 64px !important; }
+.h-20 { height: 80px !important; }
 .h-full { height: 100% !important; }
+.h-screen { height: 100vh !important; }
+.max-h-screen { max-height: 100vh !important; }
 
 /* Min/max width */
+.min-w-5 { min-width: 20px !important; }
 .min-w-8 { min-width: 32px !important; }
 .min-w-10 { min-width: 40px !important; }
+.min-w-32 { min-width: 128px !important; }
+.min-w-48 { min-width: 192px !important; }
+.max-w-52 { max-width: 208px !important; }
+.max-w-64 { max-width: 256px !important; }
+.max-w-80 { max-width: 320px !important; }
 .max-w-full { max-width: 100% !important; }
 
-/* Spacing/margins */
+/* Spacing/margins - Tailwind uses calc(var(--spacing)*N) */
+.m-1 { margin: 4px !important; }
+.m-2 { margin: 8px !important; }
+.mx-1 { margin-left: 4px !important; margin-right: 4px !important; }
+.mx-2 { margin-left: 8px !important; margin-right: 8px !important; }
+.mx-3 { margin-left: 12px !important; margin-right: 12px !important; }
+.mx-2e { margin-left: 0.5em !important; margin-right: 0.5em !important; }
+.my-1 { margin-top: 4px !important; margin-bottom: 4px !important; }
+.my-2 { margin-top: 8px !important; margin-bottom: 8px !important; }
+.mr-1 { margin-right: 4px !important; }
 .mr-2 { margin-right: 8px !important; }
 .mr-4 { margin-right: 16px !important; }
 .mr-6 { margin-right: 24px !important; }
-.mx-2 { margin-left: 8px !important; margin-right: 8px !important; }
-.mx-2e { margin-left: 0.5em !important; margin-right: 0.5em !important; }
+.ml-1 { margin-left: 4px !important; }
+.ml-2 { margin-left: 8px !important; }
+.ml-3 { margin-left: 12px !important; }
+.ml-5 { margin-left: 20px !important; }
+.mt-1 { margin-top: 4px !important; }
+.pt-1 { padding-top: 4px !important; }
+.-mt-px { margin-top: -1px !important; }
+.-ml-2 { margin-left: -8px !important; }
 
 /* Padding */
+.p-1 { padding: 4px !important; }
 .p-2 { padding: 8px !important; }
 .p-4 { padding: 16px !important; }
+.p-5 { padding: 20px !important; }
+.px-1 { padding-left: 4px !important; padding-right: 4px !important; }
 .px-2 { padding-left: 8px !important; padding-right: 8px !important; }
+.px-3 { padding-left: 12px !important; padding-right: 12px !important; }
+.px-4 { padding-left: 16px !important; padding-right: 16px !important; }
 .px-6 { padding-left: 24px !important; padding-right: 24px !important; }
+.px-8 { padding-left: 32px !important; padding-right: 32px !important; }
 .py-1 { padding-top: 4px !important; padding-bottom: 4px !important; }
+.py-2 { padding-top: 8px !important; padding-bottom: 8px !important; }
+.py-6 { padding-top: 24px !important; padding-bottom: 24px !important; }
 .pt-6e { padding-top: 1.5em !important; }
+.pr-1 { padding-right: 4px !important; }
+.pr-2 { padding-right: 8px !important; }
+.pl-3 { padding-left: 12px !important; }
+.pr-10 { padding-right: 40px !important; }
+.pb-4 { padding-bottom: 16px !important; }
+
+/* Gap utilities */
+.gap-1 { gap: 4px !important; }
+.gap-2 { gap: 8px !important; }
+.gap-4 { gap: 16px !important; }
+
+/* Border radius */
+.rounded { border-radius: 4px !important; }
+.rounded-sm { border-radius: 2px !important; }
+.rounded-md { border-radius: 6px !important; }
+.rounded-lg { border-radius: 8px !important; }
+.rounded-full { border-radius: 9999px !important; }
+.rounded-b-md { border-bottom-left-radius: 6px !important; border-bottom-right-radius: 6px !important; }
+
+/* Z-index */
+.z-10 { z-index: 10 !important; }
+.z-40 { z-index: 40 !important; }
+.z-50 { z-index: 50 !important; }
+.z-60 { z-index: 60 !important; }
+
+/* Text sizes */
+.text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
+.text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+.text-base { font-size: 1rem !important; line-height: 1.5rem !important; }
+.text-lg { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+.text-xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+.text-2xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+.text-3xl { font-size: 1.875rem !important; line-height: 2.25rem !important; }
+
+/* Flexbox utilities - Chrome 47 needs vendor prefixes */
+.flex {
+  display: -webkit-box !important;
+  display: -webkit-flex !important;
+  display: flex !important;
+}
+.inline-flex {
+  display: -webkit-inline-box !important;
+  display: -webkit-inline-flex !important;
+  display: inline-flex !important;
+}
+.flex-col {
+  -webkit-box-orient: vertical !important;
+  -webkit-box-direction: normal !important;
+  -webkit-flex-direction: column !important;
+  flex-direction: column !important;
+}
+.flex-row {
+  -webkit-box-orient: horizontal !important;
+  -webkit-box-direction: normal !important;
+  -webkit-flex-direction: row !important;
+  flex-direction: row !important;
+}
+.flex-wrap {
+  -webkit-flex-wrap: wrap !important;
+  flex-wrap: wrap !important;
+}
+.flex-nowrap {
+  -webkit-flex-wrap: nowrap !important;
+  flex-wrap: nowrap !important;
+}
+.items-center {
+  -webkit-box-align: center !important;
+  -webkit-align-items: center !important;
+  align-items: center !important;
+}
+.items-start {
+  -webkit-box-align: start !important;
+  -webkit-align-items: flex-start !important;
+  align-items: flex-start !important;
+}
+.justify-center {
+  -webkit-box-pack: center !important;
+  -webkit-justify-content: center !important;
+  justify-content: center !important;
+}
+.justify-start {
+  -webkit-box-pack: start !important;
+  -webkit-justify-content: flex-start !important;
+  justify-content: flex-start !important;
+}
+.justify-between {
+  -webkit-box-pack: justify !important;
+  -webkit-justify-content: space-between !important;
+  justify-content: space-between !important;
+}
+.grow {
+  -webkit-box-flex: 1 !important;
+  -webkit-flex-grow: 1 !important;
+  flex-grow: 1 !important;
+}
+.shrink-0 {
+  -webkit-flex-shrink: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Display utilities */
+.block { display: block !important; }
+.inline-block { display: inline-block !important; }
+.hidden { display: none !important; }
+
+/* IMPORTANT: Override hidden for md:block at 1920px viewport */
+/* We're always at 1920px on TV, so md: breakpoints should apply */
+.hidden.md\\:block,
+[class*="hidden"][class*="md:block"] {
+  display: block !important;
+}
+.hidden.sm\\:flex,
+[class*="hidden"][class*="sm:flex"] {
+  display: -webkit-box !important;
+  display: -webkit-flex !important;
+  display: flex !important;
+}
+.hidden.md\\:flex,
+[class*="hidden"][class*="md:flex"] {
+  display: -webkit-box !important;
+  display: -webkit-flex !important;
+  display: flex !important;
+}
+.hidden.lg\\:block,
+[class*="hidden"][class*="lg:block"] {
+  display: block !important;
+}
+
+/* Position utilities */
+.relative { position: relative !important; }
+.absolute { position: absolute !important; }
+.fixed { position: fixed !important; }
+.inset-0 { top: 0 !important; right: 0 !important; bottom: 0 !important; left: 0 !important; }
+.inset-y-0 { top: 0 !important; bottom: 0 !important; }
+.top-0 { top: 0 !important; }
+.right-0 { right: 0 !important; }
+.bottom-0 { bottom: 0 !important; }
+.left-0 { left: 0 !important; }
+
+/* Overflow utilities */
+.overflow-hidden { overflow: hidden !important; }
+.overflow-auto { overflow: auto !important; }
+.overflow-x-auto { overflow-x: auto !important; }
+.overflow-y-auto { overflow-y: auto !important; }
+.overflow-x-hidden { overflow-x: hidden !important; }
+.overflow-y-hidden { overflow-y: hidden !important; }
+
+/* Text utilities */
+.truncate {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+.text-center { text-align: center !important; }
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+.font-bold { font-weight: 700 !important; }
+.font-normal { font-weight: 400 !important; }
+.italic { font-style: italic !important; }
+.underline { text-decoration: underline !important; }
+.leading-3 { line-height: 0.75rem !important; }
+.leading-4 { line-height: 1rem !important; }
+
+/* Cursor */
+.cursor-pointer { cursor: pointer !important; }
+
+/* Colors - Audiobookshelf palette */
+.text-white { color: #ffffff !important; }
+.text-gray-100 { color: #f7fafc !important; }
+.text-gray-200 { color: #edf2f7 !important; }
+.text-gray-300 { color: #e2e8f0 !important; }
+.text-gray-400 { color: #a0aec0 !important; }
+.text-gray-500 { color: #718096 !important; }
+.bg-bg { background-color: #232323 !important; }
+.bg-primary { background-color: #2d3748 !important; }
+.bg-fg { background-color: #3d4759 !important; }
+.bg-success { background-color: #48bb78 !important; }
+.bg-warning { background-color: #ed8936 !important; }
+.bg-error { background-color: #f56565 !important; }
+.text-success { color: #48bb78 !important; }
+.text-error { color: #f56565 !important; }
+.text-red-500 { color: #f56565 !important; }
+
+/* Borders */
+.border { border-width: 1px !important; }
+.border-t { border-top-width: 1px !important; }
+.border-b { border-bottom-width: 1px !important; }
+.border-gray-500 { border-color: #718096 !important; }
+.border-gray-600 { border-color: #4a5568 !important; }
+.border-black-200 { border-color: #1a1a1a !important; }
+.border-black-300 { border-color: #2d2d2d !important; }
+
+/* Shadows */
+.shadow-xs { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) !important; }
+.shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; }
+.shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important; }
+.shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important; }
+
+/* Pointer events */
+.pointer-events-none { pointer-events: none !important; }
+.pointer-events-auto { pointer-events: auto !important; }
+
+/* Opacity utilities */
+.opacity-0 { opacity: 0 !important; }
+.opacity-90 { opacity: 0.9 !important; }
 
 /* Appbar height - h-16 = 64px */
 .w-full.h-16.bg-primary {
@@ -320,21 +568,225 @@ a[href]:focus:not(#appbar a):not([role="toolbar"] a):not(.bookshelfRow a):not(.c
 }
 
 /* ==========================================================================
-   SIDERAIL ADJUSTMENTS
-   Ensure siderail is always visible and properly sized for TV.
+   SIDERAIL (LEFT SIDEBAR) - CRITICAL FOR TV NAVIGATION
+   The sidebar has class "hidden md:block" which should show at 1920px.
+   Chrome 47 may not properly evaluate the breakpoint, so force display.
    ========================================================================== */
 
-/* Keep siderail visible */
+/* Siderail container - force visible and properly sized */
 [role="toolbar"][aria-orientation="vertical"] {
   display: block !important;
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
+  /* Explicit sizing - w-20 = 80px */
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+  /* Position fixed below appbar */
+  position: fixed !important;
+  left: 0 !important;
+  top: 64px !important; /* h-16 = 64px appbar height */
+  bottom: 0 !important;
+  height: auto !important;
+  /* Background and z-index */
+  background-color: #232323 !important; /* bg-bg color */
+  z-index: 50 !important;
 }
 
-/* Larger touch targets for siderail links */
+/* Siderail navigation links - h-20 = 80px each */
 #siderail-buttons-container a {
+  display: -webkit-box !important;
+  display: -webkit-flex !important;
+  display: flex !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-flex-direction: column !important;
+  flex-direction: column !important;
+  -webkit-box-align: center !important;
+  -webkit-align-items: center !important;
+  align-items: center !important;
+  -webkit-box-pack: center !important;
+  -webkit-justify-content: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 80px !important;
   min-height: 80px !important;
+  padding: 8px 4px !important;
+  border-bottom: 1px solid rgba(45, 55, 72, 0.7) !important; /* border-primary/70 */
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+
+/* Siderail link icons */
+#siderail-buttons-container a .material-symbols {
+  font-size: 1.5rem !important;
+  margin-bottom: 4px !important;
+}
+
+/* Siderail link text */
+#siderail-buttons-container a p {
+  font-size: 0.9rem !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  margin: 0 !important;
+  padding-top: 6px !important;
+}
+
+/* Active siderail link indicator (yellow bar) */
+#siderail-buttons-container a .bg-yellow-400 {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 2px !important;
+  height: 100% !important;
+  background-color: #f6e05e !important; /* yellow-400 */
+}
+
+/* ==========================================================================
+   APPBAR (TOP BAR) - FIXED AT TOP
+   ========================================================================== */
+
+/* Main appbar container - h-16 = 64px */
+.w-full.h-16.bg-primary {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  z-index: 60 !important;
+  background-color: #2d3748 !important; /* bg-primary color */
+}
+
+/* Appbar inner container */
+#appbar {
+  display: -webkit-box !important;
+  display: -webkit-flex !important;
+  display: flex !important;
+  -webkit-box-align: center !important;
+  -webkit-align-items: center !important;
+  align-items: center !important;
+  height: 100% !important;
+  padding-left: 24px !important; /* px-6 at md */
+  padding-right: 24px !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* Appbar flex container */
+#appbar > .flex {
+  display: -webkit-box !important;
+  display: -webkit-flex !important;
+  display: flex !important;
+  -webkit-box-align: center !important;
+  -webkit-align-items: center !important;
+  align-items: center !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Appbar logo - w-10 h-10 at sm+ */
+#appbar img {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  margin-right: 16px !important;
+}
+
+/* Appbar title - show at lg (1024px), we're at 1920px */
+#appbar h1 {
+  display: block !important;
+  font-size: 1.25rem !important;
+  margin-right: 24px !important;
+  white-space: nowrap !important;
+}
+
+/* Library dropdown button */
+#appbar button[aria-label*="Library"] {
+  height: 32px !important;
+  min-width: 100% !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+/* Search input container */
+#appbar .relative.w-full.sm\\:w-80,
+#appbar [class*="sm:w-80"] {
+  width: 320px !important;
+  min-width: 320px !important;
+}
+
+/* Search input */
+#appbar input[placeholder="Search.."] {
+  height: 32px !important;
+  width: 100% !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+}
+
+/* Appbar icon buttons - w-8 h-8 */
+#appbar a[href*="/config"],
+#appbar a[href*="/upload"],
+#appbar a[href*="/stats"] {
+  display: -webkit-box !important;
+  display: -webkit-flex !important;
+  display: flex !important;
+  -webkit-box-align: center !important;
+  -webkit-align-items: center !important;
+  align-items: center !important;
+  -webkit-box-pack: center !important;
+  -webkit-justify-content: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  margin: 0 4px !important;
+}
+
+/* User account button */
+#appbar a[href*="/account"] {
+  display: -webkit-box !important;
+  display: -webkit-flex !important;
+  display: flex !important;
+  -webkit-box-align: center !important;
+  -webkit-align-items: center !important;
+  align-items: center !important;
+  min-width: 128px !important; /* md:w-32 */
+  height: 36px !important;
+  padding: 8px 12px !important;
+  margin-left: 20px !important;
+  background-color: #3d4759 !important; /* bg-fg */
+  border: 1px solid #718096 !important; /* border-gray-500 */
+  border-radius: 4px !important;
+}
+
+/* Notifications button - force visible at md+ */
+#appbar .hidden.md\\:block,
+#appbar [class*="hidden md:block"],
+#appbar [class*="hidden sm:flex"] {
+  display: -webkit-box !important;
+  display: -webkit-flex !important;
+  display: flex !important;
+}
+
+/* Grow spacer */
+#appbar .grow {
+  -webkit-box-flex: 1 !important;
+  -webkit-flex-grow: 1 !important;
+  flex-grow: 1 !important;
+}
+
+/* ==========================================================================
+   MAIN CONTENT AREA - OFFSET FOR FIXED HEADER/SIDEBAR
+   ========================================================================== */
+
+/* Main content should be offset by appbar and siderail */
+.text-white.max-h-screen {
+  padding-top: 64px !important; /* Appbar height */
+  padding-left: 80px !important; /* Siderail width */
+  box-sizing: border-box !important;
 }
 
 /* ==========================================================================

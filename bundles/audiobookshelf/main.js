@@ -5,15 +5,40 @@
  * 
  * This bundle runs directly in the page (MOD mode), not in an iframe.
  * 
+ * Architecture:
+ * - Navigation targets stable outer shells (book cards, nav items)
+ * - Single-action cards: OK activates, Back exits
+ * - Multi-action cards: OK enters for inner navigation, Back exits to shell
+ * - CSS-first spacing enforcement (4px minimum gap)
+ * 
  * Features:
- * - Viewport lock to 1920px (disables Tailwind responsive breakpoints)
+ * - Viewport adjustment for TV display
  * - Focus management for siderail and content
  * - TV-friendly focus indicators
  * - Text input wrapping (no keyboard until Enter pressed)
  * - Scroll-into-view with margin for focused elements
+ * - Card interaction model (single/multi-action detection)
  */
 
 import absStyles from './style.css';
+import { 
+  isSingleActionCard, 
+  isMultiActionCard, 
+  handleOK, 
+  handleBack, 
+  isInsideCard, 
+  exitCard,
+  getPrimaryAction,
+  getFocusableChildren 
+} from '../../navigation/card-interaction.js';
+import { 
+  injectSpacingCSS, 
+  MIN_GAP, 
+  SPACING_CLASS,
+  validateSpacing,
+  logViolations,
+  isElementVisible 
+} from '../../navigation/geometry.js';
 
 /**
  * Track if bundle has been activated
@@ -105,8 +130,14 @@ export default {
   onDOMReady: function() {
     console.log('TizenPortal [ABS]: DOM ready');
     
-    // Set up focusable elements
+    // Inject geometry spacing CSS
+    injectSpacingCSS();
+    
+    // Set up focusable elements with card markers
     this.setupFocusables();
+    
+    // Apply spacing class to card containers
+    this.applySpacingClasses();
     
     // Wrap text inputs for TV-friendly keyboard handling
     this.wrapTextInputs();
@@ -114,8 +145,16 @@ export default {
     // Set up scroll-into-view for focused elements
     this.setupScrollIntoView();
     
+    // Set up key handler for card interaction model
+    this.setupKeyHandler();
+    
     // Observe DOM for dynamic content (Nuxt/Vue renders dynamically)
     this.observeDOM();
+    
+    // Validate spacing in debug mode
+    if (window.TizenPortal && window.TizenPortal.debug) {
+      this.validateAllSpacing();
+    }
     
     // Set initial focus after a short delay (let Vue render)
     var self = this;
@@ -143,6 +182,152 @@ export default {
     
     // Remove focus listener
     document.removeEventListener('focusin', this.handleFocusIn);
+    
+    // Remove key listener
+    document.removeEventListener('keydown', this.handleKeyDown);
+    
+    // Exit any entered card
+    if (isInsideCard()) {
+      exitCard();
+    }
+  },
+  
+  /**
+   * Set up key handler for card interaction model
+   */
+  setupKeyHandler: function() {
+    var self = this;
+    
+    this.handleKeyDown = function(e) {
+      var keyCode = e.keyCode || e.which;
+      var activeEl = document.activeElement;
+      
+      // OK/Enter key (13) or Tizen OK (10009)
+      if (keyCode === 13 || keyCode === 10009) {
+        // Check if focused element is a card shell
+        var card = self.findCardElement(activeEl);
+        if (card && !isInsideCard()) {
+          // Determine card type and handle accordingly
+          if (isSingleActionCard(card)) {
+            // Single action: activate directly
+            var action = getPrimaryAction(card);
+            if (action && action !== card) {
+              e.preventDefault();
+              action.click();
+              console.log('TizenPortal [ABS]: Activated single-action card');
+              return;
+            }
+          } else if (isMultiActionCard(card)) {
+            // Multi-action: enter the card
+            var focusables = getFocusableChildren(card);
+            if (focusables.length > 1) {
+              e.preventDefault();
+              if (handleOK(card)) {
+                console.log('TizenPortal [ABS]: Entered multi-action card');
+                return;
+              }
+            }
+          }
+        }
+      }
+      
+      // Back/Escape key (27, 10009) 
+      if (keyCode === 27 || keyCode === 10009) {
+        if (handleBack()) {
+          e.preventDefault();
+          console.log('TizenPortal [ABS]: Exited card via Back');
+          return;
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', this.handleKeyDown, true);
+    console.log('TizenPortal [ABS]: Key handler for card interaction enabled');
+  },
+  
+  /**
+   * Find the card element from a focused element
+   * @param {HTMLElement} el
+   * @returns {HTMLElement|null}
+   */
+  findCardElement: function(el) {
+    if (!el) return null;
+    
+    // Check if element itself is a card
+    if (el.id && el.id.match(/^(book-card-|series-card-)/)) {
+      return el;
+    }
+    
+    // Check if it has card marker
+    if (el.hasAttribute('data-tp-card')) {
+      return el;
+    }
+    
+    // Walk up to find card
+    var parent = el.parentElement;
+    while (parent && parent !== document.body) {
+      if (parent.id && parent.id.match(/^(book-card-|series-card-)/)) {
+        return parent;
+      }
+      if (parent.hasAttribute('data-tp-card')) {
+        return parent;
+      }
+      parent = parent.parentElement;
+    }
+    
+    return null;
+  },
+  
+  /**
+   * Apply spacing classes to containers
+   */
+  applySpacingClasses: function() {
+    var count = 0;
+    
+    try {
+      // Bookshelf rows need spacing
+      var rows = document.querySelectorAll(SELECTORS.bookshelfRow);
+      for (var i = 0; i < rows.length; i++) {
+        if (!rows[i].classList.contains(SPACING_CLASS)) {
+          rows[i].classList.add(SPACING_CLASS);
+          count++;
+        }
+      }
+      
+      // Siderail container
+      var siderail = document.querySelector('#siderail-buttons-container');
+      if (siderail && !siderail.classList.contains(SPACING_CLASS)) {
+        siderail.classList.add(SPACING_CLASS);
+        count++;
+      }
+      
+      // Appbar
+      var appbar = document.querySelector(SELECTORS.appbar);
+      if (appbar && !appbar.classList.contains(SPACING_CLASS)) {
+        appbar.classList.add(SPACING_CLASS);
+        count++;
+      }
+      
+      if (count > 0) {
+        console.log('TizenPortal [ABS]: Applied spacing class to', count, 'containers');
+      }
+    } catch (err) {
+      console.warn('TizenPortal [ABS]: Error applying spacing classes:', err.message);
+    }
+  },
+  
+  /**
+   * Validate spacing in all containers (debug mode)
+   */
+  validateAllSpacing: function() {
+    var rows = document.querySelectorAll(SELECTORS.bookshelfRow);
+    for (var i = 0; i < rows.length; i++) {
+      var result = validateSpacing(rows[i]);
+      if (!result.valid) {
+        console.warn('TizenPortal [ABS]: Bookshelf row', i, 'has spacing violations');
+        logViolations(result);
+      }
+    }
   },
   
   /**
@@ -384,13 +569,13 @@ export default {
   },
 
   /**
-   * Set up focusable elements with tabindex
+   * Set up focusable elements with tabindex and card markers
    */
   setupFocusables: function() {
     var count = 0;
     
     try {
-      // Siderail navigation links
+      // Siderail navigation links - these are single-action cards
       var siderailLinks = document.querySelectorAll(SELECTORS.siderailNav);
       for (var i = 0; i < siderailLinks.length; i++) {
         var el = siderailLinks[i];
@@ -398,9 +583,12 @@ export default {
           el.setAttribute('tabindex', '0');
           count++;
         }
+        // Mark as single-action card (siderail links are always single-action)
+        el.setAttribute('data-tp-card', 'single');
       }
       
       // Book cards (main content) - these are divs with id="book-card-N"
+      // They may be single or multi-action depending on content
       var bookCards = document.querySelectorAll(SELECTORS.bookCards);
       for (var j = 0; j < bookCards.length; j++) {
         var card = bookCards[j];
@@ -408,6 +596,12 @@ export default {
         if (card.getAttribute('tabindex') !== '0') {
           card.setAttribute('tabindex', '0');
           count++;
+        }
+        // Mark as card - let runtime determine single vs multi
+        if (!card.hasAttribute('data-tp-card')) {
+          // Detect card type based on interactive children
+          var cardType = isSingleActionCard(card) ? 'single' : 'multi';
+          card.setAttribute('data-tp-card', cardType);
         }
       }
       
@@ -505,6 +699,7 @@ export default {
         debounceTimeout = setTimeout(function() {
           debounceTimeout = null;
           self.setupFocusables();
+          self.applySpacingClasses();
           self.wrapTextInputs();
         }, 250);
       });
@@ -526,8 +721,17 @@ export default {
    * @returns {boolean} True if event was consumed
    */
   onKeyDown: function(event) {
+    var keyCode = event.keyCode || event.which;
+    
+    // Back/Escape - check if we're inside a card
+    if (keyCode === 27 || keyCode === 10009) {
+      if (isInsideCard()) {
+        exitCard();
+        return true;
+      }
+    }
+    
     // Future: Add media key handling for player
-    // For now, let spatial navigation handle arrow keys
     return false;
   },
 };

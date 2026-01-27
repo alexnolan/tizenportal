@@ -357,12 +357,21 @@ span.material-symbols {
 
 /* ==========================================================================
    ELEMENT SPACING - GAPS FOR SPATIAL NAVIGATION
-   Elements need physical gaps for spatial navigation to work correctly.
+   CSS-first approach: Minimum 4px gap between focusable elements.
+   This ensures spatial navigation can reliably distinguish adjacent elements.
    ========================================================================== */
 
+/* CSS variable for minimum spatial navigation gap */
+:root {
+  --tp-spatial-gap: 4px;
+}
+
 /* Siderail link spacing - gap between each navigation item */
+#siderail-buttons-container {
+  gap: var(--tp-spatial-gap, 4px) !important;
+}
 #siderail-buttons-container a {
-  margin-bottom: 4px !important;
+  margin-bottom: var(--tp-spatial-gap, 4px) !important;
 }
 
 /* Appbar element spacing */
@@ -439,6 +448,8 @@ span.material-symbols {
   /* Allow content to extend beyond container */
   width: max-content !important;
   min-width: 100% !important;
+  /* Minimum gap for spatial navigation */
+  gap: var(--tp-spatial-gap, 4px) !important;
 }
 
 /* Book card container - MUST have gaps for spatial navigation */
@@ -448,7 +459,7 @@ span.material-symbols {
   vertical-align: top !important;
   /* Remove absolute positioning - it breaks flex flow */
   position: relative !important;
-  /* CRITICAL: Gaps between cards for spatial navigation */
+  /* CRITICAL: Gaps between cards for spatial navigation - minimum 4px */
   margin: 16px !important;
   /* Flex item properties */
   -webkit-flex-shrink: 0 !important;

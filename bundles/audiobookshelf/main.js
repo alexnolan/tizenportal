@@ -86,35 +86,169 @@ import {
  * 
  * These selectors match ABS's Vue/Nuxt-generated HTML.
  * Update these when ABS changes its HTML structure.
+ * 
+ * Reference: https://github.com/advplyr/audiobookshelf/tree/main/client
  */
 var SELECTORS = {
-  // Layout containers
+  // ==========================================================================
+  // LAYOUT CONTAINERS
+  // ==========================================================================
   appbar: '#appbar',
   siderail: '[role="toolbar"][aria-orientation="vertical"]',
   siderailNav: '#siderail-buttons-container a',
   bookshelfRow: '.bookshelfRow, .categorizedBookshelfRow',
+  pageWrapper: '#page-wrapper, .page',
   
-  // Focusable content
+  // ==========================================================================
+  // CARDS - Different types have different aspect ratios
+  // ==========================================================================
+  // Book cards: 1:1 aspect ratio (square)
   bookCards: '[id^="book-card-"]',
-  appbarButtons: '#appbar button, #appbar a[href]',
-  menuItems: '[role="menuitem"]',
   
-  // Text inputs to wrap
-  textInputs: 'input[type="text"], input[type="search"], input:not([type])',
+  // Series cards: 2:1 aspect ratio (wider, shows multiple book covers)
+  seriesCards: '[id^="series-card-"]',
+  
+  // Collection cards: 2:1 aspect ratio (similar to series)
+  collectionCards: '[id^="collection-card-"]',
+  
+  // Author cards: different layout with photo + name
+  authorCards: '.author-card, [id^="author-card-"]',
+  
+  // Playlist cards
+  playlistCards: '[id^="playlist-card-"]',
+  
+  // All cards combined (for marking as focusable)
+  allCards: '[id^="book-card-"], [id^="series-card-"], [id^="collection-card-"], [id^="playlist-card-"], .author-card',
+  
+  // ==========================================================================
+  // LOGIN PAGE (/login)
+  // ==========================================================================
+  loginForm: 'form[action*="login"], form',
+  loginUsername: 'input[name="username"], input[placeholder*="username" i]',
+  loginPassword: 'input[type="password"]',
+  loginSubmit: 'button[type="submit"], ui-btn[type="submit"]',
+  loginOpenID: 'a[href*="/auth/openid"]',
+  
+  // ==========================================================================
+  // BOOK/ITEM DETAIL PAGE (/item/_id)
+  // ==========================================================================
+  itemDetailPage: '.page:has([id*="item-"])',
+  itemCover: '.covers-book-cover, [class*="book-cover"]',
+  itemTitle: 'h1',
+  itemPlayButton: 'button:has(.material-symbols):has(:not([disabled]))',
+  itemEditButton: 'button[aria-label*="Edit"]',
+  itemDetails: '.grow.px-2, [class*="item-details"]',
+  itemTabs: '[role="tablist"]',
+  itemTabPanels: '[role="tabpanel"]',
+  
+  // ==========================================================================
+  // PLAYER (bottom bar when playing)
+  // ==========================================================================
+  playerContainer: '#mediaPlayerContainer',
+  playerCover: '#mediaPlayerContainer .covers-book-cover',
+  playerTitle: '#mediaPlayerContainer a[href^="/item/"]',
+  playerPlayPause: '#mediaPlayerContainer button:has(.material-symbols):has(span:contains("play")), #mediaPlayerContainer button:has(.material-symbols):has(span:contains("pause"))',
+  playerSeekBack: '#mediaPlayerContainer button:has(span[class*="replay"])',
+  playerSeekForward: '#mediaPlayerContainer button:has(span[class*="forward"])',
+  playerClose: '#mediaPlayerContainer button:has(span:contains("close"))',
+  playerProgress: '#mediaPlayerContainer [class*="progress"], .player-progress-bar',
+  playerChapters: '#mediaPlayerContainer [class*="chapter"]',
+  
+  // ==========================================================================
+  // APPBAR (top navigation)
+  // ==========================================================================
+  appbarButtons: '#appbar button, #appbar a[href]',
+  appbarSearch: '#appbar input[type="search"], #appbar input[placeholder*="Search"]',
+  appbarLibrarySelect: '#appbar [class*="library-select"], #appbar button:has(.material-symbols)',
+  appbarUserMenu: '#appbar [class*="user-menu"], #appbar button:has(img[class*="avatar"])',
+  
+  // ==========================================================================
+  // MODALS & DIALOGS
+  // ==========================================================================
+  modal: '.modal, [role="dialog"]',
+  modalClose: '.modal button[aria-label*="Close"], [role="dialog"] button:has(span:contains("close"))',
+  modalButtons: '.modal button, [role="dialog"] button',
+  
+  // ==========================================================================
+  // DROPDOWN MENUS
+  // ==========================================================================
+  menuItems: '[role="menuitem"]',
+  dropdown: '.dropdown-menu, [role="menu"]',
+  dropdownItem: '.dropdown-item, [role="menuitem"]',
+  
+  // ==========================================================================
+  // CONFIG/SETTINGS PAGES
+  // ==========================================================================
+  configSideNav: '.app-config-side-nav, [class*="config-side-nav"]',
+  configContent: '.configContent',
+  settingsForm: 'form',
+  settingsInput: 'input, select, textarea',
+  settingsButton: 'button[type="submit"], .ui-btn',
+  
+  // ==========================================================================
+  // TEXT INPUTS TO WRAP (TV keyboard handling)
+  // ==========================================================================
+  textInputs: 'input[type="text"], input[type="search"], input[type="password"], input:not([type]), textarea',
 };
 
 /**
- * Initial focus targets (tried in order)
+ * Initial focus targets by page type (tried in order)
  * 
  * These selectors are passed to setInitialFocus() from core.
  * The first matching element gets focus on page load.
  */
-var INITIAL_FOCUS_SELECTORS = [
-  '#siderail-buttons-container a.nuxt-link-active',  // Active nav link
-  '#siderail-buttons-container a',                    // First nav link
-  '[id^="book-card-"]',                               // First book card
-  'input[placeholder*="Search"]',                     // Search input
-];
+var INITIAL_FOCUS_SELECTORS = {
+  // Default (library/home page)
+  default: [
+    '#siderail-buttons-container a.nuxt-link-active',  // Active nav link
+    '#siderail-buttons-container a',                    // First nav link
+    '[id^="book-card-"]',                               // First book card
+    '[id^="series-card-"]',                             // First series card
+    'input[placeholder*="Search"]',                     // Search input
+  ],
+  
+  // Login page
+  login: [
+    'input[name="username"]',                           // Username field
+    'input[placeholder*="username" i]',                 // Username field alt
+    'a[href*="/auth/openid"]',                          // OpenID login button
+    'button[type="submit"]',                            // Submit button
+  ],
+  
+  // Item detail page
+  item: [
+    'button:has(.material-symbols):has(span)',          // Play button
+    'h1',                                               // Title (for reading)
+    '.covers-book-cover',                               // Cover image
+  ],
+  
+  // Config/Settings pages
+  config: [
+    '.app-config-side-nav a.nuxt-link-active',          // Active config link
+    '.app-config-side-nav a',                           // First config link
+    'form input:first-of-type',                         // First form input
+  ],
+};
+
+/**
+ * Get initial focus selectors for current page
+ * @returns {string[]}
+ */
+function getInitialFocusSelectors() {
+  var path = window.location.pathname || '';
+  
+  if (path.indexOf('/login') !== -1) {
+    return INITIAL_FOCUS_SELECTORS.login;
+  }
+  if (path.indexOf('/item/') !== -1) {
+    return INITIAL_FOCUS_SELECTORS.item;
+  }
+  if (path.indexOf('/config') !== -1) {
+    return INITIAL_FOCUS_SELECTORS.config;
+  }
+  
+  return INITIAL_FOCUS_SELECTORS.default;
+}
 
 /**
  * Scroll-into-view configuration for ABS layout
@@ -230,7 +364,7 @@ export default {
     }
     
     // CORE: Set initial focus after Vue finishes rendering
-    setInitialFocus(INITIAL_FOCUS_SELECTORS, 500);
+    setInitialFocus(getInitialFocusSelectors(), 500);
     
     // Debug: Validate spacing in debug mode
     if (window.TizenPortal && window.TizenPortal.debug) {
@@ -281,7 +415,7 @@ export default {
    * 
    * Use this for:
    * - Media keys for the ABS player
-   * - Custom navigation for ABS-specific UI patterns
+   * - Custom navigation for ABS-specific UI patterns (siderail, player)
    * - Intercepting keys that core handles "wrong" for ABS
    * 
    * @param {KeyboardEvent} event
@@ -289,35 +423,114 @@ export default {
    */
   handleKeyDown: function(event) {
     var keyCode = event.keyCode;
+    var active = document.activeElement;
     
     // ========================================================================
-    // EXAMPLE: Media keys for ABS player (future implementation)
+    // SIDERAIL: Vertical-only navigation
     // ========================================================================
-    // 
-    // if (this.isPlayerActive()) {
-    //   if (keyCode === KEYS.PLAY_PAUSE) {
-    //     this.togglePlayback();
-    //     return true; // Consumed - core won't handle
-    //   }
-    //   if (keyCode === KEYS.REWIND) {
-    //     this.seekBack(30);
-    //     return true;
-    //   }
-    //   if (keyCode === KEYS.FAST_FORWARD) {
-    //     this.seekForward(30);
-    //     return true;
-    //   }
-    // }
+    // The siderail is a vertical list of navigation links.
+    // Left/Right should exit siderail, not move within it.
+    
+    if (this.isInSiderail(active)) {
+      // LEFT: Exit siderail, focus first card on bookshelf
+      if (keyCode === KEYS.LEFT) {
+        // Jump LEFT from siderail doesn't make sense - siderail is on the left
+        // So we do nothing (don't let spatial nav try to go further left)
+        return true; // Consume - nowhere to go left
+      }
+      
+      // RIGHT: Exit siderail to bookshelf
+      if (keyCode === KEYS.RIGHT) {
+        var firstCard = document.querySelector(SELECTORS.allCards);
+        if (firstCard) {
+          firstCard.focus();
+          return true; // Consumed
+        }
+        // Fall through to let spatial nav handle it
+      }
+      
+      // UP/DOWN: Let spatial nav handle vertical movement within siderail
+      // But restrict it to only siderail elements
+      if (keyCode === KEYS.UP || keyCode === KEYS.DOWN) {
+        var links = document.querySelectorAll(SELECTORS.siderailNav);
+        if (links.length > 0) {
+          var currentIndex = -1;
+          for (var i = 0; i < links.length; i++) {
+            if (links[i] === active) {
+              currentIndex = i;
+              break;
+            }
+          }
+          
+          if (currentIndex !== -1) {
+            var nextIndex;
+            if (keyCode === KEYS.UP) {
+              nextIndex = Math.max(0, currentIndex - 1);
+            } else {
+              nextIndex = Math.min(links.length - 1, currentIndex + 1);
+            }
+            
+            if (nextIndex !== currentIndex) {
+              links[nextIndex].focus();
+            }
+            return true; // Consumed - handled vertical navigation ourselves
+          }
+        }
+      }
+    }
     
     // ========================================================================
-    // EXAMPLE: Custom siderail navigation
+    // BOOKSHELF: LEFT goes to siderail
     // ========================================================================
-    //
-    // if (keyCode === KEYS.LEFT && this.isOnBookshelf()) {
-    //   // Jump to siderail instead of spatial nav
-    //   this.focusSiderail();
-    //   return true;
-    // }
+    if (this.isOnBookshelf() && keyCode === KEYS.LEFT) {
+      // Check if we're at the leftmost card in a row
+      var currentCard = active.closest(SELECTORS.allCards);
+      if (currentCard) {
+        var row = currentCard.closest(SELECTORS.bookshelfRow);
+        if (row) {
+          var cards = row.querySelectorAll(SELECTORS.allCards);
+          if (cards.length > 0 && cards[0] === currentCard) {
+            // We're at the leftmost card - jump to siderail
+            this.focusSiderail();
+            return true; // Consumed
+          }
+        }
+      }
+    }
+    
+    // ========================================================================
+    // PLAYER CONTROLS: Horizontal-only navigation
+    // ========================================================================
+    if (this.isInPlayer(active)) {
+      // UP/DOWN should exit player, not move within it
+      if (keyCode === KEYS.UP) {
+        // Focus something above the player (bookshelf or siderail)
+        var above = document.querySelector(SELECTORS.allCards + ', ' + SELECTORS.siderailNav);
+        if (above) {
+          above.focus();
+          return true;
+        }
+      }
+      if (keyCode === KEYS.DOWN) {
+        // Player is at bottom - nowhere to go
+        return true; // Consume
+      }
+      
+      // Media keys for player (future implementation)
+      // if (keyCode === KEYS.PLAY_PAUSE) {
+      //   this.togglePlayback();
+      //   return true;
+      // }
+    }
+    
+    // ========================================================================
+    // MODAL: Trap focus within modal
+    // ========================================================================
+    var modal = document.querySelector(SELECTORS.modal + ':not([style*="display: none"])');
+    if (modal && modal.offsetParent !== null && modal.contains(active)) {
+      // Focus is inside a visible modal - let core handle navigation within it
+      // but don't let focus escape
+    }
     
     // Return false to let core handle the key
     return false;
@@ -334,12 +547,21 @@ export default {
    * - Which elements should be focusable
    * - Which elements are "cards" (for Enter/Escape handling)
    * - Whether cards are single-action or multi-action
+   * - Which containers should have restricted navigation
    */
   setupFocusables: function() {
     var count = 0;
     
     try {
-      // Siderail navigation links - single-action (clicking navigates)
+      // ========================================================================
+      // SIDERAIL - Vertical navigation (up/down only)
+      // ========================================================================
+      var siderail = document.querySelector(SELECTORS.siderail);
+      if (siderail && !siderail.hasAttribute('data-tp-nav')) {
+        // Mark siderail for vertical-only navigation
+        siderail.setAttribute('data-tp-nav', 'vertical');
+      }
+      
       var siderailLinks = document.querySelectorAll(SELECTORS.siderailNav);
       for (var i = 0; i < siderailLinks.length; i++) {
         var el = siderailLinks[i];
@@ -347,13 +569,14 @@ export default {
           el.setAttribute('tabindex', '0');
           count++;
         }
-        // Mark as single-action card
+        // Mark as single-action card (clicking navigates)
         el.setAttribute('data-tp-card', 'single');
       }
       
-      // Book cards - single-action for TV
-      // ABS cards have hover buttons (play, edit, more) but those are mouse-only.
-      // For TV users, Enter navigates to the item detail page.
+      // ========================================================================
+      // CARDS - All types are single-action for TV
+      // ========================================================================
+      // Book cards (1:1 aspect ratio)
       var bookCards = document.querySelectorAll(SELECTORS.bookCards);
       for (var j = 0; j < bookCards.length; j++) {
         var card = bookCards[j];
@@ -361,13 +584,53 @@ export default {
           card.setAttribute('tabindex', '0');
           count++;
         }
-        // Mark as single-action: Enter clicks card to navigate
         if (!card.hasAttribute('data-tp-card')) {
           card.setAttribute('data-tp-card', 'single');
         }
       }
       
-      // Appbar buttons and links
+      // Series cards (2:1 aspect ratio - wider)
+      var seriesCards = document.querySelectorAll(SELECTORS.seriesCards);
+      for (var s = 0; s < seriesCards.length; s++) {
+        var sCard = seriesCards[s];
+        if (sCard.getAttribute('tabindex') !== '0') {
+          sCard.setAttribute('tabindex', '0');
+          count++;
+        }
+        if (!sCard.hasAttribute('data-tp-card')) {
+          sCard.setAttribute('data-tp-card', 'single');
+        }
+      }
+      
+      // Collection cards (2:1 aspect ratio)
+      var collectionCards = document.querySelectorAll(SELECTORS.collectionCards);
+      for (var c = 0; c < collectionCards.length; c++) {
+        var cCard = collectionCards[c];
+        if (cCard.getAttribute('tabindex') !== '0') {
+          cCard.setAttribute('tabindex', '0');
+          count++;
+        }
+        if (!cCard.hasAttribute('data-tp-card')) {
+          cCard.setAttribute('data-tp-card', 'single');
+        }
+      }
+      
+      // Playlist cards
+      var playlistCards = document.querySelectorAll(SELECTORS.playlistCards);
+      for (var p = 0; p < playlistCards.length; p++) {
+        var pCard = playlistCards[p];
+        if (pCard.getAttribute('tabindex') !== '0') {
+          pCard.setAttribute('tabindex', '0');
+          count++;
+        }
+        if (!pCard.hasAttribute('data-tp-card')) {
+          pCard.setAttribute('data-tp-card', 'single');
+        }
+      }
+      
+      // ========================================================================
+      // APPBAR - Search and buttons
+      // ========================================================================
       var appbarEls = document.querySelectorAll(SELECTORS.appbarButtons);
       for (var k = 0; k < appbarEls.length; k++) {
         var appEl = appbarEls[k];
@@ -379,13 +642,87 @@ export default {
         }
       }
       
-      // Dropdown menu items
+      // ========================================================================
+      // DROPDOWN MENU ITEMS
+      // ========================================================================
       var menuItems = document.querySelectorAll(SELECTORS.menuItems);
       for (var m = 0; m < menuItems.length; m++) {
         var menuEl = menuItems[m];
         if (menuEl.getAttribute('tabindex') !== '0') {
           menuEl.setAttribute('tabindex', '0');
           count++;
+        }
+      }
+      
+      // ========================================================================
+      // PLAYER CONTROLS (when player is visible)
+      // ========================================================================
+      var playerContainer = document.querySelector(SELECTORS.playerContainer);
+      if (playerContainer) {
+        // Mark player for horizontal navigation
+        if (!playerContainer.hasAttribute('data-tp-nav')) {
+          playerContainer.setAttribute('data-tp-nav', 'horizontal');
+        }
+        
+        var playerButtons = playerContainer.querySelectorAll('button');
+        for (var pb = 0; pb < playerButtons.length; pb++) {
+          var pBtn = playerButtons[pb];
+          if (pBtn.getAttribute('tabindex') !== '0' &&
+              !pBtn.disabled &&
+              pBtn.getAttribute('aria-hidden') !== 'true') {
+            pBtn.setAttribute('tabindex', '0');
+            count++;
+          }
+        }
+      }
+      
+      // ========================================================================
+      // LOGIN PAGE (special handling)
+      // ========================================================================
+      if (window.location.pathname.indexOf('/login') !== -1) {
+        // Login form inputs
+        var loginInputs = document.querySelectorAll(SELECTORS.loginUsername + ', ' + SELECTORS.loginPassword);
+        for (var li = 0; li < loginInputs.length; li++) {
+          var input = loginInputs[li];
+          if (input.getAttribute('tabindex') !== '0') {
+            input.setAttribute('tabindex', '0');
+            count++;
+          }
+        }
+        
+        // Login submit button
+        var submitBtns = document.querySelectorAll(SELECTORS.loginSubmit);
+        for (var sb = 0; sb < submitBtns.length; sb++) {
+          if (submitBtns[sb].getAttribute('tabindex') !== '0') {
+            submitBtns[sb].setAttribute('tabindex', '0');
+            count++;
+          }
+        }
+        
+        // OpenID login link
+        var openIdLinks = document.querySelectorAll(SELECTORS.loginOpenID);
+        for (var oi = 0; oi < openIdLinks.length; oi++) {
+          if (openIdLinks[oi].getAttribute('tabindex') !== '0') {
+            openIdLinks[oi].setAttribute('tabindex', '0');
+            count++;
+          }
+        }
+      }
+      
+      // ========================================================================
+      // MODALS (when visible)
+      // ========================================================================
+      var modals = document.querySelectorAll(SELECTORS.modal);
+      for (var md = 0; md < modals.length; md++) {
+        var modal = modals[md];
+        if (modal.offsetParent !== null) { // Modal is visible
+          var modalBtns = modal.querySelectorAll('button, a, input, select');
+          for (var mb = 0; mb < modalBtns.length; mb++) {
+            if (modalBtns[mb].getAttribute('tabindex') !== '0') {
+              modalBtns[mb].setAttribute('tabindex', '0');
+              count++;
+            }
+          }
         }
       }
       
@@ -464,8 +801,34 @@ export default {
    * @returns {boolean}
    */
   isPlayerActive: function() {
-    // TODO: Implement when adding player support
-    return false;
+    var player = document.querySelector(SELECTORS.playerContainer);
+    return player && player.offsetParent !== null;
+  },
+  
+  /**
+   * Check if focus is currently in the siderail
+   * @param {Element} [el] - Element to check (defaults to activeElement)
+   * @returns {boolean}
+   */
+  isInSiderail: function(el) {
+    var active = el || document.activeElement;
+    if (!active) return false;
+    
+    var siderail = document.querySelector(SELECTORS.siderail);
+    return siderail && siderail.contains(active);
+  },
+  
+  /**
+   * Check if focus is currently in the player
+   * @param {Element} [el] - Element to check (defaults to activeElement)
+   * @returns {boolean}
+   */
+  isInPlayer: function(el) {
+    var active = el || document.activeElement;
+    if (!active) return false;
+    
+    var player = document.querySelector(SELECTORS.playerContainer);
+    return player && player.contains(active);
   },
   
   /**
@@ -478,9 +841,17 @@ export default {
   },
   
   /**
-   * Focus the first siderail link
+   * Focus the first siderail link (or the active one)
    */
   focusSiderail: function() {
+    // Try to focus the active link first
+    var activeLink = document.querySelector(SELECTORS.siderailNav + '.nuxt-link-active');
+    if (activeLink) {
+      activeLink.focus();
+      return;
+    }
+    
+    // Fall back to first link
     var first = document.querySelector(SELECTORS.siderailNav);
     if (first) {
       first.focus();

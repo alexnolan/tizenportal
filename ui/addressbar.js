@@ -45,16 +45,23 @@ function createAddressBar() {
   var bar = document.createElement('div');
   bar.id = 'tp-addressbar';
   bar.className = 'tp-addressbar';
+  // Mark for horizontal-only navigation (buttons in a row)
+  bar.setAttribute('data-tp-nav', 'horizontal');
+  
+  // SVG icons for better visual quality
+  var homeIcon = '<svg viewBox="0 0 24 24" fill="currentColor" class="tp-btn-svg"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>';
+  var tizenIcon = '<svg viewBox="0 0 24 24" fill="currentColor" class="tp-btn-svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>';
+  var portalIcon = '<svg viewBox="0 0 24 24" fill="currentColor" class="tp-btn-svg"><path d="M3 5v14h18V5H3zm4 2h4v4H7V7zm-2 10v-4h4v4H5zm12 0h-4v-4h4v4zm2-6h-4V7h4v4z"/></svg>';
   
   bar.innerHTML = '' +
     '<div class="tp-addressbar-content">' +
       // Portal button - return to grid
       '<button type="button" class="tp-addressbar-btn" id="tp-addressbar-portal" tabindex="0" title="Back to Portal">' +
-        '<span class="tp-btn-icon">▤</span>' +
+        portalIcon +
       '</button>' +
       // Home button - go to site's home URL
       '<button type="button" class="tp-addressbar-btn" id="tp-addressbar-home" tabindex="0" title="Site Home">' +
-        '<span class="tp-btn-icon">H</span>' +
+        homeIcon +
       '</button>' +
       // Back button
       '<button type="button" class="tp-addressbar-btn" id="tp-addressbar-back" tabindex="0" title="Back">' +
@@ -79,7 +86,7 @@ function createAddressBar() {
       '</button>' +
       // Open in Tizen Browser button
       '<button type="button" class="tp-addressbar-btn" id="tp-addressbar-tizen" tabindex="0" title="Open in Tizen Browser">' +
-        '<span class="tp-btn-icon">TB</span>' +
+        tizenIcon +
       '</button>' +
     '</div>';
   

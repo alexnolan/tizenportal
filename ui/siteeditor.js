@@ -433,7 +433,7 @@ function renderFields() {
  * Render a text field
  */
 function renderTextField(field, value) {
-  var displayValue = value || field.placeholder || '(empty)';
+  var displayValue = value || field.placeholder || '';
   var isEmpty = !value;
   
   // Special case for icon field - add fetch favicon button
@@ -443,7 +443,6 @@ function renderTextField(field, value) {
         '<div class="tp-field-row" data-field="' + field.name + '" tabindex="0">' +
           '<div class="tp-field-label">' + field.label + (field.required ? ' *' : '') + '</div>' +
           '<div class="tp-field-value' + (isEmpty ? ' empty' : '') + '">' + escapeHtml(displayValue) + '</div>' +
-          '<div class="tp-field-edit">ENTER to edit</div>' +
         '</div>' +
         '<button type="button" class="tp-editor-btn tp-editor-btn-fetch" id="tp-editor-fetch-icon" tabindex="0">' +
           'Fetch Favicon' +
@@ -455,7 +454,6 @@ function renderTextField(field, value) {
     '<div class="tp-field-row" data-field="' + field.name + '" tabindex="0">' +
       '<div class="tp-field-label">' + field.label + (field.required ? ' *' : '') + '</div>' +
       '<div class="tp-field-value' + (isEmpty ? ' empty' : '') + '">' + escapeHtml(displayValue) + '</div>' +
-      '<div class="tp-field-edit">ENTER to edit</div>' +
     '</div>';
 }
 
@@ -477,7 +475,6 @@ function renderSelectField(field, value) {
     '<div class="tp-field-row" data-field="' + field.name + '" data-type="select" tabindex="0">' +
       '<div class="tp-field-label">' + field.label + '</div>' +
       '<div class="tp-field-value">' + escapeHtml(displayValue) + '</div>' +
-      '<div class="tp-field-edit">ENTER to change</div>' +
     '</div>';
 }
 

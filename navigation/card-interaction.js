@@ -194,10 +194,17 @@ export function handleOK(card) {
     var action = getPrimaryAction(card);
     if (action) {
       action.click();
-      console.log('TizenPortal [CardInteraction]: Activated single-action card');
+      console.log('TizenPortal [CardInteraction]: Activated single-action card via primary action');
       return true;
     }
-    // If no primary action but card is clickable
+    // If explicitly marked as single-action, click the card itself
+    // This handles cards with addEventListener (not onclick attribute)
+    if (card.getAttribute('data-tp-card') === 'single') {
+      card.click();
+      console.log('TizenPortal [CardInteraction]: Activated explicit single-action card');
+      return true;
+    }
+    // If card is clickable via attribute
     if (card.hasAttribute('onclick') || card.tagName === 'A' || card.tagName === 'BUTTON') {
       card.click();
       return true;

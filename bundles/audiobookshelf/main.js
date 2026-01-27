@@ -3,83 +3,151 @@
  * 
  * TV support for Audiobookshelf (https://www.audiobookshelf.org/)
  * 
- * This bundle is compiled into the TizenPortal runtime and runs directly in the page.
+ * ============================================================================
+ * BUNDLE BEST PRACTICES DEMONSTRATED
+ * ============================================================================
  * 
- * The core input handler provides card interaction (single/multi-action detection).
- * This bundle marks ABS elements with data-tp-card attributes and provides:
- * - Viewport adjustment for TV display
- * - Focus management for siderail and content
- * - TV-friendly focus indicators
- * - Text input wrapping (no keyboard until Enter pressed)
- * - Scroll-into-view with margin for focused elements
+ * This bundle is an exemplary example of how to create a TizenPortal bundle
+ * for a complex SPA website. It demonstrates:
  * 
- * Card types are detected automatically by the core based on interactive children.
+ * 1. USE CORE UTILITIES
+ *    Import from focus/manager.js and input/text-input.js instead of
+ *    reimplementing common TV patterns.
+ * 
+ * 2. OVERRIDE VIA registerKeyHandler()
+ *    Register a custom key handler that runs BEFORE core handlers.
+ *    Return true to consume the event, false to let core handle it.
+ * 
+ * 3. SITE-SPECIFIC SELECTORS
+ *    Define CSS selectors for the target site's DOM structure in one place.
+ *    Update these when the site changes its HTML.
+ * 
+ * 4. CARD MARKING
+ *    Mark focusable elements with data-tp-card="single" or "multi" so core
+ *    knows how to handle Enter/Escape on those elements.
+ * 
+ * 5. LIFECYCLE HOOKS
+ *    Use onActivate/onDeactivate for setup/cleanup. Always clean up listeners!
+ * 
+ * 6. CONFIGURATION OBJECTS
+ *    Define site-specific options (scroll margins, focus targets) as objects
+ *    that are passed to core utilities.
+ * 
+ * ============================================================================
  */
 
 import absStyles from './style.css';
+
+// ============================================================================
+// CORE IMPORTS - Use these instead of reimplementing!
+// ============================================================================
+
+// Focus utilities: scroll-into-view, initial focus, viewport, DOM observation
+import { 
+  enableScrollIntoView,
+  disableScrollIntoView,
+  setInitialFocus,
+  lockViewport,
+  observeDOM,
+  stopObservingDOM,
+} from '../../focus/manager.js';
+
+// Text input wrapping for TV-friendly keyboard handling
+import {
+  wrapTextInputs,
+} from '../../input/text-input.js';
+
+// NOTE: registerKeyHandler is accessed via window.TizenPortal.input.registerKeyHandler
+// to avoid circular dependency (handler.js -> bundlemenu.js -> registry.js -> this file)
+
+// Key constants
+import { KEYS } from '../../input/keys.js';
+
+// Card interaction utilities
 import { 
   isInsideCard, 
-  exitCard
+  exitCard,
 } from '../../navigation/card-interaction.js';
+
+// Geometry utilities for spatial navigation spacing
 import { 
   injectSpacingCSS, 
-  MIN_GAP, 
   SPACING_CLASS,
   validateSpacing,
   logViolations,
-  isElementVisible 
 } from '../../navigation/geometry.js';
 
-/**
- * Track if bundle has been activated
- */
-var isActivated = false;
+// ============================================================================
+// ABS-SPECIFIC CONFIGURATION
+// ============================================================================
 
 /**
- * DOM observer for dynamic content
- */
-var observer = null;
-
-/**
- * Debounce timeout
- */
-var debounceTimeout = null;
-
-/**
- * Track wrapped inputs to avoid re-wrapping
- */
-var wrappedInputs = new WeakMap();
-
-/**
- * Selectors based on actual ABS DOM structure
+ * CSS Selectors for Audiobookshelf's DOM structure
+ * 
+ * These selectors match ABS's Vue/Nuxt-generated HTML.
+ * Update these when ABS changes its HTML structure.
  */
 var SELECTORS = {
-  // Main layout
+  // Layout containers
   appbar: '#appbar',
   siderail: '[role="toolbar"][aria-orientation="vertical"]',
-  siderailLinks: '[role="toolbar"][aria-orientation="vertical"] a',
   siderailNav: '#siderail-buttons-container a',
-  
-  // Library dropdown
-  libraryDropdown: '[aria-haspopup="menu"][aria-label*="Library"]',
-  libraryMenuItems: '[role="menuitem"]',
-  
-  // Search and text inputs
-  searchInput: 'input[placeholder*="Search"], [role="search"] input',
-  textInputs: 'input[type="text"], input[type="search"], input:not([type])',
-  
-  // Bookshelf content - book cards are DIVs with id="book-card-N", not links
   bookshelfRow: '.bookshelfRow, .categorizedBookshelfRow',
+  
+  // Focusable content
   bookCards: '[id^="book-card-"]',
-  bookshelfLinks: '.bookshelfRow a[href], .categorizedBookshelfRow a[href], #bookshelf a[href]',
-  
-  // Appbar buttons
   appbarButtons: '#appbar button, #appbar a[href]',
+  menuItems: '[role="menuitem"]',
   
-  // Generic interactive
-  buttons: 'button:not([disabled]):not([aria-hidden="true"])',
-  links: 'a[href]:not([aria-hidden="true"])',
+  // Text inputs to wrap
+  textInputs: 'input[type="text"], input[type="search"], input:not([type])',
 };
+
+/**
+ * Initial focus targets (tried in order)
+ * 
+ * These selectors are passed to setInitialFocus() from core.
+ * The first matching element gets focus on page load.
+ */
+var INITIAL_FOCUS_SELECTORS = [
+  '#siderail-buttons-container a.nuxt-link-active',  // Active nav link
+  '#siderail-buttons-container a',                    // First nav link
+  '[id^="book-card-"]',                               // First book card
+  'input[placeholder*="Search"]',                     // Search input
+];
+
+/**
+ * Scroll-into-view configuration for ABS layout
+ * 
+ * These options are passed to enableScrollIntoView() from core.
+ * Customize for ABS's specific layout (appbar height, siderail width).
+ */
+var SCROLL_OPTIONS = {
+  topOffset: 64,        // ABS appbar height in pixels
+  leftOffset: 80,       // ABS siderail width in pixels  
+  marginTop: 100,       // Start scrolling when element is within 100px of top
+  marginBottom: 200,    // Start scrolling when element is within 200px of bottom
+  marginLeft: 100,
+  marginRight: 100,
+  scrollContainer: '.bookshelfRow, .categorizedBookshelfRow', // Horizontal scroll containers
+};
+
+// ============================================================================
+// BUNDLE STATE
+// ============================================================================
+
+/** Track if bundle has been activated */
+var isActivated = false;
+
+/** Unregister function for custom key handler */
+var unregisterKeyHandler = null;
+
+/** Stop function for DOM observer */
+var stopObserver = null;
+
+// ============================================================================
+// BUNDLE EXPORT
+// ============================================================================
 
 export default {
   name: 'audiobookshelf',
@@ -87,12 +155,19 @@ export default {
   description: 'TV support for Audiobookshelf audiobook server',
   
   /**
-   * CSS to inject
+   * CSS to inject (imported from style.css)
    */
   style: absStyles,
 
+  // ==========================================================================
+  // LIFECYCLE HOOKS
+  // ==========================================================================
+
   /**
    * Called when bundle is activated
+   * 
+   * This is where we set up all TV adaptations using core utilities
+   * plus any ABS-specific customizations.
    */
   onActivate: function() {
     if (isActivated) {
@@ -103,8 +178,8 @@ export default {
     console.log('TizenPortal [ABS]: Activating');
     isActivated = true;
     
-    // Lock viewport immediately
-    this.lockViewport();
+    // CORE: Lock viewport for TV (disables pinch zoom, etc.)
+    lockViewport();
     
     // Wait for DOM to be ready
     if (document.readyState === 'loading') {
@@ -119,56 +194,73 @@ export default {
    */
   onDOMReady: function() {
     console.log('TizenPortal [ABS]: DOM ready');
+    var self = this;
     
-    // Inject geometry spacing CSS
+    // CORE: Inject geometry spacing CSS for spatial navigation
     injectSpacingCSS();
     
-    // Set up focusable elements with card markers
+    // ABS-SPECIFIC: Set up focusable elements and card markers
     this.setupFocusables();
     
-    // Apply spacing class to card containers
+    // ABS-SPECIFIC: Apply spacing classes to containers
     this.applySpacingClasses();
     
-    // Wrap text inputs for TV-friendly keyboard handling
-    this.wrapTextInputs();
+    // CORE: Wrap text inputs for TV keyboard handling
+    // Uses the core utility with ABS-specific selector
+    wrapTextInputs(SELECTORS.textInputs);
     
-    // Set up scroll-into-view for focused elements
-    this.setupScrollIntoView();
+    // CORE: Enable scroll-into-view with ABS-specific layout options
+    enableScrollIntoView(SCROLL_OPTIONS);
     
-    // Observe DOM for dynamic content (Nuxt/Vue renders dynamically)
-    this.observeDOM();
+    // CORE: Observe DOM for dynamic Vue/Nuxt content changes
+    stopObserver = observeDOM(function() {
+      // Re-run setup when DOM changes (new cards loaded, etc.)
+      self.setupFocusables();
+      self.applySpacingClasses();
+      wrapTextInputs(SELECTORS.textInputs);
+    }, { debounceMs: 250 });
     
-    // Validate spacing in debug mode
+    // OVERRIDE: Register custom key handler for ABS-specific behavior
+    // This runs BEFORE core handlers - return true to consume the event
+    // NOTE: Accessed via global API to avoid circular dependency
+    if (window.TizenPortal && window.TizenPortal.input && window.TizenPortal.input.registerKeyHandler) {
+      unregisterKeyHandler = window.TizenPortal.input.registerKeyHandler(this.handleKeyDown.bind(this));
+    } else {
+      console.warn('TizenPortal [ABS]: registerKeyHandler not available');
+    }
+    
+    // CORE: Set initial focus after Vue finishes rendering
+    setInitialFocus(INITIAL_FOCUS_SELECTORS, 500);
+    
+    // Debug: Validate spacing in debug mode
     if (window.TizenPortal && window.TizenPortal.debug) {
       this.validateAllSpacing();
     }
-    
-    // Set initial focus after a short delay (let Vue render)
-    var self = this;
-    setTimeout(function() {
-      self.setInitialFocus();
-    }, 500);
   },
 
   /**
    * Called when bundle is deactivated
+   * 
+   * IMPORTANT: Always clean up listeners and state!
    */
   onDeactivate: function() {
     console.log('TizenPortal [ABS]: Deactivating');
     isActivated = false;
     
-    if (observer) {
-      observer.disconnect();
-      observer = null;
+    // Clean up custom key handler
+    if (unregisterKeyHandler) {
+      unregisterKeyHandler();
+      unregisterKeyHandler = null;
     }
     
-    if (debounceTimeout) {
-      clearTimeout(debounceTimeout);
-      debounceTimeout = null;
+    // Clean up DOM observer
+    if (stopObserver) {
+      stopObserver();
+      stopObserver = null;
     }
     
-    // Remove focus listener
-    document.removeEventListener('focusin', this.handleFocusIn);
+    // Clean up scroll-into-view listener
+    disableScrollIntoView();
     
     // Exit any entered card
     if (isInsideCard()) {
@@ -176,304 +268,78 @@ export default {
     }
   },
   
-  /**
-   * Apply spacing classes to containers
-   */
-  applySpacingClasses: function() {
-    var count = 0;
-    
-    try {
-      // Bookshelf rows need spacing
-      var rows = document.querySelectorAll(SELECTORS.bookshelfRow);
-      for (var i = 0; i < rows.length; i++) {
-        if (!rows[i].classList.contains(SPACING_CLASS)) {
-          rows[i].classList.add(SPACING_CLASS);
-          count++;
-        }
-      }
-      
-      // Siderail container
-      var siderail = document.querySelector('#siderail-buttons-container');
-      if (siderail && !siderail.classList.contains(SPACING_CLASS)) {
-        siderail.classList.add(SPACING_CLASS);
-        count++;
-      }
-      
-      // Appbar
-      var appbar = document.querySelector(SELECTORS.appbar);
-      if (appbar && !appbar.classList.contains(SPACING_CLASS)) {
-        appbar.classList.add(SPACING_CLASS);
-        count++;
-      }
-      
-      if (count > 0) {
-        console.log('TizenPortal [ABS]: Applied spacing class to', count, 'containers');
-      }
-    } catch (err) {
-      console.warn('TizenPortal [ABS]: Error applying spacing classes:', err.message);
-    }
-  },
+  // ==========================================================================
+  // KEY HANDLING OVERRIDE
+  // ==========================================================================
   
   /**
-   * Validate spacing in all containers (debug mode)
+   * Custom key handler - OVERRIDES core behavior when returning true
+   * 
+   * This function is registered with registerKeyHandler() and runs BEFORE
+   * any core handlers. Return true to consume the event (core won't see it),
+   * return false to let core handle it normally.
+   * 
+   * Use this for:
+   * - Media keys for the ABS player
+   * - Custom navigation for ABS-specific UI patterns
+   * - Intercepting keys that core handles "wrong" for ABS
+   * 
+   * @param {KeyboardEvent} event
+   * @returns {boolean} True if event was consumed (core won't handle)
    */
-  validateAllSpacing: function() {
-    var rows = document.querySelectorAll(SELECTORS.bookshelfRow);
-    for (var i = 0; i < rows.length; i++) {
-      var result = validateSpacing(rows[i]);
-      if (!result.valid) {
-        console.warn('TizenPortal [ABS]: Bookshelf row', i, 'has spacing violations');
-        logViolations(result);
-      }
-    }
+  handleKeyDown: function(event) {
+    var keyCode = event.keyCode;
+    
+    // ========================================================================
+    // EXAMPLE: Media keys for ABS player (future implementation)
+    // ========================================================================
+    // 
+    // if (this.isPlayerActive()) {
+    //   if (keyCode === KEYS.PLAY_PAUSE) {
+    //     this.togglePlayback();
+    //     return true; // Consumed - core won't handle
+    //   }
+    //   if (keyCode === KEYS.REWIND) {
+    //     this.seekBack(30);
+    //     return true;
+    //   }
+    //   if (keyCode === KEYS.FAST_FORWARD) {
+    //     this.seekForward(30);
+    //     return true;
+    //   }
+    // }
+    
+    // ========================================================================
+    // EXAMPLE: Custom siderail navigation
+    // ========================================================================
+    //
+    // if (keyCode === KEYS.LEFT && this.isOnBookshelf()) {
+    //   // Jump to siderail instead of spatial nav
+    //   this.focusSiderail();
+    //   return true;
+    // }
+    
+    // Return false to let core handle the key
+    return false;
   },
   
-  /**
-   * Set up scroll-into-view behavior for focused elements
-   */
-  setupScrollIntoView: function() {
-    var self = this;
-    
-    // Store bound function for removal
-    this.handleFocusIn = function(e) {
-      self.scrollElementIntoView(e.target);
-    };
-    
-    document.addEventListener('focusin', this.handleFocusIn);
-    console.log('TizenPortal [ABS]: Scroll-into-view enabled');
-  },
+  // ==========================================================================
+  // ABS-SPECIFIC DOM SETUP
+  // ==========================================================================
   
   /**
-   * Scroll element into view with margin
-   * @param {HTMLElement} el
-   */
-  scrollElementIntoView: function(el) {
-    if (!el || !el.getBoundingClientRect) return;
-    
-    try {
-      var rect = el.getBoundingClientRect();
-      var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-      var viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-      
-      // Margin from edge before we scroll (200px gives good buffer)
-      var margin = 200;
-      
-      // Check if element is near bottom edge
-      if (rect.bottom > viewportHeight - margin) {
-        // Scroll down to bring element more into view
-        var scrollAmount = rect.bottom - (viewportHeight - margin);
-        window.scrollBy(0, scrollAmount);
-        console.log('TizenPortal [ABS]: Scrolled down by', scrollAmount);
-      }
-      
-      // Check if element is near top edge (below appbar at 64px)
-      if (rect.top < 64 + margin) {
-        // Scroll up to bring element more into view
-        var scrollUpAmount = (64 + margin) - rect.top;
-        window.scrollBy(0, -scrollUpAmount);
-        console.log('TizenPortal [ABS]: Scrolled up by', scrollUpAmount);
-      }
-      
-      // Horizontal scroll for bookshelf rows
-      var parent = el.closest('.bookshelfRow, .categorizedBookshelfRow');
-      if (parent) {
-        // Scroll horizontally within the row
-        if (rect.right > viewportWidth - margin) {
-          parent.scrollLeft += rect.right - (viewportWidth - margin);
-        }
-        if (rect.left < 80 + margin) { // 80px for siderail
-          parent.scrollLeft -= (80 + margin) - rect.left;
-        }
-      }
-    } catch (err) {
-      console.warn('TizenPortal [ABS]: Scroll error:', err.message);
-    }
-  },
-  
-  /**
-   * Wrap text inputs for TV-friendly keyboard handling
-   * Inputs don't pop up keyboard until user presses Enter
-   */
-  wrapTextInputs: function() {
-    var self = this;
-    var inputs = document.querySelectorAll(SELECTORS.textInputs);
-    var count = 0;
-    
-    for (var i = 0; i < inputs.length; i++) {
-      var input = inputs[i];
-      
-      // Skip if already wrapped or is our own input
-      if (wrappedInputs.has(input) || input.classList.contains('tp-wrapped')) {
-        continue;
-      }
-      
-      // Skip hidden inputs
-      if (input.type === 'hidden' || input.closest('[style*="display: none"]')) {
-        continue;
-      }
-      
-      this.wrapSingleInput(input);
-      count++;
-    }
-    
-    if (count > 0) {
-      console.log('TizenPortal [ABS]: Wrapped', count, 'text inputs');
-    }
-  },
-  
-  /**
-   * Wrap a single text input
-   * @param {HTMLInputElement} input
-   */
-  wrapSingleInput: function(input) {
-    var self = this;
-    
-    // Create wrapper
-    var wrapper = document.createElement('div');
-    wrapper.className = 'tp-input-wrapper';
-    wrapper.setAttribute('tabindex', '0');
-    
-    // Create display element
-    var display = document.createElement('span');
-    display.className = 'tp-input-display';
-    var placeholder = input.getAttribute('placeholder') || 'Enter text...';
-    display.textContent = input.value || placeholder;
-    if (input.value) {
-      display.classList.add('has-value');
-    }
-    
-    // Insert wrapper before input
-    input.parentNode.insertBefore(wrapper, input);
-    
-    // Move input inside wrapper
-    wrapper.appendChild(display);
-    wrapper.appendChild(input);
-    
-    // Mark input as wrapped
-    input.classList.add('tp-wrapped');
-    input.setAttribute('tabindex', '-1');
-    wrappedInputs.set(input, wrapper);
-    
-    // Handle wrapper activation (Enter key or click)
-    wrapper.addEventListener('keydown', function(e) {
-      if (e.keyCode === 13) { // Enter
-        e.preventDefault();
-        e.stopPropagation();
-        self.activateInput(wrapper, input, display);
-      }
-    });
-    
-    wrapper.addEventListener('click', function() {
-      self.activateInput(wrapper, input, display);
-    });
-    
-    // Handle input deactivation
-    input.addEventListener('blur', function() {
-      self.deactivateInput(wrapper, input, display);
-    });
-    
-    input.addEventListener('keydown', function(e) {
-      if (e.keyCode === 27 || e.keyCode === 10009) { // Escape or Back
-        e.preventDefault();
-        self.deactivateInput(wrapper, input, display);
-        wrapper.focus();
-      } else if (e.keyCode === 13) { // Enter - submit and deactivate
-        // Let the form handle Enter, then deactivate
-        setTimeout(function() {
-          self.deactivateInput(wrapper, input, display);
-        }, 100);
-      }
-    });
-    
-    // Sync display when input changes
-    input.addEventListener('input', function() {
-      display.textContent = input.value || placeholder;
-      if (input.value) {
-        display.classList.add('has-value');
-      } else {
-        display.classList.remove('has-value');
-      }
-    });
-  },
-  
-  /**
-   * Activate input for editing
-   */
-  activateInput: function(wrapper, input, display) {
-    wrapper.classList.add('editing');
-    display.style.display = 'none';
-    input.style.display = 'block';
-    input.setAttribute('tabindex', '0');
-    
-    try {
-      input.focus();
-      input.select();
-    } catch (err) {
-      console.warn('TizenPortal [ABS]: Input focus error:', err.message);
-    }
-    
-    console.log('TizenPortal [ABS]: Input activated');
-  },
-  
-  /**
-   * Deactivate input (return to display mode)
-   */
-  deactivateInput: function(wrapper, input, display) {
-    if (!wrapper.classList.contains('editing')) return;
-    
-    wrapper.classList.remove('editing');
-    var placeholder = input.getAttribute('placeholder') || 'Enter text...';
-    display.textContent = input.value || placeholder;
-    display.style.display = 'block';
-    input.style.display = 'none';
-    input.setAttribute('tabindex', '-1');
-    
-    if (input.value) {
-      display.classList.add('has-value');
-    } else {
-      display.classList.remove('has-value');
-    }
-    
-    console.log('TizenPortal [ABS]: Input deactivated');
-  },
-
-  /**
-   * Adjust viewport for TV display
-   * Instead of forcing a fixed width, we ensure proper scaling
-   */
-  lockViewport: function() {
-    try {
-      var viewport = document.querySelector('meta[name="viewport"]');
-      
-      if (viewport) {
-        // Store original for potential restoration
-        var original = viewport.getAttribute('content');
-        if (original) {
-          viewport.setAttribute('data-tp-original', original);
-        }
-        // Use device width but disable user scaling
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1, user-scalable=no');
-      } else {
-        viewport = document.createElement('meta');
-        viewport.name = 'viewport';
-        viewport.content = 'width=device-width, initial-scale=1, user-scalable=no';
-        document.head.appendChild(viewport);
-      }
-      
-      console.log('TizenPortal [ABS]: Viewport adjusted for TV');
-    } catch (err) {
-      console.warn('TizenPortal [ABS]: Could not adjust viewport:', err.message);
-    }
-  },
-
-  /**
-   * Set up focusable elements with tabindex and card markers
+   * Set up focusable elements and mark cards
+   * 
+   * This is ABS-specific because it knows:
+   * - Which elements should be focusable
+   * - Which elements are "cards" (for Enter/Escape handling)
+   * - Whether cards are single-action or multi-action
    */
   setupFocusables: function() {
     var count = 0;
     
     try {
-      // Siderail navigation links - these are single-action cards
+      // Siderail navigation links - single-action (clicking navigates)
       var siderailLinks = document.querySelectorAll(SELECTORS.siderailNav);
       for (var i = 0; i < siderailLinks.length; i++) {
         var el = siderailLinks[i];
@@ -481,32 +347,30 @@ export default {
           el.setAttribute('tabindex', '0');
           count++;
         }
-        // Mark as single-action card (siderail links are always single-action)
+        // Mark as single-action card
         el.setAttribute('data-tp-card', 'single');
       }
       
-      // Book cards (main content) - these are divs with id="book-card-N"
-      // ABS cards use Vue @click handlers to navigate to item detail
-      // For TV, pressing Enter should navigate (single-action), hover buttons are mouse-only
+      // Book cards - single-action for TV
+      // ABS cards have hover buttons (play, edit, more) but those are mouse-only.
+      // For TV users, Enter navigates to the item detail page.
       var bookCards = document.querySelectorAll(SELECTORS.bookCards);
       for (var j = 0; j < bookCards.length; j++) {
         var card = bookCards[j];
-        // Already have tabindex="0" in HTML but ensure it's set
         if (card.getAttribute('tabindex') !== '0') {
           card.setAttribute('tabindex', '0');
           count++;
         }
-        // Mark as single-action - Enter clicks the card to navigate to detail
+        // Mark as single-action: Enter clicks card to navigate
         if (!card.hasAttribute('data-tp-card')) {
           card.setAttribute('data-tp-card', 'single');
         }
       }
       
-      // Appbar interactive elements (buttons and links with href)
+      // Appbar buttons and links
       var appbarEls = document.querySelectorAll(SELECTORS.appbarButtons);
       for (var k = 0; k < appbarEls.length; k++) {
         var appEl = appbarEls[k];
-        // Skip hidden elements and aria-hidden elements
         if (appEl.getAttribute('tabindex') !== '0' && 
             !appEl.closest('[style*="display: none"]') &&
             appEl.getAttribute('aria-hidden') !== 'true') {
@@ -515,8 +379,8 @@ export default {
         }
       }
       
-      // Menu items (dropdown menus)
-      var menuItems = document.querySelectorAll(SELECTORS.libraryMenuItems);
+      // Dropdown menu items
+      var menuItems = document.querySelectorAll(SELECTORS.menuItems);
       for (var m = 0; m < menuItems.length; m++) {
         var menuEl = menuItems[m];
         if (menuEl.getAttribute('tabindex') !== '0') {
@@ -532,95 +396,94 @@ export default {
       console.warn('TizenPortal [ABS]: Error setting up focusables:', err.message);
     }
   },
-
+  
   /**
-   * Set initial focus to a sensible element
+   * Apply spacing classes to containers for spatial navigation
+   * 
+   * The SPACING_CLASS ensures minimum gaps between focusable elements
+   * so spatial navigation doesn't get confused by overlapping hitboxes.
    */
-  setInitialFocus: function() {
+  applySpacingClasses: function() {
+    var count = 0;
+    
     try {
-      // If nothing is focused or body is focused
-      if (!document.activeElement || document.activeElement === document.body) {
-        
-        // Try siderail "Home" link first (usually the active one)
-        var activeNav = document.querySelector(SELECTORS.siderailNav + '.nuxt-link-active');
-        if (activeNav) {
-          activeNav.focus();
-          console.log('TizenPortal [ABS]: Focused active siderail link');
-          return;
-        }
-        
-        // Try first siderail link
-        var firstSiderail = document.querySelector(SELECTORS.siderailNav);
-        if (firstSiderail) {
-          firstSiderail.focus();
-          console.log('TizenPortal [ABS]: Focused first siderail link');
-          return;
-        }
-        
-        // Fallback to first book card
-        var firstBook = document.querySelector(SELECTORS.bookCards);
-        if (firstBook) {
-          firstBook.focus();
-          console.log('TizenPortal [ABS]: Focused first book card');
-          return;
-        }
-        
-        // Last resort: search input
-        var searchInput = document.querySelector(SELECTORS.searchInput);
-        if (searchInput) {
-          searchInput.focus();
-          console.log('TizenPortal [ABS]: Focused search input');
-          return;
+      // Bookshelf rows (horizontal scroll containers)
+      var rows = document.querySelectorAll(SELECTORS.bookshelfRow);
+      for (var i = 0; i < rows.length; i++) {
+        if (!rows[i].classList.contains(SPACING_CLASS)) {
+          rows[i].classList.add(SPACING_CLASS);
+          count++;
         }
       }
-    } catch (err) {
-      console.warn('TizenPortal [ABS]: Error setting initial focus:', err.message);
-    }
-  },
-
-  /**
-   * Observe DOM for dynamically added content (Vue/Nuxt)
-   */
-  observeDOM: function() {
-    try {
-      if (observer) {
-        observer.disconnect();
+      
+      // Siderail navigation container
+      var siderail = document.querySelector('#siderail-buttons-container');
+      if (siderail && !siderail.classList.contains(SPACING_CLASS)) {
+        siderail.classList.add(SPACING_CLASS);
+        count++;
       }
       
-      var self = this;
+      // Top appbar
+      var appbar = document.querySelector(SELECTORS.appbar);
+      if (appbar && !appbar.classList.contains(SPACING_CLASS)) {
+        appbar.classList.add(SPACING_CLASS);
+        count++;
+      }
       
-      observer = new MutationObserver(function(mutations) {
-        // Debounce - process once per 250ms
-        if (debounceTimeout) return;
-        
-        debounceTimeout = setTimeout(function() {
-          debounceTimeout = null;
-          self.setupFocusables();
-          self.applySpacingClasses();
-          self.wrapTextInputs();
-        }, 250);
-      });
-      
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-      
-      console.log('TizenPortal [ABS]: DOM observer active');
+      if (count > 0) {
+        console.log('TizenPortal [ABS]: Applied spacing class to', count, 'containers');
+      }
     } catch (err) {
-      console.warn('TizenPortal [ABS]: Could not set up DOM observer:', err.message);
+      console.warn('TizenPortal [ABS]: Error applying spacing classes:', err.message);
     }
   },
-
+  
   /**
-   * Handle key events (called by input handler if bundle is active)
-   * Reserved for bundle-specific key handling (e.g., media keys for player)
-   * Card interaction is now handled by the core input handler
-   * @param {KeyboardEvent} event
-   * @returns {boolean} True if event was consumed
+   * Validate spacing in debug mode
+   * 
+   * Logs warnings if focusable elements are too close together,
+   * which can cause spatial navigation to misbehave.
    */
-  onKeyDown: function(event) {
-    // Future: Add media key handling for player
+  validateAllSpacing: function() {
+    var rows = document.querySelectorAll(SELECTORS.bookshelfRow);
+    for (var i = 0; i < rows.length; i++) {
+      var result = validateSpacing(rows[i]);
+      if (!result.valid) {
+        console.warn('TizenPortal [ABS]: Bookshelf row', i, 'has spacing violations');
+        logViolations(result);
+      }
+    }
+  },
+  
+  // ==========================================================================
+  // ABS-SPECIFIC HELPERS (examples for future expansion)
+  // ==========================================================================
+  
+  /**
+   * Check if the ABS player is currently active
+   * @returns {boolean}
+   */
+  isPlayerActive: function() {
+    // TODO: Implement when adding player support
     return false;
+  },
+  
+  /**
+   * Check if focus is currently on a bookshelf card
+   * @returns {boolean}
+   */
+  isOnBookshelf: function() {
+    var active = document.activeElement;
+    return active && active.closest(SELECTORS.bookshelfRow) !== null;
+  },
+  
+  /**
+   * Focus the first siderail link
+   */
+  focusSiderail: function() {
+    var first = document.querySelector(SELECTORS.siderailNav);
+    if (first) {
+      first.focus();
+    }
   },
 };

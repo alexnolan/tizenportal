@@ -36,8 +36,14 @@ import '../navigation/spatial-navigation-polyfill.js';
 import { configRead, configWrite, configOnChange, configInit } from './config.js';
 import { initPolyfills, hasPolyfill, getLoadedPolyfills } from '../polyfills/index.js';
 import { KEYS } from '../input/keys.js';
-import { initInputHandler, executeColorAction } from '../input/handler.js';
+import { initInputHandler, executeColorAction, registerKeyHandler } from '../input/handler.js';
 import { initPointer, isPointerActive, togglePointer } from '../input/pointer.js';
+import { wrapTextInputs, unwrapTextInputs, activateInput, deactivateInput } from '../input/text-input.js';
+import { 
+  enableScrollIntoView, disableScrollIntoView, scrollElementIntoView,
+  setInitialFocus, lockViewport, unlockViewport,
+  observeDOM, stopObservingDOM 
+} from '../focus/manager.js';
 import { initPortal, showPortal, hidePortal, refreshPortal } from '../ui/portal.js';
 import { initModal } from '../ui/modal.js';
 import { initSiteEditor, showAddSiteEditor, showEditSiteEditor, isSiteEditorOpen } from '../ui/siteeditor.js';
@@ -913,11 +919,29 @@ var TizenPortalAPI = {
   // Key constants
   keys: KEYS,
 
-  // Input state
+  // Input state and handlers
   input: {
     isPointerMode: isPointerActive,
     togglePointer: togglePointer,
+    registerKeyHandler: registerKeyHandler,
     isIMEActive: function() { return false; }, // TODO: implement IME tracking
+    // Text input wrapping for TV keyboard handling
+    wrapTextInputs: wrapTextInputs,
+    unwrapTextInputs: unwrapTextInputs,
+    activateInput: activateInput,
+    deactivateInput: deactivateInput,
+  },
+
+  // Focus utilities for TV
+  focus: {
+    enableScrollIntoView: enableScrollIntoView,
+    disableScrollIntoView: disableScrollIntoView,
+    scrollElementIntoView: scrollElementIntoView,
+    setInitialFocus: setInitialFocus,
+    lockViewport: lockViewport,
+    unlockViewport: unlockViewport,
+    observeDOM: observeDOM,
+    stopObservingDOM: stopObservingDOM,
   },
 
   // Polyfill info

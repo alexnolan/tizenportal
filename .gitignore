@@ -4,9 +4,6 @@ node_modules/
 # Local development/test data (contains sensitive info)
 abs/
 
-# Build artifacts (keep app/ tracked for TizenBrew)
-# app/tizenportal.js is built output but must be tracked
-
 # Internal documentation (not for public repo)
 docs/
 

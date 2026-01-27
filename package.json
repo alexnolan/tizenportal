@@ -1,7 +1,7 @@
 {
   "name": "@alexnolan/tizenportal",
   "appName": "TizenPortal",
-  "version": "0302",
+  "version": "0303",
   "description": "Universal Tizen Browser Shell",
   "type": "module",
   "packageType": "mods",
@@ -30,7 +30,7 @@
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c --watch",
-    "clean": "node -e \"require('fs').rmSync('app/tizenportal.js', {force: true})\""
+    "clean": "node -e \"require('fs').rmSync('dist/tizenportal.js', {force: true})\""
   },
   "devDependencies": {
     "@babel/core": "^7.23.0",

@@ -223,7 +223,7 @@ export function handleBack() {
 
 /**
  * Check if an element is a navigable card shell
- * Cards are marked with data-tp-card or have specific class patterns
+ * Cards are marked with data-tp-card or have specific class/id patterns
  * @param {HTMLElement} el - Element to check
  * @returns {boolean}
  */
@@ -233,9 +233,10 @@ export function isCardShell(el) {
   // Explicit marker
   if (el.hasAttribute('data-tp-card')) return true;
   
-  // Common card patterns
-  if (el.id && el.id.match(/^(book-card-|series-card-|media-card-)/)) return true;
+  // Common card patterns (portal, audiobookshelf, jellyfin, etc.)
+  if (el.id && el.id.match(/^(book-card-|series-card-|media-card-|item-card-)/)) return true;
   if (el.classList.contains('tp-card')) return true;
+  if (el.classList.contains('card')) return true;
   
   return false;
 }

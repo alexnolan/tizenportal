@@ -2,6 +2,7 @@
  * TizenPortal Input Handler
  * 
  * Unified key event handling for remote, IME, and color buttons.
+ * Includes card interaction model (single/multi-action cards).
  */
 
 import { KEYS, COLOR_ACTIONS, isColorButton, getKeyName } from './keys.js';
@@ -12,6 +13,18 @@ import { toggleBundleMenu, isBundleMenuVisible, cycleBundle } from '../ui/bundle
 import { showAddSiteEditor, showEditSiteEditor, isSiteEditorOpen, closeSiteEditor } from '../ui/siteeditor.js';
 import { getFocusedCard } from '../ui/portal.js';
 import { isPointerActive, handlePointerKeyDown, handlePointerKeyUp, togglePointer } from './pointer.js';
+import {
+  isSingleActionCard,
+  isMultiActionCard,
+  getPrimaryAction,
+  getFocusableChildren,
+  enterCard,
+  exitCard,
+  isInsideCard,
+  handleOK,
+  handleBack,
+  findCardShell
+} from '../navigation/card-interaction.js';
 
 /**
  * Long press detection threshold (milliseconds)
@@ -164,10 +177,33 @@ function handleKeyDown(event) {
     return;
   }
 
-  // Handle Enter key
+  // Handle Enter key - card interaction model
   if (keyCode === KEYS.ENTER) {
-    // Let natural focus/click behavior occur
+    // Check if we're on a card shell
+    var activeEl = document.activeElement;
+    var cardShell = findCardShell(activeEl);
+    
+    if (cardShell && !isInsideCard()) {
+      // On a card shell, not inside - handle with card interaction model
+      if (handleOK(cardShell)) {
+        event.preventDefault();
+        event.stopPropagation();
+        console.log('TizenPortal: Card interaction - OK handled');
+        return;
+      }
+    }
+    // Let natural focus/click behavior occur for non-cards
     return;
+  }
+
+  // Handle Escape key - card interaction model
+  if (keyCode === 27) {
+    if (handleBack()) {
+      event.preventDefault();
+      event.stopPropagation();
+      console.log('TizenPortal: Card interaction - Back handled');
+      return;
+    }
   }
 
   // Handle navigation keys - let spatial navigation handle these

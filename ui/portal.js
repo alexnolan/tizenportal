@@ -83,6 +83,7 @@ function createCardElement(card, index) {
   el.setAttribute('tabindex', '0');
   el.setAttribute('data-card-id', card.id);
   el.setAttribute('data-index', index);
+  el.setAttribute('data-tp-card', 'single'); // Portal cards are single-action
 
   // Icon
   var iconEl = document.createElement('div');
@@ -166,6 +167,7 @@ function createAddCardElement(index) {
   el.className = 'tp-card tp-card-add';
   el.setAttribute('tabindex', '0');
   el.setAttribute('data-index', index);
+  el.setAttribute('data-tp-card', 'single'); // Add card is single-action
 
   // Icon
   var iconEl = document.createElement('div');

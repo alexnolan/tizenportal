@@ -5,31 +5,22 @@
  * 
  * This bundle is compiled into the TizenPortal runtime and runs directly in the page.
  * 
- * Architecture:
- * - Navigation targets stable outer shells (book cards, nav items)
- * - Single-action cards: OK activates, Back exits
- * - Multi-action cards: OK enters for inner navigation, Back exits to shell
- * - CSS-first spacing enforcement (4px minimum gap)
- * 
- * Features:
+ * The core input handler provides card interaction (single/multi-action detection).
+ * This bundle marks ABS elements with data-tp-card attributes and provides:
  * - Viewport adjustment for TV display
  * - Focus management for siderail and content
  * - TV-friendly focus indicators
  * - Text input wrapping (no keyboard until Enter pressed)
  * - Scroll-into-view with margin for focused elements
- * - Card interaction model (single/multi-action detection)
+ * 
+ * Card types are detected automatically by the core based on interactive children.
  */
 
 import absStyles from './style.css';
 import { 
-  isSingleActionCard, 
-  isMultiActionCard, 
-  handleOK, 
-  handleBack, 
   isInsideCard, 
   exitCard,
-  getPrimaryAction,
-  getFocusableChildren 
+  isSingleActionCard
 } from '../../navigation/card-interaction.js';
 import { 
   injectSpacingCSS, 
@@ -145,9 +136,6 @@ export default {
     // Set up scroll-into-view for focused elements
     this.setupScrollIntoView();
     
-    // Set up key handler for card interaction model
-    this.setupKeyHandler();
-    
     // Observe DOM for dynamic content (Nuxt/Vue renders dynamically)
     this.observeDOM();
     
@@ -183,99 +171,10 @@ export default {
     // Remove focus listener
     document.removeEventListener('focusin', this.handleFocusIn);
     
-    // Remove key listener
-    document.removeEventListener('keydown', this.handleKeyDown);
-    
     // Exit any entered card
     if (isInsideCard()) {
       exitCard();
     }
-  },
-  
-  /**
-   * Set up key handler for card interaction model
-   */
-  setupKeyHandler: function() {
-    var self = this;
-    
-    this.handleKeyDown = function(e) {
-      var keyCode = e.keyCode || e.which;
-      var activeEl = document.activeElement;
-      
-      // OK/Enter key (13) or Tizen OK (10009)
-      if (keyCode === 13 || keyCode === 10009) {
-        // Check if focused element is a card shell
-        var card = self.findCardElement(activeEl);
-        if (card && !isInsideCard()) {
-          // Determine card type and handle accordingly
-          if (isSingleActionCard(card)) {
-            // Single action: activate directly
-            var action = getPrimaryAction(card);
-            if (action && action !== card) {
-              e.preventDefault();
-              action.click();
-              console.log('TizenPortal [ABS]: Activated single-action card');
-              return;
-            }
-          } else if (isMultiActionCard(card)) {
-            // Multi-action: enter the card
-            var focusables = getFocusableChildren(card);
-            if (focusables.length > 1) {
-              e.preventDefault();
-              if (handleOK(card)) {
-                console.log('TizenPortal [ABS]: Entered multi-action card');
-                return;
-              }
-            }
-          }
-        }
-      }
-      
-      // Back/Escape key (27, 10009) 
-      if (keyCode === 27 || keyCode === 10009) {
-        if (handleBack()) {
-          e.preventDefault();
-          console.log('TizenPortal [ABS]: Exited card via Back');
-          return;
-        }
-      }
-    };
-    
-    document.addEventListener('keydown', this.handleKeyDown, true);
-    console.log('TizenPortal [ABS]: Key handler for card interaction enabled');
-  },
-  
-  /**
-   * Find the card element from a focused element
-   * @param {HTMLElement} el
-   * @returns {HTMLElement|null}
-   */
-  findCardElement: function(el) {
-    if (!el) return null;
-    
-    // Check if element itself is a card
-    if (el.id && el.id.match(/^(book-card-|series-card-)/)) {
-      return el;
-    }
-    
-    // Check if it has card marker
-    if (el.hasAttribute('data-tp-card')) {
-      return el;
-    }
-    
-    // Walk up to find card
-    var parent = el.parentElement;
-    while (parent && parent !== document.body) {
-      if (parent.id && parent.id.match(/^(book-card-|series-card-)/)) {
-        return parent;
-      }
-      if (parent.hasAttribute('data-tp-card')) {
-        return parent;
-      }
-      parent = parent.parentElement;
-    }
-    
-    return null;
   },
   
   /**
@@ -717,20 +616,12 @@ export default {
 
   /**
    * Handle key events (called by input handler if bundle is active)
+   * Reserved for bundle-specific key handling (e.g., media keys for player)
+   * Card interaction is now handled by the core input handler
    * @param {KeyboardEvent} event
    * @returns {boolean} True if event was consumed
    */
   onKeyDown: function(event) {
-    var keyCode = event.keyCode || event.which;
-    
-    // Back/Escape - check if we're inside a card
-    if (keyCode === 27 || keyCode === 10009) {
-      if (isInsideCard()) {
-        exitCard();
-        return true;
-      }
-    }
-    
     // Future: Add media key handling for player
     return false;
   },

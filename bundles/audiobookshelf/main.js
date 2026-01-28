@@ -182,6 +182,15 @@ var SELECTORS = {
   dropdownContainer: '.ui-dropdown-menu, [role="menu"], [role="listbox"], .dropdown-menu',
   
   // ==========================================================================
+  // FILTER/SORT DROPDOWNS - LibraryFilterSelect.vue
+  // These have nested sublists (Genre -> list of genres with back button)
+  // ==========================================================================
+  filterDropdown: '.ui-dropdown-menu',
+  filterDropdownItems: '.ui-dropdown-menu li',
+  filterDropdownBackButton: '.ui-dropdown-menu li:first-child span.mdi-arrow-left',
+  filterDropdownSublist: '.ui-dropdown-menu ul',
+  
+  // ==========================================================================
   // CONFIG/SETTINGS PAGES
   // ==========================================================================
   configSideNav: '.app-config-side-nav, [class*="config-side-nav"]',
@@ -797,6 +806,20 @@ export default {
         var menuEl = menuItems[m];
         if (menuEl.getAttribute('tabindex') !== '0') {
           menuEl.setAttribute('tabindex', '0');
+          count++;
+        }
+      }
+      
+      // ========================================================================
+      // FILTER DROPDOWN ITEMS (LibraryFilterSelect.vue)
+      // These use li elements without role attributes, including nested sublists
+      // ========================================================================
+      var filterItems = document.querySelectorAll(SELECTORS.filterDropdownItems);
+      for (var fi = 0; fi < filterItems.length; fi++) {
+        var filterItem = filterItems[fi];
+        // Make visible li elements focusable
+        if (filterItem.offsetParent !== null && filterItem.getAttribute('tabindex') !== '0') {
+          filterItem.setAttribute('tabindex', '0');
           count++;
         }
       }

@@ -77,12 +77,20 @@ button[aria-label*="Sort" i],
 [role="menu"] > button,
 [role="listbox"] > div,
 .libraryFilterMenu li,
-.libraryFilterMenu ul > li {
+.libraryFilterMenu ul > li,
+.ui-dropdown-menu li,
+.ui-dropdown-menu ul li {
   display: block !important;
   padding: 8px 12px !important;
   margin: 2px 0 !important;
   min-height: 36px !important;
   cursor: pointer !important;
+}
+
+/* Filter dropdown back button (arrow left icon) */
+.ui-dropdown-menu li span.mdi-arrow-left,
+.ui-dropdown-menu li .material-symbols {
+  margin-right: 8px !important;
 }
 
 /* Dropdown item focus state */
@@ -92,7 +100,9 @@ button[aria-label*="Sort" i],
 .ui-dropdown-menu > div:focus,
 .ui-dropdown-menu > a:focus,
 .ui-dropdown-menu > button:focus,
-.libraryFilterMenu li:focus {
+.libraryFilterMenu li:focus,
+.ui-dropdown-menu li:focus,
+.ui-dropdown-menu ul li:focus {
   outline: 2px solid #1ad691 !important;
   outline-offset: -2px !important;
   background: rgba(26, 214, 145, 0.2) !important;

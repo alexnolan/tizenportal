@@ -605,9 +605,22 @@ button[aria-label*="Options"] {
   min-height: 250px !important;
 }
 
-/* The flex container with cards */
+/* The flex container with cards - MUST be horizontal row */
 .categorizedBookshelfRow .flex.items-center {
+  -webkit-box-orient: horizontal !important;
+  -webkit-box-direction: normal !important;
+  -webkit-flex-direction: row !important;
+  flex-direction: row !important;
+  -webkit-flex-wrap: nowrap !important;
+  flex-wrap: nowrap !important;
   min-height: 220px !important;
+}
+
+/* Homepage cards are rendered with class="relative" - ensure they're not absolute */
+.categorizedBookshelfRow [id^="book-card-"],
+.categorizedBookshelfRow [id^="series-card-"],
+.categorizedBookshelfRow .relative {
+  position: relative !important;
 }
 
 /* Book card container - DO NOT override position or size - ABS calculates dynamically */

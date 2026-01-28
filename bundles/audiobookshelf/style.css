@@ -568,32 +568,34 @@ button[aria-label*="Options"] {
 /* ==========================================================================
    BOOKSHELF ROW LAYOUT - HORIZONTAL SCROLLING
    Book cards must display horizontally with proper gaps for spatial navigation.
+   
+   NOTE: There are TWO bookshelf layouts:
+   1. Homepage (BookShelfCategorized) - uses flexbox, normal scroll
+   2. Library page (LazyBookshelf) - uses virtual scroll with absolute + transform
+   
    Chrome 47 needs explicit flexbox properties.
    ========================================================================== */
 
-/* Bookshelf row container - horizontal scroll */
-.bookshelfRow,
-.categorizedBookshelfRow {
-  display: block !important;
+/* Bookshelf row container - horizontal scroll - LIBRARY PAGE */
+.bookshelfRow {
+  /* Library page uses absolute positioning, don't override display */
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  white-space: nowrap !important;
   -webkit-overflow-scrolling: touch !important;
-  padding-bottom: 40px !important; /* Space for card labels */
 }
 
-/* Inner wrapper divs */
-.categorizedBookshelfRow > div,
-.bookshelfRow > div {
-  display: block !important;
-  width: 100% !important;
+/* Categorized bookshelf row - HOMEPAGE - uses normal flex layout */
+.categorizedBookshelfRow {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: touch !important;
+  /* Don't set display or whitespace - let flexbox work naturally */
 }
 
-/* The flex container that holds cards - CRITICAL for horizontal layout */
-.categorizedBookshelfRow .flex.items-center,
-.bookshelfRow .flex.items-center,
-.categorizedBookshelfRow > div > div > .flex,
-.bookshelfRow > div > div > .flex {
+/* Homepage inner wrapper - let it use natural layout, don't force block */
+
+/* The flex container that holds cards on homepage */
+.categorizedBookshelfRow .flex.items-center {
   display: -webkit-box !important;
   display: -webkit-flex !important;
   display: flex !important;
@@ -603,14 +605,9 @@ button[aria-label*="Options"] {
   flex-direction: row !important;
   -webkit-flex-wrap: nowrap !important;
   flex-wrap: nowrap !important;
-  -webkit-box-align: start !important;
-  -webkit-align-items: flex-start !important;
-  align-items: flex-start !important;
-  /* Allow content to extend beyond container */
-  width: max-content !important;
-  min-width: 100% !important;
-  /* Minimum gap for spatial navigation */
-  gap: var(--tp-spatial-gap, 4px) !important;
+  -webkit-box-align: center !important;
+  -webkit-align-items: center !important;
+  align-items: center !important;
 }
 
 /* Book card container - DO NOT override position - ABS uses absolute + transform */

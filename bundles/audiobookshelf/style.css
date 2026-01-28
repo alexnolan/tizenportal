@@ -624,14 +624,37 @@ button[aria-label*="Options"] {
 }
 
 /* Shelf category labels ("Continue Listening", etc.) - h-6e = 1.5em */
+/* Must be above bookshelfDividerCategorized (z-20) */
 .categorizedBookshelfRow .categoryPlacard {
   height: 1.5em !important;
+  z-index: 30 !important;
+  position: relative !important;
+}
+
+/* The shelf divider (wooden bar) - keep at z-20 */
+.bookshelfDividerCategorized {
+  z-index: 20 !important;
 }
 
 /* Series card labels - keep at h-6e, positioned below card */
 [id^="series-card-"] .categoryPlacard {
   height: 1.5em !important;
   bottom: -1.5em !important;
+}
+
+/* Series hover overlay - should be hidden by default (opacity-0) */
+/* On Tizen this may be showing when it shouldn't */
+[id^="series-card-"] .opacity-0,
+.opacity-0 {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Only show on hover/focus */
+[id^="series-card-"]:hover .opacity-0,
+[id^="series-card-"]:focus .opacity-0 {
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 /* Book card container - DO NOT override position or size - ABS calculates dynamically */

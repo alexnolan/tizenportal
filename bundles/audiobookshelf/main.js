@@ -131,11 +131,12 @@ var SELECTORS = {
   
   // ==========================================================================
   // BOOK/ITEM DETAIL PAGE (/item/_id)
+  // NOTE: Chrome 47 doesn't support :has() - use simpler selectors
   // ==========================================================================
-  itemDetailPage: '.page:has([id*="item-"])',
+  itemDetailPage: '.page',
   itemCover: '.covers-book-cover, [class*="book-cover"]',
   itemTitle: 'h1',
-  itemPlayButton: 'button:has(.material-symbols):has(:not([disabled]))',
+  itemPlayButton: '#page-wrapper button .material-symbols',
   itemEditButton: 'button[aria-label*="Edit"]',
   itemDetails: '.grow.px-2, [class*="item-details"]',
   itemTabs: '[role="tablist"]',
@@ -143,30 +144,33 @@ var SELECTORS = {
   
   // ==========================================================================
   // PLAYER (bottom bar when playing)
+  // NOTE: Chrome 47 doesn't support :has() - use simpler selectors
   // ==========================================================================
   playerContainer: '#mediaPlayerContainer',
   playerCover: '#mediaPlayerContainer .covers-book-cover',
   playerTitle: '#mediaPlayerContainer a[href^="/item/"]',
-  playerPlayPause: '#mediaPlayerContainer button:has(.material-symbols):has(span:contains("play")), #mediaPlayerContainer button:has(.material-symbols):has(span:contains("pause"))',
-  playerSeekBack: '#mediaPlayerContainer button:has(span[class*="replay"])',
-  playerSeekForward: '#mediaPlayerContainer button:has(span[class*="forward"])',
-  playerClose: '#mediaPlayerContainer button:has(span:contains("close"))',
+  playerPlayPause: '#mediaPlayerContainer button',
+  playerSeekBack: '#mediaPlayerContainer button',
+  playerSeekForward: '#mediaPlayerContainer button',
+  playerClose: '#mediaPlayerContainer button',
   playerProgress: '#mediaPlayerContainer [class*="progress"], .player-progress-bar',
   playerChapters: '#mediaPlayerContainer [class*="chapter"]',
   
   // ==========================================================================
   // APPBAR (top navigation)
+  // NOTE: Chrome 47 doesn't support :has() - use simpler selectors
   // ==========================================================================
   appbarButtons: '#appbar button, #appbar a[href]',
   appbarSearch: '#appbar input[type="search"], #appbar input[placeholder*="Search"]',
-  appbarLibrarySelect: '#appbar [class*="library-select"], #appbar button:has(.material-symbols)',
-  appbarUserMenu: '#appbar [class*="user-menu"], #appbar button:has(img[class*="avatar"])',
+  appbarLibrarySelect: '#appbar [class*="library-select"], #appbar button',
+  appbarUserMenu: '#appbar [class*="user-menu"], #appbar a[href*="/account"]',
   
   // ==========================================================================
   // MODALS & DIALOGS
+  // NOTE: Chrome 47 doesn't support :has() - use simpler selectors
   // ==========================================================================
   modal: '.modal, [role="dialog"]',
-  modalClose: '.modal button[aria-label*="Close"], [role="dialog"] button:has(span:contains("close"))',
+  modalClose: '.modal button[aria-label*="Close"], [role="dialog"] button',
   modalButtons: '.modal button, [role="dialog"] button',
   
   // ==========================================================================
@@ -224,7 +228,7 @@ var INITIAL_FOCUS_SELECTORS = {
   
   // Item detail page
   item: [
-    'button:has(.material-symbols)',                    // Play button
+    '#page-wrapper button',                             // Play button
     'button[tabindex="0"]',                             // Any focusable button
     'h1',                                               // Title (for reading)
     '.covers-book-cover',                               // Cover image

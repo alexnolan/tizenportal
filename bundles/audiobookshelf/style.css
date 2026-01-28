@@ -358,6 +358,7 @@ span.material-symbols {
 /* ==========================================================================
    BUTTON BACKGROUND FIX - CHROME 47 TRANSPARENCY ISSUE
    Chrome 47 may render buttons with white backgrounds by default.
+   Chrome 47 does NOT support :has() pseudo-class, so we use broader selectors.
    Force transparent backgrounds on all ABS icon buttons.
    ========================================================================== */
 
@@ -368,13 +369,21 @@ span.material-symbols {
   border: none !important;
 }
 
-/* All icon buttons throughout the app */
-button:has(.material-symbols),
+/* ALL buttons in the app - nuclear option for Chrome 47 */
+button {
+  background-color: transparent !important;
+}
+
+/* Buttons with specific classes */
 button.icon-btn,
 button[class*="icon"],
 .iconBtn,
 [class*="IconBtn"],
-button.rounded-full {
+button.rounded-full,
+button.rounded-md,
+button.rounded-lg,
+.btn-icon,
+.icon-button {
   background: transparent !important;
   background-color: transparent !important;
 }
@@ -384,8 +393,15 @@ button[aria-label*="more"],
 button[aria-label*="More"],
 button[aria-label*="menu"],
 button[aria-label*="Menu"],
-button:has(span:contains("more_vert")),
-button:has(span:contains("more_horiz")) {
+button[aria-label*="options"],
+button[aria-label*="Options"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Page wrapper buttons (content area) */
+#page-wrapper button,
+.page button {
   background: transparent !important;
   background-color: transparent !important;
 }

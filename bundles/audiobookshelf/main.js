@@ -387,6 +387,9 @@ export default {
     // This replaces manual setupFocusables() for card elements
     this.registerCardSelectors();
     
+    // ABS-SPECIFIC: Move toolbar elements into appbar
+    this.relocateToolbarToAppbar();
+    
     // ABS-SPECIFIC: Set up non-card focusables (siderail, appbar, etc.)
     this.setupOtherFocusables();
     
@@ -404,6 +407,7 @@ export default {
     stopObserver = observeDOM(function() {
       // Re-run setup when DOM changes (new cards loaded, etc.)
       // Card selectors are auto-processed by core observer
+      self.relocateToolbarToAppbar();
       self.setupOtherFocusables();
       self.applySpacingClasses();
       wrapTextInputs(SELECTORS.textInputs);
@@ -666,6 +670,78 @@ export default {
     });
     
     console.log('TizenPortal [ABS]: Card selectors registered');
+  },
+
+  /**
+   * Relocate toolbar elements (filter, sort, options) into the appbar
+   * 
+   * The #toolbar div below the appbar takes up space on TV.
+   * We move its useful buttons into the appbar for a cleaner look.
+   */
+  relocateToolbarToAppbar: function() {
+    var toolbar = document.getElementById('toolbar');
+    var appbar = document.getElementById('appbar');
+    
+    if (!toolbar || !appbar) return;
+    
+    // Check if we've already relocated
+    if (appbar.querySelector('.tp-toolbar-relocated')) return;
+    
+    try {
+      // Find the insertion point in appbar - after search, before stats/config icons
+      // The appbar typically has: library select, search, [gap], stats, config, user
+      var statsLink = appbar.querySelector('a[href*="/stats"]');
+      var insertBefore = statsLink ? statsLink.parentElement : null;
+      
+      // If no stats link, try to find config or just append
+      if (!insertBefore) {
+        var configLink = appbar.querySelector('a[href*="/config"]');
+        insertBefore = configLink ? configLink.parentElement : null;
+      }
+      
+      // Create a container for relocated toolbar items
+      var container = document.createElement('div');
+      container.className = 'tp-toolbar-relocated';
+      container.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-left: 16px; margin-right: 16px;';
+      
+      // Find toolbar buttons/controls to move
+      var toolbarButtons = toolbar.querySelectorAll('button, [role="button"]');
+      var movedCount = 0;
+      
+      for (var i = 0; i < toolbarButtons.length; i++) {
+        var btn = toolbarButtons[i];
+        // Clone the button to avoid breaking Vue bindings
+        var clone = btn.cloneNode(true);
+        clone.setAttribute('tabindex', '0');
+        
+        // Copy click handler by triggering original on clone click
+        (function(originalBtn) {
+          clone.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            originalBtn.click();
+          });
+        })(btn);
+        
+        container.appendChild(clone);
+        movedCount++;
+      }
+      
+      // Insert into appbar
+      if (movedCount > 0) {
+        if (insertBefore) {
+          insertBefore.parentElement.insertBefore(container, insertBefore);
+        } else {
+          // Just append to appbar's inner flex container
+          var appbarInner = appbar.querySelector('.flex') || appbar;
+          appbarInner.appendChild(container);
+        }
+        
+        console.log('TizenPortal [ABS]: Relocated', movedCount, 'toolbar buttons to appbar');
+      }
+    } catch (err) {
+      console.warn('TizenPortal [ABS]: Error relocating toolbar:', err.message);
+    }
   },
 
   /**

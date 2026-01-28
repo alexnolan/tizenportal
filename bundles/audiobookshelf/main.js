@@ -636,77 +636,36 @@ export default {
       }
       
       // ========================================================================
-      // SERIES CARDS - Focus on TITLE PLACARD, not the card itself
+      // SERIES CARDS - Focus on the card container directly
       // ========================================================================
-      // Series cards display multiple book covers which is confusing for nav.
-      // Instead, make the title placard underneath focusable.
+      // The title placard (categoryPlacard) has opacity-0 overlay issues on Tizen.
+      // Instead, make the series card itself focusable like book cards.
+      // The card already has a click handler from Vue, so we just need tabindex.
       var seriesCards = document.querySelectorAll(SELECTORS.seriesCards);
       for (var s = 0; s < seriesCards.length; s++) {
         var sCard = seriesCards[s];
-        // Remove tabindex from the card itself - we don't want it focusable
-        sCard.setAttribute('tabindex', '-1');
-        sCard.removeAttribute('data-tp-card');
-        
-        // Find the title placard (standard or detail view)
-        var titlePlacard = sCard.querySelector('.categoryPlacard') || 
-                          sCard.querySelector('[cy-id="detailBottomText"]') ||
-                          sCard.querySelector('[cy-id="standardBottomText"]');
-        if (titlePlacard) {
-          if (titlePlacard.getAttribute('tabindex') !== '0') {
-            titlePlacard.setAttribute('tabindex', '0');
-            count++;
-          }
-          // Single-action: clicking title navigates to series
-          titlePlacard.setAttribute('data-tp-card', 'single');
-          // Store reference to parent card for click handling
-          titlePlacard.setAttribute('data-tp-series-card', sCard.id);
-          
-          // Add click handler to navigate when Enter pressed on title
-          if (!titlePlacard.hasAttribute('data-tp-click-setup')) {
-            titlePlacard.setAttribute('data-tp-click-setup', 'true');
-            titlePlacard.addEventListener('click', function() {
-              var cardId = this.getAttribute('data-tp-series-card');
-              var parentCard = document.getElementById(cardId);
-              if (parentCard) {
-                parentCard.click();
-              }
-            });
-          }
+        // Make the card itself focusable
+        if (sCard.getAttribute('tabindex') !== '0') {
+          sCard.setAttribute('tabindex', '0');
+          count++;
         }
+        // Single-action: Enter clicks the card to navigate to series
+        sCard.setAttribute('data-tp-card', 'single');
       }
       
       // ========================================================================
-      // COLLECTION CARDS - Focus on title, similar to series
+      // COLLECTION CARDS - Focus on the card itself (not hidden title placard)
       // ========================================================================
       var collectionCards = document.querySelectorAll(SELECTORS.collectionCards);
       for (var c = 0; c < collectionCards.length; c++) {
         var cCard = collectionCards[c];
-        // Remove tabindex from card itself
-        cCard.setAttribute('tabindex', '-1');
-        cCard.removeAttribute('data-tp-card');
-        
-        // Find title element
-        var collectionTitle = cCard.querySelector('.categoryPlacard') ||
-                              cCard.querySelector('p.truncate');
-        if (collectionTitle) {
-          if (collectionTitle.getAttribute('tabindex') !== '0') {
-            collectionTitle.setAttribute('tabindex', '0');
-            count++;
-          }
-          collectionTitle.setAttribute('data-tp-card', 'single');
-          collectionTitle.setAttribute('data-tp-collection-card', cCard.id);
-          
-          if (!collectionTitle.hasAttribute('data-tp-click-setup')) {
-            collectionTitle.setAttribute('data-tp-click-setup', 'true');
-            collectionTitle.addEventListener('click', function() {
-              var cardId = this.getAttribute('data-tp-collection-card');
-              var parentCard = document.getElementById(cardId);
-              if (parentCard) {
-                parentCard.click();
-              }
-            });
-          }
+        // Make the collection card itself focusable
+        if (cCard.getAttribute('tabindex') !== '0') {
+          cCard.setAttribute('tabindex', '0');
+          count++;
         }
+        // Single-action: Enter clicks the card to navigate to collection
+        cCard.setAttribute('data-tp-card', 'single');
       }
       
       // ========================================================================

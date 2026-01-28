@@ -144,6 +144,12 @@ export function processCards() {
         // Mark card type
         el.setAttribute('data-tp-card', reg.type);
         
+        // Add accessibility role if not a native interactive element
+        var tagName = el.tagName.toUpperCase();
+        if (tagName !== 'A' && tagName !== 'BUTTON' && !el.hasAttribute('role')) {
+          el.setAttribute('role', 'button');
+        }
+        
         count++;
       }
     } catch (err) {
@@ -239,40 +245,38 @@ function injectFocusStyles() {
   style.textContent = [
     '/* TizenPortal Core Card Focus Styles */',
     '',
+    '/* Base card styles - cursor and transition */',
+    '[data-tp-card] {',
+    '  cursor: pointer;',
+    '  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;',
+    '}',
+    '',
     '/* Universal focus indicator for ALL registered cards */',
-    '[data-tp-card]:focus {',
-    '  outline: 4px solid #1ad691 !important;',
-    '  outline-offset: 4px !important;',
+    '/* Use box-shadow instead of outline - not clipped by overflow:hidden */',
+    '/* Use high specificity to override any resets */',
+    '[data-tp-card]:focus,',
+    'a[data-tp-card]:focus,',
+    'div[data-tp-card]:focus,',
+    'button[data-tp-card]:focus {',
+    '  outline: none !important;',
+    '  box-shadow: 0 0 0 4px #1ad691 !important;',
     '  z-index: 100 !important;',
     '  position: relative !important;',
-    '}',
-    '',
-    '/* Subtle scale on focus for visual feedback */',
-    '[data-tp-card]:focus > *:first-child {',
-    '  transform: scale(1.02);',
-    '  transition: transform 0.15s ease-out;',
-    '}',
-    '',
-    '/* Single-action cards get slightly different styling */',
-    '[data-tp-card="single"]:focus {',
-    '  outline-color: #1ad691 !important;',
-    '}',
-    '',
-    '/* Multi-action cards (have inner focusables) */',
-    '[data-tp-card="multi"]:focus {',
-    '  outline-color: #1ad691 !important;',
+    '  transform: scale(1.05);',
     '}',
     '',
     '/* Entered state for multi-action cards */',
     '[data-tp-card="multi"].tp-card-entered,',
     '[data-tp-card="multi"][data-tp-entered="true"] {',
-    '  outline: 4px solid #fcd34d !important;',
-    '  outline-offset: 4px !important;',
+    '  outline: none !important;',
+    '  box-shadow: 0 0 0 4px #fcd34d !important;',
     '}',
     '',
-    '/* Make cards cursor pointer */',
-    '[data-tp-card] {',
-    '  cursor: pointer;',
+    '/* Focus within entered card - inner buttons */',
+    '[data-tp-card].tp-card-entered :focus,',
+    '[data-tp-card][data-tp-entered="true"] :focus {',
+    '  outline: 2px solid #fff !important;',
+    '  outline-offset: 2px;',
     '}'
   ].join('\n');
   

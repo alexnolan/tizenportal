@@ -584,14 +584,6 @@ button[aria-label*="Options"] {
   -webkit-overflow-scrolling: touch !important;
 }
 
-/* Homepage cards need minimum dimensions */
-.categorizedBookshelfRow [id^="book-card-"],
-.categorizedBookshelfRow [id^="series-card-"],
-.categorizedBookshelfRow [id^="collection-card-"],
-.categorizedBookshelfRow [id^="playlist-card-"] {
-  min-height: 192px !important;
-}
-
 /* Book card container - DO NOT override position or size - ABS calculates dynamically */
 [id^="book-card-"],
 [id^="series-card-"] {
@@ -667,8 +659,8 @@ body {
 
 /* CRITICAL: Override the main content container's overflow-hidden */
 /* This is the div with "text-white max-h-screen h-screen overflow-hidden" */
-.text-white.max-h-screen.h-screen.overflow-hidden,
-#__layout > div.text-white {
+/* Be SPECIFIC - only target the main layout container, not all h-screen elements */
+#__layout > div.text-white.h-screen.overflow-hidden {
   max-height: none !important;
   height: auto !important;
   min-height: 100vh !important;
@@ -676,17 +668,8 @@ body {
   overflow-y: auto !important;
 }
 
-/* Also override the h-screen and max-h-screen classes directly */
-.h-screen {
-  height: auto !important;
-  min-height: 100vh !important;
-}
-.max-h-screen {
-  max-height: none !important;
-}
-
-/* Ensure overflow-hidden doesn't apply to main layout */
-#__layout .overflow-hidden {
+/* Ensure overflow-hidden doesn't apply to main layout container only */
+#__layout > div.overflow-hidden {
   overflow: visible !important;
 }
 

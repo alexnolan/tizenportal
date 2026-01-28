@@ -628,8 +628,13 @@ export default {
     });
     
     // Author cards - single-action
+    // Register both class and ID patterns separately
     cards.register({
-      selector: SELECTORS.authorCards,
+      selector: '.author-card',
+      type: 'single'
+    });
+    cards.register({
+      selector: '[id^="author-card-"]',
       type: 'single'
     });
     

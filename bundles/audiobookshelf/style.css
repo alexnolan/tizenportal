@@ -26,30 +26,6 @@ html, body {
 }
 
 /* ==========================================================================
-   BOOKSHELF CARD LAYOUT FIX
-   ABS virtual scroller uses absolute positioning for cards within rows.
-   Cards must stay on the same horizontal line within their row container.
-   ========================================================================== */
-
-/* The bookshelf row content that holds cards should allow horizontal layout */
-.bookshelfRow > div,
-.categorizedBookshelfRow > div,
-[class*="bookshelf"] [style*="height:"] {
-  /* Don't constrain width - let ABS calculate */
-  position: relative !important;
-}
-
-/* Cards with absolute positioning - ensure they're positioned correctly */
-[id^="book-card-"],
-[id^="series-card-"],
-[id^="collection-card-"],
-[id^="author-card-"],
-[id^="playlist-card-"] {
-  /* Cards should respect their calculated left position */
-  display: block !important;
-}
-
-/* ==========================================================================
    FILTER/SORT DROPDOWN FIXES
    ABS uses controls-library-filter-select and controls-library-sort-select
    ========================================================================== */

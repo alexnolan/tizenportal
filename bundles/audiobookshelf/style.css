@@ -582,7 +582,6 @@ button[aria-label*="Options"] {
 .categorizedBookshelfRow {
   overflow-x: auto !important;
   -webkit-overflow-scrolling: touch !important;
-  min-height: 250px !important;
 }
 
 /* Homepage cards need minimum dimensions */
@@ -590,15 +589,7 @@ button[aria-label*="Options"] {
 .categorizedBookshelfRow [id^="series-card-"],
 .categorizedBookshelfRow [id^="collection-card-"],
 .categorizedBookshelfRow [id^="playlist-card-"] {
-  min-height: 200px !important;
-  min-width: 120px !important;
-}
-
-/* Homepage cover images need minimum size */
-.categorizedBookshelfRow [id^="cover-area-"],
-.categorizedBookshelfRow .covers-book-cover {
-  min-height: 150px !important;
-  min-width: 100px !important;
+  min-height: 192px !important;
 }
 
 /* Book card container - DO NOT override position or size - ABS calculates dynamically */

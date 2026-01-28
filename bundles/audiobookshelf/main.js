@@ -637,6 +637,11 @@ export default {
       selector: '[id^="author-card-"]',
       type: 'single'
     });
+    // Homepage author cards are just links to /author/ URLs
+    cards.register({
+      selector: 'a[href*="/author/"]',
+      type: 'single'
+    });
     
     // Siderail links - single-action
     cards.register({

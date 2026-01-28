@@ -55,27 +55,13 @@ html, body,
 
 /* ==========================================================================
    FILTER/SORT BAR - HIDE ON TV
-   The filter/sort/options bar below the appbar takes up space and doesn't
-   look great on TV. Hide it - users can access these via library settings.
+   The #toolbar div below the appbar contains filter, sort, and options.
+   Hide it on TV - it takes up space and doesn't work well with remote.
    ========================================================================== */
 
-/* Hide the filter/sort controls bar (the row below appbar with filter, sort, menu) */
-/* This targets the row containing controls-library-filter-select etc. */
-#page-wrapper > .w-full.px-2.md\\:px-4,
-#page-wrapper > .flex.items-center.py-2,
-#page-wrapper > div > .w-full.px-2,
-.bookshelf-toolbar,
-[class*=\"controls-library\"],
-#page-wrapper > .w-full.flex.items-center {
+/* Hide the toolbar (filter/sort/options bar below appbar) */
+#toolbar {
   display: none !important;
-}
-
-/* But keep dropdown menus visible when they open */
-.ui-dropdown-menu,
-[role=\"menu\"],
-[role=\"listbox\"],
-.dropdown-menu {
-  display: block !important;
 }
 
 /* ==========================================================================

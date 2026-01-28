@@ -251,15 +251,18 @@ function polyfillResizeObserver() {
     return false; // Already exists
   }
 
+  // Throttle interval (ms) - balance between responsiveness and performance
+  var POLL_INTERVAL = 100;
+
   /**
    * Minimal ResizeObserver implementation
-   * Uses polling since MutationObserver doesn't detect size changes
+   * Uses throttled polling since MutationObserver doesn't detect size changes
    */
   window.ResizeObserver = function ResizeObserver(callback) {
     this._callback = callback;
     this._observedElements = [];
+    this._timeoutId = null;
     this._boundCheck = this._check.bind(this);
-    this._rafId = null;
   };
 
   window.ResizeObserver.prototype.observe = function(target) {
@@ -277,10 +280,11 @@ function polyfillResizeObserver() {
       height: rect.height,
     });
     
-    // CRITICAL: Fire initial callback immediately (native behavior)
-    // Virtual scrollers depend on this to know initial container size
+    // CRITICAL: Fire initial callback after a delay to let CSS settle
+    // Virtual scrollers and layout calculators depend on accurate initial dimensions
     var self = this;
     setTimeout(function() {
+      if (!document.body || !document.body.contains(target)) return;
       try {
         var initialRect = target.getBoundingClientRect();
         var entry = {
@@ -308,10 +312,10 @@ function polyfillResizeObserver() {
       } catch (err) {
         // Ignore errors from initial callback
       }
-    }, 0);
+    }, 50); // Delay to let CSS/layout settle
     
     // Start polling if not already
-    if (!this._rafId) {
+    if (!this._timeoutId) {
       this._scheduleCheck();
     }
   };
@@ -325,25 +329,22 @@ function polyfillResizeObserver() {
     }
     
     // Stop polling if nothing to observe
-    if (this._observedElements.length === 0 && this._rafId) {
-      cancelAnimationFrame(this._rafId);
-      this._rafId = null;
+    if (this._observedElements.length === 0 && this._timeoutId) {
+      clearTimeout(this._timeoutId);
+      this._timeoutId = null;
     }
   };
 
   window.ResizeObserver.prototype.disconnect = function() {
     this._observedElements = [];
-    if (this._rafId) {
-      cancelAnimationFrame(this._rafId);
-      this._rafId = null;
+    if (this._timeoutId) {
+      clearTimeout(this._timeoutId);
+      this._timeoutId = null;
     }
   };
 
   window.ResizeObserver.prototype._scheduleCheck = function() {
-    var self = this;
-    this._rafId = requestAnimationFrame(function() {
-      self._check();
-    });
+    this._timeoutId = setTimeout(this._boundCheck, POLL_INTERVAL);
   };
 
   window.ResizeObserver.prototype._check = function() {
@@ -401,7 +402,6 @@ function polyfillResizeObserver() {
         this._callback(entries, this);
       } catch (err) {
         // Don't let callback errors stop the observer
-        // Log silently - ABS may throw during Vue re-renders
       }
     }
     

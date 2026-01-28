@@ -6,6 +6,22 @@
  */
 
 /* ==========================================================================
+   CRITICAL TV LAYOUT FIXES
+   ========================================================================== */
+
+/* Hide horizontal scrollbars on bookshelf rows - cards should wrap or be calculated per row */
+.bookshelfRow,
+.categorizedBookshelfRow {
+  overflow-x: hidden !important;
+}
+
+/* Ensure the main content area doesn't overflow horizontally */
+#page-wrapper {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+}
+
+/* ==========================================================================
    CSS VARIABLE POLYFILL FOR CHROME 47
    Chrome 47 doesn't support CSS custom properties (var()).
    Tailwind CSS v4 uses calc(var(--spacing)*N) for all utility classes.

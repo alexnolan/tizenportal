@@ -30,35 +30,27 @@ html, body,
 
 /* ==========================================================================
    SHELF LABEL VISIBILITY FIX
-   Labels below cards get clipped by the shelf divider and overflow:hidden.
-   Force overflow-visible on the entire shelf hierarchy.
+   Labels below cards get hidden under the wooden shelf divider bar.
+   Fix by ensuring cards and their labels have higher z-index than divider.
    ========================================================================== */
 
-/* Homepage bookshelf container - must allow vertical overflow for labels */
-#bookshelf {
-  overflow-y: visible !important;
-  overflow-x: hidden !important;
+/* The shelf divider (wooden bar) - LOWER z-index */
+.bookshelfDividerCategorized {
+  z-index: 5 !important;
 }
 
-/* Each shelf section needs overflow-visible */
-.categorizedBookshelfRow,
-.categorizedBookshelfRow > div,
-.categorizedBookshelfRow .flex.items-center {
-  overflow-y: visible !important;
-}
-
-/* Add bottom padding to shelf rows so labels have space above the divider */
-.categorizedBookshelfRow {
-  padding-bottom: 60px !important;
-  margin-bottom: -20px !important;  /* Compensate so shelves don't space too much */
-}
-
-/* Labels below cards - ensure they're visible above the shelf divider */
-[id^="book-card-"] > .w-full,
-[id^="book-card-"] > div:last-child,
-.book-card-bottom {
+/* Cards and their content - HIGHER z-index than divider */
+[id^="book-card-"],
+[id^="series-card-"],
+[id^="collection-card-"],
+[id^="author-card-"] {
+  z-index: 10 !important;
   position: relative !important;
-  z-index: 25 !important;  /* Above shelf divider (z-index: 20) */
+}
+
+/* Shelf category labels ("Continue Listening", etc.) - highest z-index */
+.categoryPlacard {
+  z-index: 30 !important;
 }
 
 /* ==========================================================================
@@ -625,9 +617,9 @@ button[aria-label*="Options"] {
 
 /* Categorized bookshelf row - HOMEPAGE - cards inside flex container */
 /* Default card height is 192px, plus ~50px for labels below, plus pt-6e padding */
-/* NOTE: padding-bottom and overflow-y added in SHELF LABEL VISIBILITY FIX section above */
 .categorizedBookshelfRow {
   overflow-x: auto !important;
+  overflow-y: visible !important;
   -webkit-overflow-scrolling: touch !important;
   min-height: 280px !important;
 }
@@ -662,10 +654,7 @@ button[aria-label*="Options"] {
   z-index: 30 !important;
 }
 
-/* The shelf divider (wooden bar) */
-.bookshelfDividerCategorized {
-  z-index: 20 !important;
-}
+/* NOTE: .bookshelfDividerCategorized z-index set in SHELF LABEL VISIBILITY FIX section */
 
 /* ========================================================================== 
    SERIES CARD LABELS - HIDDEN

@@ -262,7 +262,7 @@ function injectFocusStyles() {
     '  box-shadow: 0 0 0 4px #1ad691 !important;',
     '  z-index: 100 !important;',
     '  position: relative !important;',
-    '  transform: scale(1.05);',
+    '  transform: scale(1.02);',
     '}',
     '',
     '/* Entered state for multi-action cards */',

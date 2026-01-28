@@ -243,6 +243,127 @@ function polyfillStringEndsWith() {
 }
 
 /**
+ * ResizeObserver polyfill for Chrome < 64
+ * Provides a minimal implementation that ABS and other SPAs need
+ */
+function polyfillResizeObserver() {
+  if (typeof window.ResizeObserver === 'function') {
+    return false; // Already exists
+  }
+
+  /**
+   * Minimal ResizeObserver implementation
+   * Uses polling since MutationObserver doesn't detect size changes
+   */
+  window.ResizeObserver = function ResizeObserver(callback) {
+    this._callback = callback;
+    this._observedElements = [];
+    this._boundCheck = this._check.bind(this);
+    this._rafId = null;
+  };
+
+  window.ResizeObserver.prototype.observe = function(target) {
+    if (!target || !(target instanceof Element)) return;
+    
+    // Check if already observing
+    for (var i = 0; i < this._observedElements.length; i++) {
+      if (this._observedElements[i].target === target) return;
+    }
+    
+    var rect = target.getBoundingClientRect();
+    this._observedElements.push({
+      target: target,
+      width: rect.width,
+      height: rect.height,
+    });
+    
+    // Start polling if not already
+    if (!this._rafId) {
+      this._scheduleCheck();
+    }
+  };
+
+  window.ResizeObserver.prototype.unobserve = function(target) {
+    for (var i = 0; i < this._observedElements.length; i++) {
+      if (this._observedElements[i].target === target) {
+        this._observedElements.splice(i, 1);
+        break;
+      }
+    }
+    
+    // Stop polling if nothing to observe
+    if (this._observedElements.length === 0 && this._rafId) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
+  };
+
+  window.ResizeObserver.prototype.disconnect = function() {
+    this._observedElements = [];
+    if (this._rafId) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
+  };
+
+  window.ResizeObserver.prototype._scheduleCheck = function() {
+    this._rafId = requestAnimationFrame(this._boundCheck);
+  };
+
+  window.ResizeObserver.prototype._check = function() {
+    var entries = [];
+    
+    for (var i = 0; i < this._observedElements.length; i++) {
+      var obs = this._observedElements[i];
+      var rect = obs.target.getBoundingClientRect();
+      
+      if (rect.width !== obs.width || rect.height !== obs.height) {
+        obs.width = rect.width;
+        obs.height = rect.height;
+        
+        // Create a ResizeObserverEntry-like object
+        entries.push({
+          target: obs.target,
+          contentRect: {
+            x: 0,
+            y: 0,
+            width: rect.width,
+            height: rect.height,
+            top: 0,
+            right: rect.width,
+            bottom: rect.height,
+            left: 0,
+          },
+          borderBoxSize: [{
+            blockSize: rect.height,
+            inlineSize: rect.width,
+          }],
+          contentBoxSize: [{
+            blockSize: rect.height,
+            inlineSize: rect.width,
+          }],
+        });
+      }
+    }
+    
+    if (entries.length > 0) {
+      try {
+        this._callback(entries, this);
+      } catch (err) {
+        console.warn('ResizeObserver callback error:', err);
+      }
+    }
+    
+    // Continue polling
+    if (this._observedElements.length > 0) {
+      this._scheduleCheck();
+    }
+  };
+
+  return true;
+}
+
+/**
  * Initialize all polyfills based on feature detection
  * @returns {string[]} List of loaded polyfill names
  */
@@ -254,6 +375,7 @@ export function initPolyfills() {
   if (polyfillDOMRectReadOnly()) loaded.push('DOMRectReadOnly');
   if (polyfillElementMatches()) loaded.push('Element.matches');
   if (polyfillElementClosest()) loaded.push('Element.closest');
+  if (polyfillResizeObserver()) loaded.push('ResizeObserver');
 
   // Array methods
   if (polyfillArrayIncludes()) loaded.push('Array.includes');

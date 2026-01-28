@@ -29,6 +29,39 @@ html, body,
 }
 
 /* ==========================================================================
+   SHELF LABEL VISIBILITY FIX
+   Labels below cards get clipped by the shelf divider and overflow:hidden.
+   Force overflow-visible on the entire shelf hierarchy.
+   ========================================================================== */
+
+/* Homepage bookshelf container - must allow vertical overflow for labels */
+#bookshelf {
+  overflow-y: visible !important;
+  overflow-x: hidden !important;
+}
+
+/* Each shelf section needs overflow-visible */
+.categorizedBookshelfRow,
+.categorizedBookshelfRow > div,
+.categorizedBookshelfRow .flex.items-center {
+  overflow-y: visible !important;
+}
+
+/* Add bottom padding to shelf rows so labels have space above the divider */
+.categorizedBookshelfRow {
+  padding-bottom: 60px !important;
+  margin-bottom: -20px !important;  /* Compensate so shelves don't space too much */
+}
+
+/* Labels below cards - ensure they're visible above the shelf divider */
+[id^="book-card-"] > .w-full,
+[id^="book-card-"] > div:last-child,
+.book-card-bottom {
+  position: relative !important;
+  z-index: 25 !important;  /* Above shelf divider (z-index: 20) */
+}
+
+/* ==========================================================================
    FILTER/SORT DROPDOWN FIXES
    ABS uses controls-library-filter-select and controls-library-sort-select
    ========================================================================== */
@@ -592,9 +625,9 @@ button[aria-label*="Options"] {
 
 /* Categorized bookshelf row - HOMEPAGE - cards inside flex container */
 /* Default card height is 192px, plus ~50px for labels below, plus pt-6e padding */
+/* NOTE: padding-bottom and overflow-y added in SHELF LABEL VISIBILITY FIX section above */
 .categorizedBookshelfRow {
   overflow-x: auto !important;
-  overflow-y: visible !important;
   -webkit-overflow-scrolling: touch !important;
   min-height: 280px !important;
 }

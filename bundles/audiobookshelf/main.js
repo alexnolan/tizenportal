@@ -1043,7 +1043,10 @@ export default {
       if (!hints) return;
       
       var playerContainer = document.querySelector(SELECTORS.playerContainer);
-      var playerVisible = playerContainer && playerContainer.offsetParent !== null;
+      // offsetParent doesn't work for fixed elements - check display/visibility instead
+      var playerVisible = playerContainer && 
+        playerContainer.style.display !== 'none' &&
+        getComputedStyle(playerContainer).display !== 'none';
       
       if (playerVisible) {
         // Hide color hints when player is visible

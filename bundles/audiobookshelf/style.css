@@ -1657,102 +1657,39 @@ textarea,
    ========================================================================== */
 
 /* Player container - fixed at bottom, full width */
-/* IMPORTANT: Don't override flex-direction or height - ABS has its own layout */
+/* IMPORTANT: Don't override colors or layout - just positioning */
 #mediaPlayerContainer {
   position: fixed !important;
   bottom: 0 !important;
-  left: 0 !important;  /* Full width, ignore siderail */
+  left: 0 !important;
   right: 0 !important;
   width: 100% !important;
-  max-width: 100vw !important;
-  /* Let ABS control height - it needs space for all content */
-  min-height: 120px !important;
-  padding: 12px 24px !important;
-  margin: 0 !important;
-  background: linear-gradient(to top, #0d1117 0%, #1a202c 100%) !important;
-  z-index: 10000 !important;  /* Above everything including color hints */
-  box-sizing: border-box !important;
-  /* Don't force overflow hidden - menus need to appear above */
+  z-index: 10000 !important;
   overflow: visible !important;
 }
 
-/* Ensure player children are visible */
-#mediaPlayerContainer > * {
-  visibility: visible !important;
-  opacity: 1 !important;
-}
+/* ==========================================================================
+   PLAYER FOCUS STATES ONLY
+   Don't override ABS colors/layout - just add focus indicators for TV nav
+   ========================================================================== */
 
-/* Hide siderail when player is visible to prevent overlap */
-#mediaPlayerContainer ~ [role="toolbar"],
-body:has(#mediaPlayerContainer) [role="toolbar"][aria-orientation="vertical"] {
-  z-index: 1 !important;
-}
-
-/* Hide color hints when player is visible */
-/* Note: This uses adjacent sibling which may not work, so we also add JS handling */
-#mediaPlayerContainer ~ .tp-site-hints {
-  display: none !important;
-}
-
-/* Ensure all text in player is visible */
-#mediaPlayerContainer * {
-  visibility: visible !important;
-}
-
-/* Player cover image */
-#mediaPlayerContainer .covers-book-cover,
-#mediaPlayerContainer [class*="book-cover"] {
-  cursor: pointer !important;
-}
-
+/* Cover image focus */
 #mediaPlayerContainer .covers-book-cover:focus,
 #mediaPlayerContainer [class*="book-cover"]:focus {
   outline: 3px solid #1ad691 !important;
   outline-offset: 4px !important;
 }
 
-/* Player title and author - ensure visible */
-#mediaPlayerContainer a[href^="/item/"] {
-  font-size: 1.125rem !important;
-}
-
-#mediaPlayerContainer a[href^="/item/"]:focus {
+/* Links focus */
+#mediaPlayerContainer a:focus {
   outline: 2px solid #1ad691 !important;
   outline-offset: 2px !important;
 }
 
-/* Text colors - ensure visible against dark background */
-#mediaPlayerContainer .text-gray-400,
-#mediaPlayerContainer .text-gray-300,
-#mediaPlayerContainer .text-gray-200 {
-  color: #a0aec0 !important;
-}
-
-/* Duration/time display - ensure visible */
-#mediaPlayerContainer .font-mono {
-  font-size: 0.875rem !important;
-  color: #e2e8f0 !important;
-}
-
-/* Chapter title display */
-#mediaPlayerContainer .text-xs,
-#mediaPlayerContainer .text-sm {
-  font-size: 0.875rem !important;
-  color: #cbd5e0 !important;
-}
-
-/* ==========================================================================
-   PLAYER TRACK BAR (SEEKBAR)
-   From ABS: PlayerTrackBar.vue
-   ========================================================================== */
-
-/* Track bar - ensure visible */
-#mediaPlayerContainer .w-full.h-2,
-.player-track-bar,
-[class*="track-bar"] {
-  height: 8px !important;
-  border-radius: 4px !important;
-  cursor: pointer !important;
+/* Button focus */
+#mediaPlayerContainer button:focus {
+  outline: 3px solid #fff !important;
+  outline-offset: 2px !important;
 }
 
 /* Track bar focus */
@@ -1763,138 +1700,17 @@ body:has(#mediaPlayerContainer) [role="toolbar"][aria-orientation="vertical"] {
 }
 
 /* ==========================================================================
-   PLAYER PLAYBACK CONTROLS
-   From ABS: PlayerPlaybackControls.vue
+   PLAYER UI EXTRAS - FOCUS STATES ONLY
+   Don't override ABS positioning/colors - just add focus for TV nav
    ========================================================================== */
 
-/* Controls container - ensure spacing for spatial nav */
-#mediaPlayerContainer .flex.items-center.justify-center,
-.player-controls {
-  gap: 8px !important;  /* Consistent spacing for spatial nav */
-}
-
-/* All playback buttons - ensure minimum touch target for TV */
-#mediaPlayerContainer button {
-  min-width: 40px !important;
-  min-height: 40px !important;
-}
-
-/* Play/Pause button - slightly larger */
-#mediaPlayerContainer button.bg-accent {
-  min-width: 56px !important;
-  min-height: 56px !important;
-}
-
-/* Button focus states */
-#mediaPlayerContainer button:focus {
-  outline: 3px solid #fff !important;
-  outline-offset: 2px !important;
-}
-
-/* Disabled buttons */
-#mediaPlayerContainer button:disabled {
-  opacity: 0.3 !important;
-}
-
-/* ==========================================================================
-   PLAYER UI EXTRAS
-   Volume, speed, bookmarks, sleep timer, chapters modal
-   ========================================================================== */
-
-/* Player popovers/menus - position ABOVE the player, not below */
-#mediaPlayerContainer [role="menu"],
-#mediaPlayerContainer [role="listbox"],
-.player-popover,
-.player-menu,
-.sleep-timer-menu,
-.playback-speed-menu,
-.bookmarks-menu {
-  z-index: 10001 !important;  /* Above player container */
-  background: #1a202c !important;
-  border: 1px solid #4a5568 !important;
-  border-radius: 8px !important;
-  padding: 8px !important;
-  min-width: 200px !important;
-  /* Position above the trigger button */
-  bottom: 100% !important;
-  top: auto !important;
-  margin-bottom: 8px !important;
-}
-
-/* Player menu items - make navigable */
-#mediaPlayerContainer [role="menu"] > *,
-#mediaPlayerContainer [role="listbox"] > *,
-#mediaPlayerContainer [role="option"],
-#mediaPlayerContainer [role="menuitem"],
-.player-popover button,
-.player-menu button {
-  display: block !important;
-  width: 100% !important;
-  padding: 12px 16px !important;
-  font-size: 1.125rem !important;
-  text-align: left !important;
-  cursor: pointer !important;
-}
-
-/* Player menu item focus */
+/* Menu/popover items focus */
 #mediaPlayerContainer [role="menu"] > *:focus,
 #mediaPlayerContainer [role="listbox"] > *:focus,
 #mediaPlayerContainer [role="option"]:focus,
-#mediaPlayerContainer [role="menuitem"]:focus,
-.player-popover button:focus,
-.player-menu button:focus {
-  background: rgba(26, 214, 145, 0.2) !important;
+#mediaPlayerContainer [role="menuitem"]:focus {
   outline: 2px solid #1ad691 !important;
   outline-offset: -2px !important;
-}
-
-/* Speed control */
-#mediaPlayerContainer [class*="playback-speed"],
-#mediaPlayerContainer button[aria-label*="Speed"] {
-  min-width: 64px !important;
-  min-height: 44px !important;
-  padding: 8px 16px !important;
-  font-size: 1rem !important;
-}
-
-/* Volume control - usually hidden on TV but style just in case */
-#mediaPlayerContainer [class*="volume"],
-#mediaPlayerContainer input[type="range"] {
-  min-width: 120px !important;
-  height: 8px !important;
-}
-
-/* Sleep timer button */
-#mediaPlayerContainer button[aria-label*="Sleep"] {
-  min-width: 44px !important;
-  min-height: 44px !important;
-}
-
-/* Chapters button */
-#mediaPlayerContainer button[aria-label*="Chapter"],
-#mediaPlayerContainer button[aria-label*="chapters"] {
-  min-width: 44px !important;
-  min-height: 44px !important;
-}
-
-/* Bookmarks button */
-#mediaPlayerContainer button[aria-label*="Bookmark"],
-#mediaPlayerContainer button[aria-label*="bookmark"] {
-  min-width: 44px !important;
-  min-height: 44px !important;
-}
-
-/* Current chapter name display */
-#mediaPlayerContainer .text-xs.text-gray-300,
-.current-chapter-name {
-  font-size: 1rem !important;
-  padding: 4px 0 !important;
-}
-
-/* Time display (current / total) */
-#mediaPlayerContainer .font-mono.text-xxs,
-#mediaPlayerContainer .font-mono.text-sm {
-  font-size: 1rem !important;
 }
 
 /* ==========================================================================

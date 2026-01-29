@@ -405,16 +405,20 @@ export default {
     
     // CORE: Observe DOM for dynamic Vue/Nuxt content changes
     stopObserver = observeDOM(function() {
-      // Re-run setup when DOM changes (new cards loaded, etc.)
-      // Card selectors are auto-processed by core observer
-      // Only relocate toolbar if there are new elements to move
-      var toolbar = document.getElementById('toolbar');
-      if (toolbar && toolbar.children.length > 0) {
-        self.relocateToolbarToAppbar();
+      try {
+        // Re-run setup when DOM changes (new cards loaded, etc.)
+        // Card selectors are auto-processed by core observer
+        // Only relocate toolbar if there are new elements to move
+        var toolbar = document.getElementById('toolbar');
+        if (toolbar && toolbar.children.length > 0) {
+          self.relocateToolbarToAppbar();
+        }
+        self.setupOtherFocusables();
+        self.applySpacingClasses();
+        wrapTextInputs(SELECTORS.textInputs);
+      } catch (err) {
+        console.warn('TizenPortal [ABS]: Error in DOM observer:', err.message);
       }
-      self.setupOtherFocusables();
-      self.applySpacingClasses();
-      wrapTextInputs(SELECTORS.textInputs);
     }, { debounceMs: 250 });
     
     // SPA NAVIGATION: Watch for URL changes and reset navigation state
@@ -782,17 +786,21 @@ export default {
    * Clear relocated toolbar elements (called on URL change)
    */
   clearRelocatedToolbar: function() {
-    var appbar = document.getElementById('appbar');
-    if (!appbar) return;
-    
-    var container = appbar.querySelector('.tp-toolbar-container');
-    if (container) {
-      // Remove all children - they'll be stale after page change
-      while (container.firstChild) {
-        container.removeChild(container.firstChild);
+    try {
+      var appbar = document.getElementById('appbar');
+      if (!appbar) return;
+      
+      var container = appbar.querySelector('.tp-toolbar-container');
+      if (container) {
+        // Remove all children - they'll be stale after page change
+        while (container.firstChild) {
+          container.removeChild(container.firstChild);
+        }
+        container.style.display = 'none';
+        console.log('TizenPortal [ABS]: Cleared relocated toolbar');
       }
-      container.style.display = 'none';
-      console.log('TizenPortal [ABS]: Cleared relocated toolbar');
+    } catch (err) {
+      console.warn('TizenPortal [ABS]: Error clearing toolbar:', err.message);
     }
   },
 
@@ -1133,46 +1141,54 @@ export default {
     
     // Handler for URL changes
     function onUrlChange() {
-      var currentUrl = window.location.href;
-      if (currentUrl === lastUrl) return;
-      
-      console.log('TizenPortal [ABS]: URL changed from', lastUrl, 'to', currentUrl);
-      lastUrl = currentUrl;
-      
-      // Exit any entered card state
-      if (isInsideCard()) {
-        exitCard();
-      }
-      
-      // Clear old toolbar elements immediately
-      self.clearRelocatedToolbar();
-      
-      // Force re-process cards - remove all data-tp-card attributes first
-      // so they get re-registered with fresh DOM elements
-      var staleCards = document.querySelectorAll('[data-tp-card]');
-      for (var i = 0; i < staleCards.length; i++) {
-        staleCards[i].removeAttribute('data-tp-card');
-        staleCards[i].removeAttribute('tabindex');
-      }
-      
-      // Small delay for Vue/Nuxt to render new content
-      setTimeout(function() {
-        // Re-run card registration
-        if (window.TizenPortal && window.TizenPortal.cards) {
-          window.TizenPortal.cards.processCards();
+      try {
+        var currentUrl = window.location.href;
+        if (currentUrl === lastUrl) return;
+        
+        console.log('TizenPortal [ABS]: URL changed from', lastUrl, 'to', currentUrl);
+        lastUrl = currentUrl;
+        
+        // Exit any entered card state
+        if (isInsideCard()) {
+          exitCard();
         }
         
-        // Relocate new toolbar elements
-        self.relocateToolbarToAppbar();
+        // Clear old toolbar elements immediately
+        self.clearRelocatedToolbar();
         
-        // Re-run other focusables
-        self.setupOtherFocusables();
-        self.applySpacingClasses();
-        wrapTextInputs(SELECTORS.textInputs);
+        // Force re-process cards - remove all data-tp-card attributes first
+        // so they get re-registered with fresh DOM elements
+        var staleCards = document.querySelectorAll('[data-tp-card]');
+        for (var i = 0; i < staleCards.length; i++) {
+          staleCards[i].removeAttribute('data-tp-card');
+          staleCards[i].removeAttribute('tabindex');
+        }
         
-        // Set initial focus on new page
-        setInitialFocus(getInitialFocusSelectors(), 100);
-      }, 300);
+        // Small delay for Vue/Nuxt to render new content
+        setTimeout(function() {
+          try {
+            // Re-run card registration
+            if (window.TizenPortal && window.TizenPortal.cards) {
+              window.TizenPortal.cards.processCards();
+            }
+            
+            // Relocate new toolbar elements
+            self.relocateToolbarToAppbar();
+            
+            // Re-run other focusables
+            self.setupOtherFocusables();
+            self.applySpacingClasses();
+            wrapTextInputs(SELECTORS.textInputs);
+        
+            // Set initial focus on new page
+            setInitialFocus(getInitialFocusSelectors(), 100);
+          } catch (err) {
+            console.warn('TizenPortal [ABS]: Error in URL change timeout:', err.message);
+          }
+        }, 300);
+      } catch (err) {
+        console.warn('TizenPortal [ABS]: Error in URL change handler:', err.message);
+      }
     }
     
     // Listen for popstate (back/forward buttons)

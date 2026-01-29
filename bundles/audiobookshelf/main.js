@@ -713,34 +713,22 @@ export default {
         container = document.createElement('div');
         container.className = 'tp-toolbar-container';
         container.setAttribute('data-tp-nav', 'horizontal');
-        container.style.cssText = 'display: flex; align-items: center; gap: 0; flex-wrap: wrap;';
+        container.style.cssText = 'display: flex; align-items: center; gap: 4px; margin-left: auto; margin-right: 8px;';
         
-        // Find insertion point - after search/library select, before stats/config
-        var searchBox = appbar.querySelector('input[placeholder*="Search" i]');
-        var statsLink = appbar.querySelector('a[href*="/stats"]');
-        var insertPoint = statsLink || appbar;
-        
-        if (searchBox) {
-          // Insert after search box
-          var searchParent = searchBox.parentElement;
-          if (searchParent && searchParent.nextElementSibling) {
-            searchParent.parentElement.insertBefore(container, searchParent.nextElementSibling);
-          } else {
-            appbar.insertBefore(container, insertPoint);
-          }
-        } else {
-          // Insert before stats link or at end
-          appbar.insertBefore(container, insertPoint);
-        }
+        // Simple approach: append to appbar (will appear at end due to flex)
+        // The margin-left: auto pushes it to the right side
+        appbar.appendChild(container);
+        console.log('TizenPortal [ABS]: Created toolbar container in appbar');
       }
       
       // ========================================================================
-      // PART 2: CLEAR OLD ITEMS AND MOVE NEW ONES
+      // PART 2: CLEAR OLD ITEMS - move them back to toolbar first
       // ========================================================================
-      // Remove previous toolbar items from container
-      var previousItems = container.querySelectorAll('[data-tp-toolbar-item]');
+      // Move previous items back to toolbar so they can be re-evaluated
+      var previousItems = Array.prototype.slice.call(container.querySelectorAll('[data-tp-toolbar-item]'));
       for (var pi = 0; pi < previousItems.length; pi++) {
-        previousItems[pi].parentElement.removeChild(previousItems[pi]);
+        previousItems[pi].removeAttribute('data-tp-toolbar-item');
+        toolbar.appendChild(previousItems[pi]);
       }
       
       // ========================================================================

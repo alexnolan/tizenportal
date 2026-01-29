@@ -517,9 +517,17 @@ img {
 .pointer-events-none { pointer-events: none !important; }
 .pointer-events-auto { pointer-events: auto !important; }
 
-/* Opacity utilities */
-.opacity-0 { opacity: 0 !important; }
+/* Opacity utilities - BUT allow inline styles to override for modals */
+/* Vue modals start with opacity-0 class then set inline style opacity:1 */
+/* We can't use !important on opacity-0 or it breaks modal visibility */
+.opacity-0:not([style*="opacity"]) { opacity: 0; }
 .opacity-90 { opacity: 0.9 !important; }
+
+/* Modals with inline opacity should respect that inline style */
+.modal[style*="opacity: 1"],
+.modal[style*="opacity:1"] {
+  opacity: 1 !important;
+}
 
 /* ==========================================================================
    LINK COLOR RESET
@@ -795,9 +803,37 @@ button[aria-label*="Options"] {
   display: none !important;
 }
 
-/* Modal hidden state */
-/* NOTE: Don't hide .modal.opacity-0 - Vue uses opacity transitions and we need to let them complete */
-.modal.hidden,
+/* ==========================================================================
+   MODAL VISIBILITY FIX
+   Vue modals start with: class="modal opacity-0 hidden"
+   When shown, Vue: removes 'hidden', adds 'flex', sets inline style opacity:1
+   Our .opacity-0 !important was overriding the inline opacity:1
+   ========================================================================== */
+
+/* Modal when shown (has flex class, no hidden class) */
+.modal.flex:not(.hidden) {
+  display: -webkit-box !important;
+  display: -webkit-flex !important;
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 60 !important;  /* Default modal z-index from ABS */
+}
+
+/* Modal content - ensure visible and focusable */
+.modal.flex:not(.hidden) > div {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Modal hidden state - only when has hidden class */
+.modal.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Modal with inline display:none */
 .modal[style*="display: none"] {
   display: none !important;
   visibility: hidden !important;

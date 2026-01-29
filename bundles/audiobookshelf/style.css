@@ -121,12 +121,7 @@ html, body,
   padding-left: 40px !important;  /* Space for magnifying glass on left */
 }
 
-/* Ensure the magnifying glass icon is positioned correctly */
-#appbar .material-symbols {
-  position: absolute !important;
-  left: 10px !important;
-  pointer-events: none !important;
-}
+/* NOTE: Do NOT style #appbar .material-symbols broadly - it breaks the nav icons! */
 
 /* ==========================================================================
    FILTER/SORT DROPDOWN FIXES

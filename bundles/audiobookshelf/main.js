@@ -741,7 +741,9 @@ export default {
       // ========================================================================
       // Find all visible, interactive elements in toolbar
       // These are typically the filter/sort dropdowns and options menu
-      var toolbarChildren = toolbar.children;
+      // IMPORTANT: Convert to array first! toolbar.children is a live collection
+      // that changes as we move elements, causing us to skip items.
+      var toolbarChildren = Array.prototype.slice.call(toolbar.children);
       var movedCount = 0;
       
       for (var i = 0; i < toolbarChildren.length; i++) {

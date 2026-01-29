@@ -871,8 +871,15 @@ body {
 [role="toolbar"][aria-orientation="vertical"] a:focus,
 #siderail-buttons-container a:focus {
   outline: 4px solid #1ad691 !important;
-  outline-offset: -4px !important;
+  outline-offset: 2px !important;
   background-color: rgba(26, 214, 145, 0.15) !important;
+}
+
+/* Ensure siderail has padding so outline is visible */
+[role="toolbar"][aria-orientation="vertical"],
+#siderail-buttons-container {
+  padding: 8px !important;
+  overflow: visible !important;
 }
 
 /* Appbar elements */

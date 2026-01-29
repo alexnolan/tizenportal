@@ -586,7 +586,7 @@ function injectOverlayStyles() {
     '  display: -webkit-box;',
     '  display: -webkit-flex;',
     '  display: flex;',
-    '  background: rgba(0,0,0,0.85);',
+    '  background: rgba(0,0,0,0.4);',
     '  padding: 12px 24px;',
     '  border-radius: 12px;',
     '  z-index: 2147483640;',

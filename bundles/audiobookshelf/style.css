@@ -2235,3 +2235,107 @@ textarea,
 .flex.md\\:hidden {
   display: none !important;
 }
+/* ==========================================================================
+   TV NAVIGATION ENHANCEMENTS
+   Make focusable elements clearly visible and easy to navigate
+   ========================================================================== */
+
+/* Generic focusable item (set by JS) */
+[data-tp-focusable="true"] {
+  cursor: pointer !important;
+}
+
+[data-tp-focusable="true"]:focus {
+  outline: 3px solid #1ad691 !important;
+  outline-offset: 2px !important;
+  background: rgba(26, 214, 145, 0.1) !important;
+}
+
+/* Collection/Playlist table rows - ensure visible focus */
+.w-full.flex.items-center.px-1,
+.w-full.flex.items-center.px-2,
+.overflow-hidden.relative > .w-full.flex {
+  cursor: pointer !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.w-full.flex.items-center.px-1:focus,
+.w-full.flex.items-center.px-2:focus,
+.overflow-hidden.relative > .w-full.flex:focus {
+  outline: 3px solid #1ad691 !important;
+  outline-offset: -3px !important;
+  background: rgba(26, 214, 145, 0.15) !important;
+}
+
+/* Item detail page buttons - larger touch targets */
+#page-wrapper .ui-btn,
+#item-page-wrapper .ui-btn {
+  min-height: 48px !important;
+  min-width: 120px !important;
+  padding: 12px 24px !important;
+  font-size: 1.125rem !important;
+}
+
+#page-wrapper .ui-icon-btn,
+#item-page-wrapper .ui-icon-btn {
+  min-width: 48px !important;
+  min-height: 48px !important;
+}
+
+/* Chapters/tracks table rows - ensure clickable */
+#page-wrapper [class*="chapters"] .flex.py-2,
+#item-page-wrapper [class*="chapters"] .flex.py-2,
+[class*="bg-primary"] + div > div {
+  cursor: pointer !important;
+  min-height: 56px !important;
+}
+
+#page-wrapper [class*="chapters"] .flex.py-2:focus,
+#item-page-wrapper [class*="chapters"] .flex.py-2:focus {
+  outline: 3px solid #1ad691 !important;
+  outline-offset: -3px !important;
+  background: rgba(26, 214, 145, 0.15) !important;
+}
+
+/* Play buttons on all pages - always visible (not just on hover) */
+[cy-id="playButton"],
+[cy-id="overlay"],
+.group-hover\\:opacity-100 {
+  opacity: 1 !important;
+}
+
+/* Player controls - ensure all buttons are focusable and visible */
+#mediaPlayerContainer .flex.items-center button {
+  cursor: pointer !important;
+}
+
+/* Player seekbar - make it taller and focusable */
+#mediaPlayerContainer .relative.w-full {
+  min-height: 32px !important;
+  cursor: pointer !important;
+}
+
+#mediaPlayerContainer .relative.w-full:focus {
+  outline: 2px solid #1ad691 !important;
+  outline-offset: 4px !important;
+}
+
+/* Collection table - BookTableRow.vue */
+[class*="BookTableRow"],
+.collection-books-table > div > div {
+  min-height: 80px !important;
+  padding: 12px 16px !important;
+}
+
+/* Playlist table - ItemTableRow.vue */
+[class*="ItemTableRow"],
+.playlist-items-table > div {
+  min-height: 72px !important;
+  padding: 12px 16px !important;
+}
+
+/* Make hover states visible (TV doesn't hover) */
+[class*="bg-white"],
+[class*="hover:bg"] {
+  background: rgba(255, 255, 255, 0.03) !important;
+}

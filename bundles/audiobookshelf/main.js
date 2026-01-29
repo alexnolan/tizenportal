@@ -590,22 +590,24 @@ export default {
     // MEDIA KEYS: Play/Pause/Seek when player is visible
     // ========================================================================
     var player = document.querySelector(SELECTORS.playerContainer);
-    if (player && player.offsetParent !== null) {
+    var playerVisible = player && player.offsetParent !== null;
+    
+    if (playerVisible) {
       // Player is visible - handle media keys globally
       
-      // PLAY/PAUSE
+      // PLAY/PAUSE - toggle audio playback
       if (keyCode === KEYS.PLAY_PAUSE || keyCode === KEYS.PLAY || keyCode === KEYS.PAUSE) {
         this.togglePlayback();
         return true;
       }
       
-      // FAST FORWARD - seek forward 30 seconds
+      // FAST FORWARD - seek forward
       if (keyCode === KEYS.FAST_FORWARD) {
         this.seekForward();
         return true;
       }
       
-      // REWIND - seek backward 10 seconds
+      // REWIND - seek backward
       if (keyCode === KEYS.REWIND) {
         this.seekBackward();
         return true;
@@ -614,6 +616,24 @@ export default {
       // STOP - close player
       if (keyCode === KEYS.STOP) {
         this.closePlayer();
+        return true;
+      }
+    }
+    
+    // ========================================================================
+    // PLAY KEY WITHOUT PLAYER: Start playback on item detail or card
+    // ========================================================================
+    if (!playerVisible && (keyCode === KEYS.PLAY_PAUSE || keyCode === KEYS.PLAY)) {
+      // Check if we're on item detail page
+      if (this.isOnItemDetailPage()) {
+        this.playItemFromDetailPage();
+        return true;
+      }
+      
+      // Check if we have a card focused
+      var focusedCard = active && active.closest(SELECTORS.allCards);
+      if (focusedCard) {
+        this.playFromFocusedCard(focusedCard);
         return true;
       }
     }
@@ -1020,46 +1040,81 @@ export default {
   
   /**
    * Toggle playback in the media player
-   * Finds and clicks the play/pause button
+   * Uses the HTML5 audio element directly for reliable control
    */
   togglePlayback: function() {
-    // ABS uses #play-pause-btn or a button with aria-label
-    var playBtn = document.querySelector('#play-pause-btn') ||
-                  document.querySelector('[aria-label="Play/Pause"]') ||
-                  document.querySelector('.player-playback-controls button');
+    // ABS creates an audio element with id="audio-player"
+    var audioEl = document.getElementById('audio-player');
+    if (audioEl) {
+      if (audioEl.paused) {
+        audioEl.play();
+        console.log('TizenPortal [ABS]: Play audio');
+      } else {
+        audioEl.pause();
+        console.log('TizenPortal [ABS]: Pause audio');
+      }
+      return;
+    }
+    
+    // Fallback: Try clicking the play/pause button in the player UI
+    // Look for the accent-colored play button with material-symbols
+    var playBtn = document.querySelector('#mediaPlayerContainer button.bg-accent') ||
+                  document.querySelector('#mediaPlayerContainer .p-2.bg-accent');
     if (playBtn) {
       playBtn.click();
-      console.log('TizenPortal [ABS]: Toggle playback');
+      console.log('TizenPortal [ABS]: Toggle playback via button click');
     }
   },
   
   /**
    * Seek forward in the media player
-   * Finds and clicks the jump forward button
+   * Uses the HTML5 audio element directly
    */
   seekForward: function() {
-    // ABS jump forward button - look for SVG with forward icon or button
-    var fwdBtn = document.querySelector('#player-jump-forward') ||
-                 document.querySelector('[aria-label="Jump forward"]') ||
-                 document.querySelector('.player-playback-controls button:last-child');
-    if (fwdBtn) {
-      fwdBtn.click();
-      console.log('TizenPortal [ABS]: Seek forward');
+    var audioEl = document.getElementById('audio-player');
+    if (audioEl && !isNaN(audioEl.duration)) {
+      // Default jump forward is 30 seconds in ABS
+      var jumpAmount = 30;
+      audioEl.currentTime = Math.min(audioEl.currentTime + jumpAmount, audioEl.duration);
+      console.log('TizenPortal [ABS]: Seek forward', jumpAmount, 'seconds');
+      return;
+    }
+    
+    // Fallback: Click the forward button
+    var fwdBtns = document.querySelectorAll('#mediaPlayerContainer button');
+    for (var i = 0; i < fwdBtns.length; i++) {
+      var icon = fwdBtns[i].querySelector('.material-symbols');
+      if (icon && icon.textContent && icon.textContent.indexOf('forward') !== -1) {
+        fwdBtns[i].click();
+        console.log('TizenPortal [ABS]: Seek forward via button');
+        return;
+      }
     }
   },
   
   /**
    * Seek backward in the media player
-   * Finds and clicks the jump backward button
+   * Uses the HTML5 audio element directly
    */
   seekBackward: function() {
-    // ABS jump backward button
-    var backBtn = document.querySelector('#player-jump-backward') ||
-                  document.querySelector('[aria-label="Jump backward"]') ||
-                  document.querySelector('.player-playback-controls button:first-child');
-    if (backBtn) {
-      backBtn.click();
-      console.log('TizenPortal [ABS]: Seek backward');
+    var audioEl = document.getElementById('audio-player');
+    if (audioEl && !isNaN(audioEl.duration)) {
+      // Default jump backward is 10 seconds in ABS
+      var jumpAmount = 10;
+      audioEl.currentTime = Math.max(audioEl.currentTime - jumpAmount, 0);
+      console.log('TizenPortal [ABS]: Seek backward', jumpAmount, 'seconds');
+      return;
+    }
+    
+    // Fallback: Click the rewind button
+    var btns = document.querySelectorAll('#mediaPlayerContainer button');
+    for (var i = 0; i < btns.length; i++) {
+      var icon = btns[i].querySelector('.material-symbols');
+      if (icon && icon.textContent && icon.textContent.indexOf('replay') !== -1) {
+        btns[i].click();
+        console.log('TizenPortal [ABS]: Seek backward via button');
+        return;
+      }
     }
   },
   
@@ -1068,14 +1123,101 @@ export default {
    * Finds and clicks the close button
    */
   closePlayer: function() {
-    // ABS close button in player
-    var closeBtn = document.querySelector('#player-close') ||
-                   document.querySelector('.player-container [aria-label="Close"]') ||
-                   document.querySelector('#streamContainer button[aria-label="Close"]');
-    if (closeBtn) {
-      closeBtn.click();
+    // Look for close button with "close" icon or aria-label
+    var closeBtn = document.querySelector('#mediaPlayerContainer button[aria-label*="Close"]') ||
+                   document.querySelector('#mediaPlayerContainer .material-symbols');
+    
+    // Find button containing "close" text
+    var btns = document.querySelectorAll('#mediaPlayerContainer button');
+    for (var i = 0; i < btns.length; i++) {
+      var text = btns[i].textContent || '';
+      if (text.indexOf('close') !== -1) {
+        btns[i].click();
+        console.log('TizenPortal [ABS]: Close player');
+        return;
+      }
+    }
+    
+    if (closeBtn && closeBtn.closest('button')) {
+      closeBtn.closest('button').click();
       console.log('TizenPortal [ABS]: Close player');
     }
+  },
+  
+  /**
+   * Check if we're on an item detail page
+   * @returns {boolean}
+   */
+  isOnItemDetailPage: function() {
+    var path = window.location.pathname || '';
+    return path.indexOf('/item/') !== -1;
+  },
+  
+  /**
+   * Play the item from the detail page
+   * Finds and clicks the green play button
+   */
+  playItemFromDetailPage: function() {
+    // Look for the green success-colored play button
+    var playBtn = document.querySelector('#page-wrapper .bg-success') ||
+                  document.querySelector('#item-page-wrapper .bg-success') ||
+                  document.querySelector('button.bg-success');
+    if (playBtn) {
+      playBtn.click();
+      console.log('TizenPortal [ABS]: Play from detail page');
+      return;
+    }
+    
+    // Fallback: look for button with play_arrow icon
+    var btns = document.querySelectorAll('#page-wrapper button, #item-page-wrapper button');
+    for (var i = 0; i < btns.length; i++) {
+      var icon = btns[i].querySelector('.material-symbols');
+      if (icon) {
+        var text = icon.textContent || '';
+        // Check for play_arrow unicode (\ue037) or text
+        if (text.indexOf('\ue037') !== -1 || text.indexOf('play_arrow') !== -1 || text === '') {
+          btns[i].click();
+          console.log('TizenPortal [ABS]: Play from detail page (fallback)');
+          return;
+        }
+      }
+    }
+  },
+  
+  /**
+   * Play from a focused book/series card
+   * Simulates the hover-to-play behavior
+   * @param {Element} card - The focused card element
+   */
+  playFromFocusedCard: function(card) {
+    // Try to click the card's play button (shown on hover)
+    var playBtn = card.querySelector('[cy-id="playButton"]') ||
+                  card.querySelector('.material-symbols');
+    
+    // Check for play icon
+    if (playBtn) {
+      var text = playBtn.textContent || '';
+      if (text.indexOf('play_arrow') !== -1 || text.indexOf('\ue037') !== -1) {
+        playBtn.click();
+        console.log('TizenPortal [ABS]: Play from card');
+        return;
+      }
+    }
+    
+    // Fallback: navigate to item and auto-play
+    // For book cards, navigate to the item page
+    var itemLink = card.querySelector('a[href^="/item/"]');
+    if (itemLink) {
+      var href = itemLink.getAttribute('href');
+      // Set flag to auto-play after navigation
+      window.sessionStorage.setItem('tp_autoplay', 'true');
+      window.location.href = href;
+      console.log('TizenPortal [ABS]: Navigate to item for playback');
+      return;
+    }
+    
+    // For series cards, just click to navigate
+    card.click();
   },
   
   /**
@@ -1086,6 +1228,7 @@ export default {
    * 1. Force re-process all card registrations (some DOM elements are stale)
    * 2. Reset focus to something sensible on the new page
    * 3. Clear and re-relocate toolbar elements
+   * 4. Check for auto-play flag
    * 
    * @returns {Function} Cleanup function to stop watching
    */
@@ -1127,9 +1270,20 @@ export default {
             self.setupOtherFocusables();
             self.applySpacingClasses();
             wrapTextInputs(SELECTORS.textInputs);
+            
+            // Setup detail page elements if on item/collection/playlist page
+            self.setupDetailPageFocusables();
         
             // Set initial focus on new page
             setInitialFocus(getInitialFocusSelectors(), 100);
+            
+            // Check for auto-play flag (set when navigating from card via PLAY key)
+            if (window.sessionStorage.getItem('tp_autoplay') === 'true') {
+              window.sessionStorage.removeItem('tp_autoplay');
+              setTimeout(function() {
+                self.playItemFromDetailPage();
+              }, 500);
+            }
           } catch (err) {
             console.warn('TizenPortal [ABS]: Error in URL change timeout:', err.message);
           }
@@ -1154,5 +1308,132 @@ export default {
       window.removeEventListener('popstate', onUrlChange);
       clearInterval(pollInterval);
     };
+  },
+  
+  /**
+   * Set up focusable elements on item detail, collection, and playlist pages
+   * These pages have different layouts than the main bookshelf grid
+   */
+  setupDetailPageFocusables: function() {
+    var path = window.location.pathname || '';
+    
+    // Item detail page (/item/...)
+    if (path.indexOf('/item/') !== -1) {
+      this.setupItemDetailPage();
+    }
+    
+    // Collection page (/collection/...)
+    if (path.indexOf('/collection/') !== -1) {
+      this.setupCollectionPage();
+    }
+    
+    // Playlist page (/playlist/...)
+    if (path.indexOf('/playlist/') !== -1) {
+      this.setupPlaylistPage();
+    }
+  },
+  
+  /**
+   * Setup focusable elements on item detail page
+   */
+  setupItemDetailPage: function() {
+    // Make play button focusable
+    var playBtn = document.querySelector('#page-wrapper .bg-success, #item-page-wrapper .bg-success');
+    if (playBtn && playBtn.tagName !== 'BUTTON') {
+      playBtn = playBtn.closest('button') || playBtn;
+    }
+    if (playBtn) {
+      playBtn.setAttribute('tabindex', '0');
+      playBtn.setAttribute('data-tp-focusable', 'true');
+    }
+    
+    // Make all action buttons focusable
+    var actionBtns = document.querySelectorAll('#page-wrapper button, #item-page-wrapper button');
+    for (var i = 0; i < actionBtns.length; i++) {
+      actionBtns[i].setAttribute('tabindex', '0');
+    }
+    
+    // Make chapter rows focusable for navigation
+    var chapterRows = document.querySelectorAll('[class*="chapters"] > div > div, .chapter-row');
+    for (var j = 0; j < chapterRows.length; j++) {
+      if (!chapterRows[j].hasAttribute('tabindex')) {
+        chapterRows[j].setAttribute('tabindex', '0');
+        chapterRows[j].setAttribute('data-tp-focusable', 'true');
+      }
+    }
+    
+    // Make links focusable
+    var links = document.querySelectorAll('#page-wrapper a[href], #item-page-wrapper a[href]');
+    for (var k = 0; k < links.length; k++) {
+      if (!links[k].hasAttribute('tabindex')) {
+        links[k].setAttribute('tabindex', '0');
+      }
+    }
+    
+    console.log('TizenPortal [ABS]: Setup item detail page focusables');
+  },
+  
+  /**
+   * Setup focusable elements on collection page
+   */
+  setupCollectionPage: function() {
+    // Make play all button focusable
+    var playAllBtn = document.querySelector('.bg-success');
+    if (playAllBtn) {
+      if (playAllBtn.tagName !== 'BUTTON') {
+        playAllBtn = playAllBtn.closest('button') || playAllBtn;
+      }
+      playAllBtn.setAttribute('tabindex', '0');
+      playAllBtn.setAttribute('data-tp-focusable', 'true');
+    }
+    
+    // Make book rows in the collection table focusable
+    var bookRows = document.querySelectorAll('[class*="collection"] > div, .collection-book-row, .w-full.flex.items-center');
+    for (var i = 0; i < bookRows.length; i++) {
+      var row = bookRows[i];
+      // Only rows with book covers
+      if (row.querySelector('.covers-book-cover, [class*="book-cover"]')) {
+        row.setAttribute('tabindex', '0');
+        row.setAttribute('data-tp-focusable', 'true');
+        row.style.cursor = 'pointer';
+      }
+    }
+    
+    console.log('TizenPortal [ABS]: Setup collection page focusables');
+  },
+  
+  /**
+   * Setup focusable elements on playlist page
+   */
+  setupPlaylistPage: function() {
+    // Make play all button focusable
+    var playAllBtn = document.querySelector('.bg-success');
+    if (playAllBtn) {
+      if (playAllBtn.tagName !== 'BUTTON') {
+        playAllBtn = playAllBtn.closest('button') || playAllBtn;
+      }
+      playAllBtn.setAttribute('tabindex', '0');
+      playAllBtn.setAttribute('data-tp-focusable', 'true');
+    }
+    
+    // Make playlist item rows focusable
+    var itemRows = document.querySelectorAll('[class*="playlist"] .w-full.flex, .playlist-item-row');
+    for (var i = 0; i < itemRows.length; i++) {
+      var row = itemRows[i];
+      // Only rows with covers
+      if (row.querySelector('.covers-book-cover, [class*="book-cover"], [class*="preview-cover"]')) {
+        row.setAttribute('tabindex', '0');
+        row.setAttribute('data-tp-focusable', 'true');
+        row.style.cursor = 'pointer';
+      }
+    }
+    
+    // Make edit/delete buttons focusable
+    var actionBtns = document.querySelectorAll('#page-wrapper button, .ui-icon-btn');
+    for (var j = 0; j < actionBtns.length; j++) {
+      actionBtns[j].setAttribute('tabindex', '0');
+    }
+    
+    console.log('TizenPortal [ABS]: Setup playlist page focusables');
   },
 };

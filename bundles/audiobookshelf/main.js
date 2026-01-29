@@ -1169,7 +1169,7 @@ export default {
           try {
             // Re-run card registration
             if (window.TizenPortal && window.TizenPortal.cards) {
-              window.TizenPortal.cards.processCards();
+              window.TizenPortal.cards.process();
             }
             
             // Relocate new toolbar elements

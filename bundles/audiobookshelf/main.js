@@ -1674,6 +1674,14 @@ export default {
       console.log('TizenPortal [ABS]: Audio element volume set to 1.0');
     }
     
+    // If audio has a source but hasn't started loading, call load() to kickstart buffering
+    // readyState: 0 = HAVE_NOTHING, 1 = HAVE_METADATA, 2 = HAVE_CURRENT_DATA, 3 = HAVE_FUTURE_DATA, 4 = HAVE_ENOUGH_DATA
+    // networkState: 0 = EMPTY, 1 = IDLE, 2 = LOADING, 3 = NO_SOURCE
+    if (audioEl.src && audioEl.readyState === 0 && audioEl.networkState !== 2) {
+      console.log('TizenPortal [ABS]: Calling load() to kickstart buffering');
+      audioEl.load();
+    }
+    
     // Track buffering time for diagnostics
     var loadStartTime = 0;
     

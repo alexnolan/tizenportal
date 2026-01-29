@@ -796,9 +796,9 @@ button[aria-label*="Options"] {
 }
 
 /* Modal hidden state */
+/* NOTE: Don't hide .modal.opacity-0 - Vue uses opacity transitions and we need to let them complete */
 .modal.hidden,
-.modal[style*="display: none"],
-.modal.opacity-0 {
+.modal[style*="display: none"] {
   display: none !important;
   visibility: hidden !important;
 }
@@ -1859,6 +1859,52 @@ body:has(#mediaPlayerContainer) [role="toolbar"][aria-orientation="vertical"] {
    PLAYER UI EXTRAS
    Volume, speed, bookmarks, sleep timer, chapters modal
    ========================================================================== */
+
+/* Player popovers/menus - ensure they're visible and styled for TV */
+#mediaPlayerContainer [role="menu"],
+#mediaPlayerContainer [role="listbox"],
+#mediaPlayerContainer .absolute,
+.player-popover,
+.player-menu,
+.sleep-timer-menu,
+.playback-speed-menu,
+.bookmarks-menu {
+  z-index: 10001 !important;  /* Above player container */
+  background: #1a202c !important;
+  border: 1px solid #4a5568 !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  min-width: 200px !important;
+}
+
+/* Player menu items - make navigable */
+#mediaPlayerContainer [role="menu"] > *,
+#mediaPlayerContainer [role="listbox"] > *,
+#mediaPlayerContainer [role="option"],
+#mediaPlayerContainer [role="menuitem"],
+.player-popover button,
+.player-menu button,
+.sleep-timer-menu button,
+.playback-speed-menu button {
+  display: block !important;
+  width: 100% !important;
+  padding: 12px 16px !important;
+  font-size: 1.125rem !important;
+  text-align: left !important;
+  cursor: pointer !important;
+}
+
+/* Player menu item focus */
+#mediaPlayerContainer [role="menu"] > *:focus,
+#mediaPlayerContainer [role="listbox"] > *:focus,
+#mediaPlayerContainer [role="option"]:focus,
+#mediaPlayerContainer [role="menuitem"]:focus,
+.player-popover button:focus,
+.player-menu button:focus {
+  background: rgba(26, 214, 145, 0.2) !important;
+  outline: 2px solid #1ad691 !important;
+  outline-offset: -2px !important;
+}
 
 /* Speed control */
 #mediaPlayerContainer [class*="playback-speed"],

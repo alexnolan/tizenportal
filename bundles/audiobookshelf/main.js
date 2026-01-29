@@ -692,7 +692,14 @@ export default {
     var toolbar = document.getElementById('toolbar');
     var appbar = document.getElementById('appbar');
     
-    if (!toolbar || !appbar) return;
+    console.log('TizenPortal [ABS]: relocateToolbarToAppbar - toolbar:', toolbar, 'appbar:', appbar);
+    
+    if (!toolbar || !appbar) {
+      console.log('TizenPortal [ABS]: Missing toolbar or appbar, skipping relocation');
+      return;
+    }
+    
+    console.log('TizenPortal [ABS]: toolbar.children.length:', toolbar.children.length);
     
     try {
       // ========================================================================
@@ -763,10 +770,14 @@ export default {
         // Adjust styles to fit in appbar
         child.style.margin = '0 4px'; // Reset margin
         
+        console.log('TizenPortal [ABS]: Moving child:', child.tagName, child.className, child.id);
+        
         // Move into container
         container.appendChild(child);
         movedCount++;
       }
+      
+      console.log('TizenPortal [ABS]: Container now has', container.children.length, 'children, movedCount:', movedCount);
       
       // ========================================================================
       // PART 4: ENSURE CONTAINER IS VISIBLE IF IT HAS CONTENT
@@ -782,9 +793,11 @@ export default {
       
       if (movedCount > 0) {
         console.log('TizenPortal [ABS]: Relocated', movedCount, 'toolbar elements to appbar');
+      } else {
+        console.log('TizenPortal [ABS]: No toolbar elements to relocate');
       }
     } catch (err) {
-      console.warn('TizenPortal [ABS]: Error relocating toolbar:', err.message);
+      console.warn('TizenPortal [ABS]: Error relocating toolbar:', err.message, err);
     }
   },
 

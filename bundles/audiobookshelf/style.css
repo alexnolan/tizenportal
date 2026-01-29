@@ -59,11 +59,11 @@ html, body,
    reposition the toolbar to appear inside the appbar area.
    ========================================================================== */
 
-/* Position toolbar absolutely to overlay on appbar */
+/* Position toolbar absolutely to overlay on appbar - left of the icons */
 #toolbar {
   position: fixed !important;
   top: 0 !important;
-  right: 120px !important;  /* Leave space for user/config icons */
+  right: 200px !important;  /* More space - leave room for stats/upload/settings/user icons */
   left: auto !important;
   width: auto !important;
   height: 64px !important;  /* Match appbar height */
@@ -71,7 +71,7 @@ html, body,
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
-  padding: 0 8px !important;
+  padding: 0 16px !important;
   margin: 0 !important;
   background: transparent !important;
   border: none !important;
@@ -106,6 +106,27 @@ html, body,
 /* Remove the old tp-toolbar-container stuff since we're not using it anymore */
 .tp-toolbar-container {
   display: none !important;
+}
+
+/* ==========================================================================
+   SEARCH BOX - Fix icon overlapping text
+   ========================================================================== */
+
+/* Move search icon to the right so it doesn't overlap "Search" text */
+#appbar input[type="search"],
+#appbar input[placeholder*="Search" i] {
+  padding-left: 12px !important;  /* Normal left padding for text */
+  padding-right: 36px !important; /* Space for icon on right */
+}
+
+/* Position the search icon further right */
+#appbar .material-symbols[class*="search"],
+#appbar .mdi-magnify,
+#appbar [class*="search-icon"],
+#appbar input + span,
+#appbar input + .material-symbols {
+  right: 8px !important;
+  left: auto !important;
 }
 
 /* ==========================================================================

@@ -1,6 +1,6 @@
 # 📺 TizenPortal
 
-![Version](https://img.shields.io/badge/version-0301-blue) ![Tizen](https://img.shields.io/badge/Tizen-3.0%2B-blueviolet) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-0391-blue) ![Tizen](https://img.shields.io/badge/Tizen-3.0%2B-blueviolet) ![License](https://img.shields.io/badge/license-MIT-green)
 
 **TizenPortal** is a browser shell for Samsung Smart TVs running Tizen OS. It provides a launcher for managing self-hosted web applications (like **Audiobookshelf**, **Jellyfin**, etc.) and injects site-specific fixes for TV compatibility.
 
@@ -35,7 +35,7 @@ Runs as a TizenBrew module to inject fixes into any site.
 This project is designed to be loaded via **TizenBrew** on your Samsung TV.
 
 1. **Open TizenBrew** on your Samsung TV
-2. **Add Module:** `alexnolan/tizenportal@0301`
+2. **Add Module:** `alexnolan/tizenportal@0391`
 3. **Launch** TizenPortal from your TizenBrew dashboard
 
 TizenBrew will open the portal and inject the runtime into all navigated pages.
@@ -106,11 +106,13 @@ TizenPortal uses a **Universal Runtime** architecture:
 
 ---
 
-## 🆕 What's New in v0301
+## 🆕 What's New in v0391
 
-- **Unified Runtime** — Single codebase for portal and target sites
-- **Simplified Architecture** — Removed legacy dual-build system
-- **Bundle Registry** — All bundles compiled into runtime
+- **Audiobookshelf Bundle Refactored** — Best-practice example with core utilities
+- **Card Registration System** — Mark elements with `data-tp-card` for special handling
+- **Focus Manager Utilities** — Centralized scroll-into-view and viewport locking
+- **Text Input Handling** — TV-friendly keyboard support for text fields
+- **Geometry Utilities** — Spatial navigation spacing helpers
 
 ---
 
@@ -120,7 +122,8 @@ TizenPortal uses a **Universal Runtime** architecture:
 | :--- | :--- |
 | **Target OS** | Samsung Tizen 3.0 - 6.5 |
 | **Browser Engine** | Chrome 47 - 69 (Tizen's Chromium) |
-| **Tested Apps** | ✅ Audiobookshelf<br>⚠️ Jellyfin (Basic) |
+| **Tested Apps** | ✅ Audiobookshelf |
+| **Built-in Bundles** | default, audiobookshelf, adblock |
 
 ---
 
@@ -128,7 +131,7 @@ TizenPortal uses a **Universal Runtime** architecture:
 
 This project uses code from:
 - **[TizenTube](https://github.com/reisxd/TizenTube)** — Spatial navigation polyfill and DOMRect polyfill
-- **[TizenBrew](https://github.com/nicholasmordecai/nicholasmordecai.github.io)** — Module loading platform
+- **[TizenBrew](https://github.com/reisxd/TizenBrew)** — Module loading platform
 
 ---
 

@@ -4,10 +4,7 @@ node_modules/
 # Local development/test data (contains sensitive info)
 abs/
 
-# Internal documentation (not for public repo)
-docs/
-
-# GitHub/Copilot instructions
+# GitHub/Copilot instructions (internal)
 .github/
 
 # IDE and editor files

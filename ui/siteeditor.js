@@ -14,11 +14,34 @@ import { refreshPortal } from './modal.js';
  */
 var state = {
   active: false,
-  isEdit: false,
   card: null,
   currentField: 0,
   onComplete: null,
 };
+
+/**
+ * Editor mode - stored on DOM element to prevent state loss
+ * Mode can be: 'add' or 'edit'
+ * For edit mode, cardId is stored on editor.dataset.cardId
+ */
+function getEditorMode() {
+  var editor = document.getElementById('tp-site-editor');
+  return editor ? editor.dataset.mode : 'add';
+}
+
+function getEditorCardId() {
+  var editor = document.getElementById('tp-site-editor');
+  return editor ? editor.dataset.cardId : '';
+}
+
+function setEditorMode(mode, cardId) {
+  var editor = document.getElementById('tp-site-editor');
+  if (editor) {
+    editor.dataset.mode = mode;
+    editor.dataset.cardId = cardId || '';
+    console.log('TizenPortal: setEditorMode mode=' + mode + ' cardId=' + cardId);
+  }
+}
 
 /**
  * Field definitions for the editor
@@ -210,7 +233,10 @@ function handleEditorKeyDown(event) {
  */
 export function showAddSiteEditor(onComplete) {
   console.log('TizenPortal: showAddSiteEditor called');
-  state.isEdit = false;
+  
+  // Set mode on DOM element - this is the source of truth
+  setEditorMode('add', '');
+  
   state.card = {
     name: '',
     url: '',
@@ -219,7 +245,6 @@ export function showAddSiteEditor(onComplete) {
     icon: '',
   };
   state.onComplete = onComplete;
-  console.log('TizenPortal: state.card set to:', JSON.stringify(state.card));
   
   openEditor();
 }
@@ -230,12 +255,15 @@ export function showAddSiteEditor(onComplete) {
  * @param {Function} onComplete - Callback when complete
  */
 export function showEditSiteEditor(card, onComplete) {
-  console.log('TizenPortal: showEditSiteEditor called with card:', card ? card.name : 'null');
-  if (!card) {
-    console.error('TizenPortal: showEditSiteEditor called with null card!');
+  console.log('TizenPortal: showEditSiteEditor called with card:', card ? card.name : 'null', 'id:', card ? card.id : 'null');
+  if (!card || !card.id) {
+    console.error('TizenPortal: showEditSiteEditor called with invalid card!');
     return;
   }
-  state.isEdit = true;
+  
+  // Set mode on DOM element - this is the source of truth
+  setEditorMode('edit', card.id);
+  
   state.card = {
     id: card.id,
     name: card.name || '',
@@ -245,7 +273,6 @@ export function showEditSiteEditor(card, onComplete) {
     icon: card.icon || '',
   };
   state.onComplete = onComplete;
-  console.log('TizenPortal: state.card set to:', JSON.stringify(state.card));
   
   openEditor();
 }
@@ -254,9 +281,9 @@ export function showEditSiteEditor(card, onComplete) {
  * Open the editor
  */
 function openEditor() {
-  console.log('TizenPortal: openEditor called, state.card =', state.card ? 'set' : 'null');
-  console.log('TizenPortal: openEditor - state.isEdit =', state.isEdit);
-  console.log('TizenPortal: openEditor - state.card.id =', state.card ? state.card.id : 'no card');
+  var mode = getEditorMode();
+  var cardId = getEditorCardId();
+  console.log('TizenPortal: openEditor mode=' + mode + ' cardId=' + cardId);
   
   var editor = document.getElementById('tp-site-editor');
   if (!editor) {
@@ -264,24 +291,21 @@ function openEditor() {
     return;
   }
 
-  editor.dataset.cardId = state.card && state.card.id ? state.card.id : '';
+  var isEdit = mode === 'edit';
 
   // Set title
   var title = editor.querySelector('#tp-editor-title');
   if (title) {
-    title.textContent = state.isEdit ? 'Edit Site' : 'Add Site';
-    console.log('TizenPortal: Set title to:', title.textContent);
+    title.textContent = isEdit ? 'Edit Site' : 'Add Site';
   }
 
   // Show/hide delete button
   var deleteBtn = editor.querySelector('#tp-editor-delete');
   if (deleteBtn) {
-    deleteBtn.style.display = state.isEdit ? 'flex' : 'none';
-    console.log('TizenPortal: Delete button display:', deleteBtn.style.display);
+    deleteBtn.style.display = isEdit ? 'flex' : 'none';
   }
 
   // Render fields
-  console.log('TizenPortal: About to render fields, state.card =', state.card);
   renderFields();
 
   // Update preview
@@ -290,11 +314,6 @@ function openEditor() {
   // Show editor
   state.active = true;
   editor.classList.add('visible');
-  
-  console.log('TizenPortal: Editor shown. Final state check:');
-  console.log('TizenPortal: - state.isEdit =', state.isEdit);
-  console.log('TizenPortal: - state.card =', state.card);
-  console.log('TizenPortal: - state.card.id =', state.card ? state.card.id : 'no card');
 
   // Focus first field
   setTimeout(function() {
@@ -364,97 +383,69 @@ function updateYellowHintText(text) {
 }
 
 /**
- * Resolve active card for actions (fallback to editor dataset)
+ * Get active card - just returns state.card
  */
 function getActiveCardForAction() {
-  if (state.card) {
-    if (!state.card.id) {
-      var existingEditor = document.getElementById('tp-site-editor');
-      var existingCardId = existingEditor ? existingEditor.dataset.cardId : '';
-      if (existingCardId) {
-        state.card.id = existingCardId;
-      }
-    }
-    return state.card;
-  }
-
-  var editor = document.getElementById('tp-site-editor');
-  var cardId = editor ? editor.dataset.cardId : '';
-  if (cardId) {
-    var cards = getCards();
-    for (var i = 0; i < cards.length; i++) {
-      if (cards[i].id === cardId) {
-        state.card = cards[i];
-        state.isEdit = true;
-        return state.card;
-      }
-    }
-  }
-
   return state.card;
 }
 
 /**
  * Auto-save on changes (no Save button)
+ * Uses DOM-based mode to determine add vs edit - cannot get confused
  */
 function autoSaveCard(reason) {
-  var card = getActiveCardForAction();
-  if (!card) {
-    console.log('TizenPortal: Auto-save skipped - no card', reason || '');
+  var mode = getEditorMode();
+  var cardId = getEditorCardId();
+  
+  console.log('TizenPortal: autoSaveCard mode=' + mode + ' cardId=' + cardId + ' reason=' + reason);
+  
+  if (!state.card) {
+    console.log('TizenPortal: Auto-save skipped - no card');
     return;
   }
 
-  var editor = document.getElementById('tp-site-editor');
-  var editorCardId = editor ? editor.dataset.cardId : '';
-  var effectiveCardId = card.id || editorCardId || '';
-  if (!card.id && effectiveCardId) {
-    card.id = effectiveCardId;
-  }
-
-  console.log('TizenPortal: autoSaveCard - state.isEdit =', state.isEdit, 'card.id =', card.id, 'reason =', reason);
-
-  var cardName = (card.name || '').trim();
-  var cardUrl = (card.url || '').trim();
+  var cardName = (state.card.name || '').trim();
+  var cardUrl = (state.card.url || '').trim();
 
   if (cardUrl && cardUrl.indexOf('://') === -1) {
     cardUrl = 'https://' + cardUrl;
-    card.url = cardUrl;
+    state.card.url = cardUrl;
   }
 
   if (!cardName || !cardUrl) {
-    console.log('TizenPortal: Auto-save skipped - missing name/url', reason || '');
+    console.log('TizenPortal: Auto-save skipped - missing name/url');
     return;
   }
 
   var payload = {
     name: cardName,
     url: cardUrl,
-    featureBundle: card.featureBundle || null,
-    userAgent: card.userAgent || 'tizen',
-    icon: card.icon || null,
+    featureBundle: state.card.featureBundle || null,
+    userAgent: state.card.userAgent || 'tizen',
+    icon: state.card.icon || null,
   };
 
-  // Check both state.isEdit and whether we have a card ID to determine update vs add
-  var shouldUpdate = state.isEdit && effectiveCardId;
-  
-  if (shouldUpdate) {
-    console.log('TizenPortal: Updating card with ID:', effectiveCardId);
-    updateCard(effectiveCardId, payload);
+  // Use DOM mode - this is bulletproof
+  if (mode === 'edit' && cardId) {
+    console.log('TizenPortal: EDIT MODE - Updating card ID:', cardId);
+    updateCard(cardId, payload);
     showEditorToast('Saved');
   } else {
-    console.log('TizenPortal: Adding new card (state.isEdit=' + state.isEdit + ', card.id=' + card.id + ')');
+    console.log('TizenPortal: ADD MODE - Creating new card');
     var created = addCard(payload);
+    
+    // Switch to edit mode now that we have an ID
+    setEditorMode('edit', created.id);
     state.card = created;
-    state.isEdit = true;
-
-    var editor = document.getElementById('tp-site-editor');
-    if (editor) {
-      editor.dataset.cardId = created.id;
-    }
 
     var deleteBtn = document.getElementById('tp-editor-delete');
     if (deleteBtn) {
       deleteBtn.style.display = 'flex';
+    }
+    
+    var title = document.querySelector('#tp-editor-title');
+    if (title) {
+      title.textContent = 'Edit Site';
     }
 
     showEditorToast('Added');
@@ -469,23 +460,22 @@ function autoSaveCard(reason) {
  * Delete and close
  */
 function deleteAndClose() {
-  console.log('TizenPortal: deleteAndClose called');
+  var mode = getEditorMode();
+  var cardId = getEditorCardId();
+  
+  console.log('TizenPortal: deleteAndClose mode=' + mode + ' cardId=' + cardId);
 
-  var activeCard = getActiveCardForAction();
-  console.log('TizenPortal: activeCard =', activeCard);
-  console.log('TizenPortal: state.isEdit =', state.isEdit);
-
-  if (!activeCard || !activeCard.id) {
-    console.log('TizenPortal: Cannot delete - missing card or id');
+  if (mode !== 'edit' || !cardId) {
+    console.log('TizenPortal: Cannot delete - not in edit mode or no card ID');
     return;
   }
 
-  var cardName = activeCard.name || 'Site';
+  var cardName = state.card ? state.card.name : 'Site';
 
   // Simple confirmation via toast + second press
   var deleteBtn = document.getElementById('tp-editor-delete');
   if (deleteBtn && deleteBtn.dataset.confirmDelete === 'true') {
-    deleteCard(activeCard.id);
+    deleteCard(cardId);
     showEditorToast('Deleted: ' + cardName);
     closeSiteEditor();
     refreshPortal();

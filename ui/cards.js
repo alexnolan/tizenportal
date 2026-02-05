@@ -52,10 +52,18 @@ function loadCards() {
         cardCache = [];
       }
       
-      // Migration: Convert old 'bundle' field to 'featureBundle'
+      // Migration: Ensure all cards have IDs and convert old 'bundle' field to 'featureBundle'
       var needsSave = false;
       for (var i = 0; i < cardCache.length; i++) {
         var card = cardCache[i];
+        
+        // Ensure card has an ID
+        if (!card.id) {
+          card.id = generateId();
+          needsSave = true;
+          console.log('TizenPortal: Generated ID for card:', card.name);
+        }
+        
         if (card.bundle && !card.featureBundle) {
           // Migrate old bundle field
           if (card.bundle === 'default') {

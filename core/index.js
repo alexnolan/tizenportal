@@ -54,6 +54,7 @@ import { initDiagnostics, log, warn, error } from '../diagnostics/console.js';
 import { initDiagnosticsPanel, showDiagnosticsPanel, hideDiagnosticsPanel, toggleDiagnosticsPanel } from '../ui/diagnostics.js';
 import { loadBundle, unloadBundle, getActiveBundle, getActiveBundleName, handleBundleKeyDown } from './loader.js';
 import { getBundleNames, getBundle } from '../bundles/registry.js';
+import featureLoader from '../features/index.js';
 import { 
   registerCards, unregisterCards, clearRegistrations, getRegistrations,
   processCards, initCards, shutdownCards 
@@ -350,7 +351,7 @@ function findMatchingCard(url) {
 }
 
 /**
- * Apply bundle directly to the current page (MOD mode)
+ * Apply bundle directly to the current page
  * @param {Object} card - Card with bundle info
  */
 async function applyBundleToPage(card) {
@@ -407,6 +408,14 @@ async function applyBundleToPage(card) {
     await new Promise(function(resolve) {
       document.addEventListener('DOMContentLoaded', resolve);
     });
+  }
+  
+  // Apply global features from preferences (focusStyling, tabindexInjection, etc.)
+  try {
+    log('Applying global features from preferences...');
+    featureLoader.applyFeatures(document);
+  } catch (e) {
+    error('Failed to apply features: ' + e.message);
   }
   
   try {

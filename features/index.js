@@ -56,21 +56,17 @@ function getConfig() {
 }
 
 /**
- * Apply enabled features to an iframe document
- * @param {HTMLIFrameElement} iframe
+ * Apply enabled features to a document
+ * @param {Document} [doc] - Document to apply features to (defaults to current document)
  */
-function applyFeatures(iframe) {
-  if (!iframe) return;
+function applyFeatures(doc) {
+  if (!doc) {
+    doc = document;
+  }
   
   var config = getConfig();
   
   try {
-    var doc = iframe.contentDocument;
-    if (!doc) {
-      TizenPortal.warn('Features: No contentDocument (cross-origin?)');
-      return;
-    }
-    
     // Apply scroll-into-view (doesn't need document)
     if (config.scrollIntoView && features.scrollIntoView) {
       features.scrollIntoView.apply();
@@ -97,23 +93,28 @@ function applyFeatures(iframe) {
       features.tabindexInjection.apply(doc);
     }
     
-    TizenPortal.log('Features: Applied to', iframe.src);
+    if (window.TizenPortal) {
+      TizenPortal.log('Features: Applied');
+    }
   } catch (err) {
-    TizenPortal.warn('Features: Failed to apply:', err.message);
+    if (window.TizenPortal) {
+      TizenPortal.warn('Features: Failed to apply:', err.message);
+    } else {
+      console.warn('TizenPortal Features: Failed to apply:', err.message);
+    }
   }
 }
 
 /**
- * Remove all features from an iframe document
- * @param {HTMLIFrameElement} iframe
+ * Remove all features from a document
+ * @param {Document} [doc] - Document to remove features from (defaults to current document)
  */
-function removeFeatures(iframe) {
-  if (!iframe) return;
+function removeFeatures(doc) {
+  if (!doc) {
+    doc = document;
+  }
   
   try {
-    var doc = iframe.contentDocument;
-    if (!doc) return;
-    
     // Remove all features
     Object.keys(features).forEach(function(key) {
       var feature = features[key];
@@ -122,9 +123,13 @@ function removeFeatures(iframe) {
       }
     });
     
-    TizenPortal.log('Features: Removed from', iframe.src);
+    if (window.TizenPortal) {
+      TizenPortal.log('Features: Removed');
+    }
   } catch (err) {
-    TizenPortal.warn('Features: Failed to remove:', err.message);
+    if (window.TizenPortal) {
+      TizenPortal.warn('Features: Failed to remove:', err.message);
+    }
   }
 }
 

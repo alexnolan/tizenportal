@@ -249,7 +249,7 @@ async function initTargetSite() {
     matchedCard = {
       name: document.title || 'Unknown Site',
       url: window.location.href,
-      bundle: 'default'
+      featureBundle: 'default'
     };
   }
   
@@ -296,7 +296,7 @@ function getCardFromHash() {
     var card = {
       name: payload.cardName || 'Unknown Site',
       url: window.location.href.replace(/[#&]tp=[^&#]+/, ''),
-      bundle: payload.bundleName || 'default',
+      featureBundle: payload.bundleName || 'default',
       // Store raw payload for CSS/JS injection
       _payload: payload
     };

@@ -397,6 +397,8 @@ function autoSaveCard(reason) {
     return;
   }
 
+  console.log('TizenPortal: autoSaveCard - state.isEdit =', state.isEdit, 'card.id =', card.id, 'reason =', reason);
+
   var cardName = (card.name || '').trim();
   var cardUrl = (card.url || '').trim();
 
@@ -418,10 +420,15 @@ function autoSaveCard(reason) {
     icon: card.icon || null,
   };
 
-  if (state.isEdit && card.id) {
+  // Check both state.isEdit and whether we have a card ID to determine update vs add
+  var shouldUpdate = state.isEdit && card.id;
+  
+  if (shouldUpdate) {
+    console.log('TizenPortal: Updating card with ID:', card.id);
     updateCard(card.id, payload);
     showEditorToast('Saved');
   } else {
+    console.log('TizenPortal: Adding new card (state.isEdit=' + state.isEdit + ', card.id=' + card.id + ')');
     var created = addCard(payload);
     state.card = created;
     state.isEdit = true;

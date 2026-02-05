@@ -7,6 +7,7 @@
 
 import { addCard, updateCard, deleteCard, getCards } from './cards.js';
 import { getFeatureBundles } from '../bundles/registry.js';
+import { refreshPortal } from './modal.js';
 
 /**
  * Editor state
@@ -466,6 +467,7 @@ function deleteAndClose() {
     deleteCard(activeCard.id);
     showEditorToast('Deleted: ' + cardName);
     closeSiteEditor();
+    refreshPortal();
 
     if (state.onComplete) {
       state.onComplete();

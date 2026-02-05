@@ -24,7 +24,7 @@ export function setRefreshPortalFn(fn) {
 /**
  * Call refresh portal
  */
-function refreshPortal() {
+export function refreshPortal() {
   if (refreshPortalFn) {
     refreshPortalFn();
   } else if (window.TizenPortal && window.TizenPortal._refreshPortal) {

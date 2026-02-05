@@ -15,12 +15,25 @@ var prefsState = {
 };
 
 /**
+ * Theme mode options
+ */
+var THEME_OPTIONS = [
+  { value: 'dark', label: 'Dark' },
+  { value: 'light', label: 'Light' },
+  { value: 'auto', label: 'Automatic (Sunset)' },
+  { value: 'backdrop', label: 'Custom Backdrop' },
+  { value: 'custom', label: 'Custom Colours' },
+];
+
+/**
  * Preference rows definition
+ * Note: customColor1/customColor2 are conditional rows shown only when theme='custom'
  */
 var PREFERENCE_ROWS = [
-  { id: 'theme', label: 'Theme', type: 'select', options: ['Dark', 'Light'], key: 'theme', config: 'portal' },
-  { id: 'backgroundColor', label: 'Background Color', type: 'text', key: 'backgroundColor', config: 'portal' },
-  { id: 'backgroundImage', label: 'Background Image URL', type: 'text', key: 'backgroundImage', config: 'portal' },
+  { id: 'theme', label: 'Theme Mode', type: 'select', options: THEME_OPTIONS, key: 'theme', config: 'portal' },
+  { id: 'customColor1', label: 'Gradient Color 1', type: 'color', key: 'customColor1', config: 'portal', showIf: 'custom' },
+  { id: 'customColor2', label: 'Gradient Color 2', type: 'color', key: 'customColor2', config: 'portal', showIf: 'custom' },
+  { id: 'backgroundImage', label: 'Backdrop Image URL', type: 'text', key: 'backgroundImage', config: 'portal', showIf: 'backdrop' },
   { id: 'focusStyling', label: 'Focus Styling (blue outline)', type: 'toggle', key: 'focusStyling', config: 'features' },
   { id: 'tabindexInjection', label: 'Auto-focusable Elements', type: 'toggle', key: 'tabindexInjection', config: 'features' },
   { id: 'scrollIntoView', label: 'Scroll-into-view on Focus', type: 'toggle', key: 'scrollIntoView', config: 'features' },
@@ -181,7 +194,8 @@ export function showPreferences() {
 function getDefaultPortalConfig() {
   return {
     theme: 'dark',
-    backgroundColor: '#1a1a2e',
+    customColor1: '#0d1117',
+    customColor2: '#161b22',
     backgroundImage: '',
   };
 }
@@ -201,16 +215,35 @@ function getDefaultFeaturesConfig() {
 }
 
 /**
+ * Get visible preference rows based on current theme setting
+ */
+function getVisibleRows() {
+  var currentTheme = prefsState.settings.portalConfig.theme || 'dark';
+  var visible = [];
+  
+  for (var i = 0; i < PREFERENCE_ROWS.length; i++) {
+    var row = PREFERENCE_ROWS[i];
+    // Show row if no condition, or condition matches current theme
+    if (!row.showIf || row.showIf === currentTheme) {
+      visible.push(row);
+    }
+  }
+  
+  return visible;
+}
+
+/**
  * Render preferences rows
  */
 function renderPreferencesUI() {
   var container = document.getElementById('tp-prefs-rows');
   if (!container) return;
 
+  var visibleRows = getVisibleRows();
   var html = '';
 
-  for (var i = 0; i < PREFERENCE_ROWS.length; i++) {
-    var row = PREFERENCE_ROWS[i];
+  for (var i = 0; i < visibleRows.length; i++) {
+    var row = visibleRows[i];
     var value = getValue(row);
     var displayValue = formatDisplayValue(row, value);
 
@@ -255,8 +288,18 @@ function formatDisplayValue(row, value) {
   if (row.type === 'toggle') {
     return value ? '✓ On' : '○ Off';
   }
-  if (row.type === 'select') {
-    return value || 'dark';
+  if (row.type === 'select' && row.options) {
+    // Find label for current value
+    for (var i = 0; i < row.options.length; i++) {
+      if (row.options[i].value === value) {
+        return row.options[i].label;
+      }
+    }
+    return value || 'Dark';
+  }
+  if (row.type === 'color') {
+    // Show color swatch indicator
+    return value ? '■ ' + value : '(not set)';
   }
   // Text field
   return value || '(not set)';
@@ -264,13 +307,16 @@ function formatDisplayValue(row, value) {
 
 /**
  * Navigate preferences (Up/Down)
+ * Now includes Close button as final navigation target
  */
 function navigatePreferences(direction) {
+  var visibleRows = getVisibleRows();
+  var totalItems = visibleRows.length + 1; // +1 for Close button
   var newIndex = prefsState.currentRow + direction;
   
-  // Clamp to valid range
+  // Clamp to valid range (0 to totalItems-1)
   if (newIndex < 0) newIndex = 0;
-  if (newIndex >= PREFERENCE_ROWS.length) newIndex = PREFERENCE_ROWS.length - 1;
+  if (newIndex >= totalItems) newIndex = totalItems - 1;
   
   if (newIndex !== prefsState.currentRow) {
     prefsState.currentRow = newIndex;
@@ -279,9 +325,20 @@ function navigatePreferences(direction) {
 }
 
 /**
- * Focus a preferences row
+ * Focus a preferences row or the Close button
  */
 function focusPreferencesRow(index) {
+  var visibleRows = getVisibleRows();
+  
+  // If index is beyond visible rows, focus Close button
+  if (index >= visibleRows.length) {
+    var closeBtn = document.getElementById('tp-prefs-cancel');
+    if (closeBtn) {
+      closeBtn.focus();
+    }
+    return;
+  }
+  
   var container = document.getElementById('tp-prefs-rows');
   if (!container) return;
 
@@ -296,7 +353,8 @@ function focusPreferencesRow(index) {
  */
 function activatePreferenceRow(rowEl) {
   var index = parseInt(rowEl.dataset.index, 10);
-  var row = PREFERENCE_ROWS[index];
+  var visibleRows = getVisibleRows();
+  var row = visibleRows[index];
 
   if (!row) return;
 
@@ -315,6 +373,9 @@ function activatePreferenceRow(rowEl) {
   } else if (row.type === 'text') {
     // Show text input prompt
     showTextInputPrompt(row, index);
+  } else if (row.type === 'color') {
+    // Show color input prompt
+    showColorInputPrompt(row, index);
   }
 }
 
@@ -325,18 +386,44 @@ function cycleSelectOption(row, index) {
   var currentValue = getValue(row);
   var options = row.options;
   
-  // Find current index
-  var currentIndex = options.indexOf(currentValue);
+  // Find current index (options are now objects with value/label)
+  var currentIndex = -1;
+  for (var i = 0; i < options.length; i++) {
+    if (options[i].value === currentValue) {
+      currentIndex = i;
+      break;
+    }
+  }
   if (currentIndex === -1) currentIndex = 0;
   
   // Move to next option
   var nextIndex = (currentIndex + 1) % options.length;
-  var nextValue = options[nextIndex];
+  var nextValue = options[nextIndex].value;
   
-  setValue(row, nextValue.toLowerCase());
+  setValue(row, nextValue);
   renderPreferencesUI();
   focusPreferencesRow(index);
   savePreferencesAuto('select:' + row.id);
+}
+
+/**
+ * Show color input prompt
+ */
+function showColorInputPrompt(row, index) {
+  var currentValue = getValue(row) || '#1a1a2e';
+  var newValue = prompt(row.label + ' (hex color, e.g. #ff0000):', currentValue);
+  
+  if (newValue !== null) {
+    // Validate hex color format
+    if (/^#[0-9A-Fa-f]{6}$/.test(newValue) || /^#[0-9A-Fa-f]{3}$/.test(newValue)) {
+      setValue(row, newValue);
+      renderPreferencesUI();
+      focusPreferencesRow(index);
+      savePreferencesAuto('color:' + row.id);
+    } else {
+      alert('Invalid color format. Use hex format like #ff0000');
+    }
+  }
 }
 
 /**
@@ -420,22 +507,52 @@ export function applyPortalPreferences(config) {
   var shell = document.getElementById('tp-shell');
   if (!shell) return;
   
-  // Apply theme
-  shell.setAttribute('data-theme', config.theme || 'dark');
+  var theme = config.theme || 'dark';
   
-  // Apply background color
-  if (config.backgroundColor) {
-    shell.style.backgroundColor = config.backgroundColor;
+  // Handle automatic theme (sunset-based)
+  if (theme === 'auto') {
+    theme = isNightTime() ? 'dark' : 'light';
   }
   
-  // Apply background image
-  if (config.backgroundImage) {
-    shell.style.backgroundImage = 'url(' + config.backgroundImage + ')';
-    shell.style.backgroundSize = 'cover';
-    shell.style.backgroundPosition = 'center';
+  // Apply theme attribute for CSS
+  shell.setAttribute('data-theme', theme);
+  
+  // Clear existing background styles
+  shell.style.backgroundColor = '';
+  shell.style.backgroundImage = '';
+  shell.style.background = '';
+  
+  // Apply theme-specific styles
+  if (config.theme === 'custom') {
+    // Custom gradient colors
+    var color1 = config.customColor1 || '#0d1117';
+    var color2 = config.customColor2 || '#161b22';
+    shell.style.background = 'linear-gradient(135deg, ' + color1 + ' 0%, ' + color2 + ' 100%)';
+  } else if (config.theme === 'backdrop') {
+    // Custom backdrop image
+    if (config.backgroundImage) {
+      shell.style.backgroundImage = 'url(' + config.backgroundImage + ')';
+      shell.style.backgroundSize = 'cover';
+      shell.style.backgroundPosition = 'center';
+      shell.style.backgroundColor = '#0d1117'; // Fallback
+    }
+  } else if (theme === 'light') {
+    // Light theme gradient
+    shell.style.background = 'linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%)';
   } else {
-    shell.style.backgroundImage = '';
+    // Dark theme gradient (default)
+    shell.style.background = 'linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%)';
   }
+}
+
+/**
+ * Determine if it's night time based on sunset
+ * Uses a simple approximation: night = 6pm to 6am
+ * @returns {boolean} True if currently night time
+ */
+function isNightTime() {
+  var hour = new Date().getHours();
+  return hour < 6 || hour >= 18;
 }
 
 /**

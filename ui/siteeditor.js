@@ -6,7 +6,7 @@
  */
 
 import { addCard, updateCard, deleteCard, getCards } from './cards.js';
-import { getFeatureBundles } from '../bundles/registry.js';
+import { getFeatureBundles, getBundle } from '../bundles/registry.js';
 import { refreshPortal } from './modal.js';
 
 /**
@@ -57,6 +57,55 @@ var FIELDS = [
   ]},
   { name: 'icon', label: 'Icon URL', type: 'text', placeholder: 'https://... (optional)', required: false },
 ];
+
+/**
+ * Ensure bundle options are initialized from bundle metadata
+ */
+function ensureBundleOptionsInitialized() {
+  if (!state.card) return;
+
+  var bundleName = state.card.featureBundle;
+  if (!bundleName) return;
+
+  var bundle = getBundle(bundleName);
+  if (!bundle || !bundle.options || !bundle.options.length) return;
+
+  if (!state.card.bundleOptions || typeof state.card.bundleOptions !== 'object') {
+    state.card.bundleOptions = {};
+  }
+  if (!state.card.bundleOptionData || typeof state.card.bundleOptionData !== 'object') {
+    state.card.bundleOptionData = {};
+  }
+
+  var options = bundle.options;
+  for (var i = 0; i < options.length; i++) {
+    var opt = options[i];
+    if (!opt || !opt.key) continue;
+    if (!state.card.bundleOptions.hasOwnProperty(opt.key)) {
+      state.card.bundleOptions[opt.key] = opt.hasOwnProperty('default') ? opt.default : null;
+    }
+  }
+}
+
+/**
+ * Reset bundle options when changing bundle
+ */
+function resetBundleOptionsForBundle(bundleName) {
+  if (!state.card) return;
+  state.card.bundleOptions = {};
+  state.card.bundleOptionData = {};
+
+  if (!bundleName) return;
+
+  var bundle = getBundle(bundleName);
+  if (!bundle || !bundle.options || !bundle.options.length) return;
+
+  for (var i = 0; i < bundle.options.length; i++) {
+    var opt = bundle.options[i];
+    if (!opt || !opt.key) continue;
+    state.card.bundleOptions[opt.key] = opt.hasOwnProperty('default') ? opt.default : null;
+  }
+}
 
 /**
  * Initialize the site editor
@@ -197,6 +246,15 @@ function handleEditorKeyDown(event) {
     }
     
     // If on a field row, open input mode
+    if (active && active.classList && active.classList.contains('tp-bundle-option-row')) {
+      console.log('TizenPortal: Enter on bundle option row');
+      event.preventDefault();
+      event.stopPropagation();
+      activateBundleOptionInput(active);
+      return;
+    }
+
+    // If on a field row, open input mode
     if (active && active.classList && active.classList.contains('tp-field-row')) {
       console.log('TizenPortal: Enter on field row');
       event.preventDefault();
@@ -243,6 +301,8 @@ export function showAddSiteEditor(onComplete) {
     featureBundle: null,
     userAgent: 'tizen',
     icon: '',
+    bundleOptions: {},
+    bundleOptionData: {},
   };
   state.onComplete = onComplete;
   
@@ -271,6 +331,8 @@ export function showEditSiteEditor(card, onComplete) {
     featureBundle: card.featureBundle || null,
     userAgent: card.userAgent || 'tizen',
     icon: card.icon || '',
+    bundleOptions: card.bundleOptions || {},
+    bundleOptionData: card.bundleOptionData || {},
   };
   state.onComplete = onComplete;
   
@@ -304,6 +366,9 @@ function openEditor() {
   if (deleteBtn) {
     deleteBtn.style.display = isEdit ? 'flex' : 'none';
   }
+
+  // Ensure bundle options are initialized
+  ensureBundleOptionsInitialized();
 
   // Render fields
   renderFields();
@@ -423,6 +488,8 @@ function autoSaveCard(reason) {
     featureBundle: state.card.featureBundle || null,
     userAgent: state.card.userAgent || 'tizen',
     icon: state.card.icon || null,
+    bundleOptions: state.card.bundleOptions || {},
+    bundleOptionData: state.card.bundleOptionData || {},
   };
 
   // Use DOM mode - this is bulletproof
@@ -622,9 +689,82 @@ function renderBundleField(field, value) {
       '</div>';
   }
   
-  html += '</div></div>';
+  html += '</div>';
+
+  // Render bundle options if available
+  if (value) {
+    html += renderBundleOptions(value);
+  }
+
+  html += '</div>';
   
   return html;
+}
+
+/**
+ * Render bundle options section based on bundle metadata
+ */
+function renderBundleOptions(bundleName) {
+  var bundle = getBundle(bundleName);
+  if (!bundle || !bundle.options || !bundle.options.length) {
+    return '';
+  }
+
+  if (!state.card.bundleOptions || typeof state.card.bundleOptions !== 'object') {
+    state.card.bundleOptions = {};
+  }
+  if (!state.card.bundleOptionData || typeof state.card.bundleOptionData !== 'object') {
+    state.card.bundleOptionData = {};
+  }
+
+  var html = '<div class="tp-field-section">';
+  html += '<div class="tp-field-section-label">Bundle Options</div>';
+
+  for (var i = 0; i < bundle.options.length; i++) {
+    var opt = bundle.options[i];
+    if (!opt || !opt.key) continue;
+    var value = state.card.bundleOptions.hasOwnProperty(opt.key) ? state.card.bundleOptions[opt.key] : opt.default;
+    var dataValue = state.card.bundleOptionData[opt.key] || '';
+    html += renderBundleOptionRow(opt, value, dataValue);
+  }
+
+  html += '</div>';
+  return html;
+}
+
+/**
+ * Render a single bundle option row
+ */
+function renderBundleOptionRow(option, value, dataValue) {
+  var label = option.label || option.key;
+  var type = option.type || 'text';
+  var displayValue = '';
+  var isEmpty = value === null || value === undefined || value === '';
+
+  if (type === 'toggle') {
+    displayValue = value ? '✓ On' : '○ Off';
+  } else if (type === 'select' && option.options) {
+    displayValue = value;
+    for (var i = 0; i < option.options.length; i++) {
+      if (option.options[i].value === value) {
+        displayValue = option.options[i].label;
+        break;
+      }
+    }
+  } else if (type === 'url') {
+    displayValue = value || option.placeholder || '(not set)';
+    if (dataValue) {
+      displayValue = displayValue + ' (saved)';
+    }
+  } else {
+    displayValue = value || option.placeholder || '(not set)';
+  }
+
+  return '' +
+    '<div class="tp-field-row tp-bundle-option-row" data-option-key="' + option.key + '" data-option-type="' + type + '" tabindex="0">' +
+      '<div class="tp-field-label">' + label + '</div>' +
+      '<div class="tp-field-value' + (isEmpty ? ' empty' : '') + '">' + escapeHtml(displayValue) + '</div>' +
+    '</div>';
 }
 
 /**
@@ -632,7 +772,7 @@ function renderBundleField(field, value) {
  */
 function setupFieldListeners(container) {
   // Text/select field rows
-  var rows = container.querySelectorAll('.tp-field-row');
+  var rows = container.querySelectorAll('.tp-field-row:not(.tp-bundle-option-row)');
   for (var i = 0; i < rows.length; i++) {
     rows[i].addEventListener('click', function() {
       activateFieldInput(this);
@@ -642,6 +782,21 @@ function setupFieldListeners(container) {
         e.preventDefault();
         e.stopPropagation();
         activateFieldInput(this);
+      }
+    });
+  }
+
+  // Bundle option rows (handled separately)
+  var optionRows = container.querySelectorAll('.tp-bundle-option-row');
+  for (var k = 0; k < optionRows.length; k++) {
+    optionRows[k].addEventListener('click', function() {
+      activateBundleOptionInput(this);
+    });
+    optionRows[k].addEventListener('keydown', function(e) {
+      if (e.keyCode === 13) { // Enter
+        e.preventDefault();
+        e.stopPropagation();
+        activateBundleOptionInput(this);
       }
     });
   }
@@ -691,6 +846,181 @@ function activateFieldInput(row) {
   } else {
     // Show text input prompt
     showTextInputPrompt(fieldName, field);
+  }
+}
+
+/**
+ * Activate input mode for a bundle option row
+ */
+function activateBundleOptionInput(row) {
+  var optionKey = row.dataset.optionKey;
+  var optionType = row.dataset.optionType || 'text';
+  var option = getBundleOptionDef(optionKey);
+
+  if (!option) return;
+
+  if (optionType === 'toggle') {
+    var current = getBundleOptionValue(optionKey, option);
+    setBundleOptionValue(optionKey, !current);
+    renderFields();
+    autoSaveCard('option:' + optionKey);
+    focusBundleOption(optionKey);
+  } else if (optionType === 'select') {
+    cycleBundleOptionSelect(optionKey, option);
+  } else if (optionType === 'url') {
+    showBundleOptionUrlPrompt(optionKey, option);
+  } else {
+    showBundleOptionTextPrompt(optionKey, option);
+  }
+}
+
+/**
+ * Get bundle option definition by key
+ */
+function getBundleOptionDef(key) {
+  if (!state.card || !state.card.featureBundle) return null;
+  var bundle = getBundle(state.card.featureBundle);
+  if (!bundle || !bundle.options || !bundle.options.length) return null;
+
+  for (var i = 0; i < bundle.options.length; i++) {
+    if (bundle.options[i].key === key) {
+      return bundle.options[i];
+    }
+  }
+  return null;
+}
+
+/**
+ * Get current bundle option value (with default fallback)
+ */
+function getBundleOptionValue(key, optionDef) {
+  if (!state.card.bundleOptions || typeof state.card.bundleOptions !== 'object') {
+    state.card.bundleOptions = {};
+  }
+  if (state.card.bundleOptions.hasOwnProperty(key)) {
+    return state.card.bundleOptions[key];
+  }
+  return optionDef && optionDef.hasOwnProperty('default') ? optionDef.default : null;
+}
+
+/**
+ * Set bundle option value
+ */
+function setBundleOptionValue(key, value) {
+  if (!state.card.bundleOptions || typeof state.card.bundleOptions !== 'object') {
+    state.card.bundleOptions = {};
+  }
+  state.card.bundleOptions[key] = value;
+}
+
+/**
+ * Set bundle option data (e.g., fetched allowlist contents)
+ */
+function setBundleOptionData(key, value) {
+  if (!state.card.bundleOptionData || typeof state.card.bundleOptionData !== 'object') {
+    state.card.bundleOptionData = {};
+  }
+  state.card.bundleOptionData[key] = value;
+}
+
+/**
+ * Cycle select options for bundle option
+ */
+function cycleBundleOptionSelect(optionKey, optionDef) {
+  var options = optionDef.options || [];
+  var currentValue = getBundleOptionValue(optionKey, optionDef);
+  var currentIndex = 0;
+
+  for (var i = 0; i < options.length; i++) {
+    if (options[i].value === currentValue) {
+      currentIndex = i;
+      break;
+    }
+  }
+
+  var nextIndex = (currentIndex + 1) % options.length;
+  setBundleOptionValue(optionKey, options[nextIndex].value);
+  renderFields();
+  autoSaveCard('option:' + optionKey);
+  focusBundleOption(optionKey);
+}
+
+/**
+ * Prompt for bundle option text input
+ */
+function showBundleOptionTextPrompt(optionKey, optionDef) {
+  var currentValue = getBundleOptionValue(optionKey, optionDef) || '';
+  var newValue = prompt(optionDef.label + ':', currentValue);
+
+  if (newValue !== null) {
+    setBundleOptionValue(optionKey, newValue);
+    renderFields();
+    autoSaveCard('option:' + optionKey);
+  }
+
+  setTimeout(function() {
+    focusBundleOption(optionKey);
+  }, 100);
+}
+
+/**
+ * Prompt for bundle option URL input and fetch contents
+ */
+function showBundleOptionUrlPrompt(optionKey, optionDef) {
+  var currentValue = getBundleOptionValue(optionKey, optionDef) || '';
+  var newValue = prompt(optionDef.label + ':', currentValue);
+
+  if (newValue !== null) {
+    setBundleOptionValue(optionKey, newValue);
+    renderFields();
+    autoSaveCard('option:' + optionKey);
+
+    if (newValue) {
+      fetchBundleOptionUrl(optionKey, newValue);
+    } else {
+      setBundleOptionData(optionKey, '');
+      autoSaveCard('optionData:' + optionKey);
+    }
+  }
+
+  setTimeout(function() {
+    focusBundleOption(optionKey);
+  }, 100);
+}
+
+/**
+ * Fetch bundle option URL contents and save to bundleOptionData
+ */
+function fetchBundleOptionUrl(optionKey, url) {
+  try {
+    showEditorToast('Fetching ' + optionKey + '...');
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          setBundleOptionData(optionKey, xhr.responseText || '');
+          autoSaveCard('optionData:' + optionKey);
+          renderFields();
+          showEditorToast('Saved ' + optionKey + ' data');
+        } else {
+          showEditorToast('Failed to fetch ' + optionKey);
+        }
+      }
+    };
+    xhr.send();
+  } catch (err) {
+    showEditorToast('Failed to fetch ' + optionKey);
+  }
+}
+
+/**
+ * Focus a bundle option row by key
+ */
+function focusBundleOption(optionKey) {
+  var row = document.querySelector('.tp-bundle-option-row[data-option-key="' + optionKey + '"]');
+  if (row) {
+    row.focus();
   }
 }
 
@@ -761,6 +1091,9 @@ function selectBundleOption(option) {
   var bundleName = option.dataset.bundle;
   // "none" means null for featureBundle
   state.card.featureBundle = bundleName === 'none' ? null : bundleName;
+
+  // Reset bundle options when bundle changes
+  resetBundleOptionsForBundle(state.card.featureBundle);
   
   // Re-render fields
   renderFields();

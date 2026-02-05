@@ -298,6 +298,8 @@ function getCardFromHash() {
       name: payload.cardName || 'Unknown Site',
       url: window.location.href.replace(/[#&]tp=[^&#]+/, ''),
       featureBundle: payload.bundleName || 'default',
+      bundleOptions: payload.bundleOptions || {},
+      bundleOptionData: payload.bundleOptionData || {},
       // Store raw payload for CSS/JS injection
       _payload: payload
     };
@@ -858,7 +860,9 @@ function loadSite(card) {
     var payload = {
       css: '',
       js: '',
-      ua: ''
+      ua: '',
+      bundleOptions: card.bundleOptions || {},
+      bundleOptionData: card.bundleOptionData || {}
     };
     
     // Add bundle CSS

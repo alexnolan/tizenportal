@@ -42,6 +42,37 @@ var AD_URL_PATTERNS = [
 ];
 
 /**
+ * Additional strict URL patterns
+ */
+var STRICT_AD_URL_PATTERNS = [
+  'adsystem',
+  'adservice',
+  '/ads?',
+  '/ad?',
+  '/ads/',
+  '/ad/',
+  'pixel',
+  'tracker',
+  'tracking',
+  'analytics',
+  'beacon',
+  'promo',
+  'sponsor',
+  'sponsored',
+  'doubleverify.com',
+  'scorecardresearch.com',
+  'quantserve.com',
+  'chartbeat.com',
+  'googletagmanager.com',
+  'googletagservices.com',
+  'adnxs.com',
+  'adsrvr.org',
+  'pubmatic.com',
+  'rubiconproject.com',
+  'openx.net',
+];
+
+/**
  * Selectors for elements to remove from DOM
  * More aggressive than CSS hiding - removes the element entirely
  */
@@ -80,18 +111,57 @@ var AD_SELECTORS = [
 ];
 
 /**
+ * Additional strict selectors
+ */
+var STRICT_AD_SELECTORS = [
+  '[class*="sponsor"]',
+  '[id*="sponsor"]',
+  '[class*="promoted"]',
+  '[id*="promoted"]',
+  '[class*="paid"]',
+  '[id*="paid"]',
+  '[aria-label*="sponsor"]',
+  '[aria-label*="sponsored"]',
+  '[aria-label*="advert"]',
+  '[data-ad]','[data-ads]','[data-advert]','[data-advertisement]','[data-sponsored]','[data-sponsor]',
+  'iframe[src*="ad"]',
+  'iframe[id*="ad"]',
+  'iframe[class*="ad"]',
+  'div[id*="ad-"]',
+  'div[class*="ad-"]',
+];
+
+/**
  * State
  */
 var state = {
   observer: null,
   blocked: 0,
   enabled: true,
+  strict: false,
+  allowlist: [],
 };
 
 export default {
   name: 'adblock',
   displayName: 'Ad Blocker',
   description: 'Blocks advertisements and tracking scripts for cleaner browsing',
+  options: [
+    {
+      key: 'strict',
+      label: 'Strict Mode',
+      type: 'toggle',
+      default: false,
+      description: 'Enable stricter ad blocking (may hide more content)'
+    },
+    {
+      key: 'allowlistUrl',
+      label: 'Allowlist URL',
+      type: 'url',
+      placeholder: 'https://example.com/allowlist.txt',
+      description: 'Text file with allowed hosts/paths (one per line)'
+    }
+  ],
   
   /**
    * CSS to inject
@@ -105,6 +175,10 @@ export default {
     console.log('TizenPortal [AdBlock]: Preparing');
     state.blocked = 0;
     state.enabled = true;
+    this.applyOptions(card);
+    if (state.strict) {
+      this.injectStrictScript(win);
+    }
     this.cleanup();
   },
 
@@ -162,6 +236,77 @@ export default {
     state.blocked = 0;
   },
 
+  // ========================================================================
+  // OPTIONS
+  // ========================================================================
+
+  /**
+   * Apply bundle options from card
+   * @param {Object} card
+   */
+  applyOptions: function(card) {
+    var options = (card && card.bundleOptions) ? card.bundleOptions : {};
+    var optionData = (card && card.bundleOptionData) ? card.bundleOptionData : {};
+
+    state.strict = !!options.strict;
+
+    // Parse allowlist contents (if provided)
+    var allowlistText = optionData.allowlistUrl || '';
+    state.allowlist = this.parseAllowlist(allowlistText);
+  },
+
+  /**
+   * Parse allowlist text into array
+   * @param {string} text
+   * @returns {string[]}
+   */
+  parseAllowlist: function(text) {
+    if (!text || typeof text !== 'string') return [];
+    var lines = text.split(/\r?\n/);
+    var list = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (!line) continue;
+      line = line.trim();
+      if (!line || line.charAt(0) === '#') continue;
+      list.push(line.toLowerCase());
+    }
+    return list;
+  },
+
+  /**
+   * Check if URL is allowlisted
+   * @param {string} url
+   * @returns {boolean}
+   */
+  isAllowlisted: function(url) {
+    if (!url || !state.allowlist || !state.allowlist.length) return false;
+    var lower = url.toLowerCase();
+    for (var i = 0; i < state.allowlist.length; i++) {
+      if (lower.indexOf(state.allowlist[i]) !== -1) {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  /**
+   * Inject a strict script to harden ad blocking
+   * @param {Window} win
+   */
+  injectStrictScript: function(win) {
+    try {
+      var doc = win.document || document;
+      if (!doc || !doc.createElement) return;
+      var script = doc.createElement('script');
+      script.type = 'text/javascript';
+      script.text = '(function(){try{var w=window;w.__tpAdblockStrict=true;var d=document;var ow=d.write;d.write=function(h){try{var s=String(h||\'\').toLowerCase();if(s.indexOf("adsbygoogle")!==-1||s.indexOf("doubleclick")!==-1||s.indexOf("googlesyndication")!==-1||s.indexOf("adservice")!==-1){return;}}catch(e){}return ow.apply(d,arguments);};}catch(e){}})();';
+      (doc.head || doc.documentElement || doc.body).appendChild(script);
+    } catch (err) {
+      // Ignore
+    }
+  },
+
   // ==========================================================================
   // AD REMOVAL
   // ==========================================================================
@@ -172,10 +317,14 @@ export default {
    */
   removeAds: function(doc) {
     var removed = 0;
+    var selectors = AD_SELECTORS;
+    if (state.strict) {
+      selectors = AD_SELECTORS.concat(STRICT_AD_SELECTORS);
+    }
     
-    for (var i = 0; i < AD_SELECTORS.length; i++) {
+    for (var i = 0; i < selectors.length; i++) {
       try {
-        var elements = doc.querySelectorAll(AD_SELECTORS[i]);
+        var elements = doc.querySelectorAll(selectors[i]);
         for (var j = 0; j < elements.length; j++) {
           var el = elements[j];
           // Don't remove if it's part of critical page structure
@@ -277,9 +426,18 @@ export default {
   isAdURL: function(url) {
     if (!url || typeof url !== 'string') return false;
     var lower = url.toLowerCase();
+
+    if (this.isAllowlisted(lower)) {
+      return false;
+    }
+
+    var patterns = AD_URL_PATTERNS;
+    if (state.strict) {
+      patterns = AD_URL_PATTERNS.concat(STRICT_AD_URL_PATTERNS);
+    }
     
-    for (var i = 0; i < AD_URL_PATTERNS.length; i++) {
-      if (lower.indexOf(AD_URL_PATTERNS[i]) !== -1) {
+    for (var i = 0; i < patterns.length; i++) {
+      if (lower.indexOf(patterns[i]) !== -1) {
         return true;
       }
     }
@@ -416,6 +574,9 @@ export default {
     // Quick checks for common ad patterns
     var adPatterns = ['adsbygoogle', 'ad-container', 'ad-wrapper', 'ad-banner', 
                       'advertisement', 'taboola', 'outbrain', 'sponsored'];
+    if (state.strict) {
+      adPatterns = adPatterns.concat(['promoted', 'promo', 'sponsor', 'advert', 'ad-', 'ads-']);
+    }
     
     for (var i = 0; i < adPatterns.length; i++) {
       if (combined.indexOf(adPatterns[i]) !== -1) {

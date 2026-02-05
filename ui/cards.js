@@ -81,6 +81,17 @@ function loadCards() {
           card.featureBundle = null;
           needsSave = true;
         }
+
+        // Ensure bundle options storage exists
+        if (!card.hasOwnProperty('bundleOptions') || typeof card.bundleOptions !== 'object' || card.bundleOptions === null) {
+          card.bundleOptions = {};
+          needsSave = true;
+        }
+
+        if (!card.hasOwnProperty('bundleOptionData') || typeof card.bundleOptionData !== 'object' || card.bundleOptionData === null) {
+          card.bundleOptionData = {};
+          needsSave = true;
+        }
       }
       
       if (needsSave) {
@@ -137,6 +148,8 @@ export function addCard(cardData) {
     featureBundle: cardData.featureBundle || null,
     userAgent: cardData.userAgent || 'tizen',
     icon: cardData.icon || null,
+    bundleOptions: cardData.bundleOptions || {},
+    bundleOptionData: cardData.bundleOptionData || {},
     order: cards.length,
     createdAt: Date.now(),
     updatedAt: Date.now(),

@@ -132,6 +132,44 @@ var STRICT_AD_SELECTORS = [
 ];
 
 /**
+ * Cookie/consent banner selectors
+ */
+var COOKIE_SELECTORS = [
+  '[id*="cookie"]',
+  '[class*="cookie"]',
+  '[id*="consent"]',
+  '[class*="consent"]',
+  '[id*="gdpr"]',
+  '[class*="gdpr"]',
+  '[id*="privacy"]',
+  '[class*="privacy"]',
+  '[class*="cc-window"]',
+  '[class*="cookie-banner"]',
+  '[class*="cookie-consent"]',
+  '[class*="consent-banner"]'
+];
+
+/**
+ * Banner keyword hints
+ */
+var BANNER_KEYWORDS = [
+  'banner',
+  'leaderboard',
+  'skyscraper',
+  'billboard',
+  'sponsor',
+  'sponsored',
+  'promoted',
+  'promo',
+  'advert',
+  'adserver',
+  'adsystem',
+  'doubleclick',
+  '/ads/',
+  'ads.'
+];
+
+/**
  * State
  */
 var state = {
@@ -146,6 +184,9 @@ var state = {
   originalInsertBefore: null,
   originalReplaceChild: null,
   strictStyleEl: null,
+  cookieStyleEl: null,
+  hideCookieBanners: false,
+  inlineHeuristics: true,
 };
 
 export default {
@@ -166,6 +207,20 @@ export default {
       type: 'url',
       placeholder: 'https://example.com/allowlist.txt',
       description: 'Text file with allowed hosts/paths (one per line)'
+    },
+    {
+      key: 'hideCookieBanners',
+      label: 'Hide Cookie Banners',
+      type: 'toggle',
+      default: false,
+      description: 'Hide cookie/consent banners'
+    },
+    {
+      key: 'inlineHeuristics',
+      label: 'Inline Ad Heuristics',
+      type: 'toggle',
+      default: true,
+      description: 'Block inline ad scripts and banner images'
     }
   ],
   
@@ -186,6 +241,9 @@ export default {
       this.injectStrictScript(win);
       this.injectStrictStyles(win);
     }
+    if (state.hideCookieBanners) {
+      this.injectCookieStyles(win);
+    }
     this.cleanup();
   },
 
@@ -205,6 +263,7 @@ export default {
 
       // Initial cleanup
       this.removeAds(doc);
+      this.removeCookieBanners(doc);
       
       // Block ad scripts from loading
       this.interceptRequests(win);
@@ -259,6 +318,8 @@ export default {
     var optionData = (card && card.bundleOptionData) ? card.bundleOptionData : {};
 
     state.strict = !!options.strict;
+    state.hideCookieBanners = !!options.hideCookieBanners;
+    state.inlineHeuristics = options.inlineHeuristics !== false;
 
     // Parse allowlist contents (if provided)
     var allowlistText = optionData.allowlistUrl || '';
@@ -348,6 +409,26 @@ export default {
     }
   },
 
+  /**
+   * Inject cookie banner hiding styles
+   * @param {Window} win
+   */
+  injectCookieStyles: function(win) {
+    try {
+      var doc = win.document || document;
+      if (!doc || !doc.createElement) return;
+      if (state.cookieStyleEl) return;
+
+      var style = doc.createElement('style');
+      style.type = 'text/css';
+      style.textContent = COOKIE_SELECTORS.join(',') + '{display:none !important;visibility:hidden !important;height:0 !important;overflow:hidden !important;opacity:0 !important;}';
+      (doc.head || doc.documentElement || doc.body).appendChild(style);
+      state.cookieStyleEl = style;
+    } catch (err) {
+      // Ignore
+    }
+  },
+
   // ==========================================================================
   // AD REMOVAL
   // ==========================================================================
@@ -383,6 +464,98 @@ export default {
       state.blocked += removed;
       console.log('TizenPortal [AdBlock]: Removed', removed, 'ad elements');
     }
+
+    // Heuristic image banner removal
+    if (state.inlineHeuristics || state.strict) {
+      var imageRemoved = this.removeImageAds(doc);
+      if (imageRemoved > 0) {
+        state.blocked += imageRemoved;
+        console.log('TizenPortal [AdBlock]: Removed', imageRemoved, 'ad images');
+      }
+    }
+  },
+
+  /**
+   * Remove cookie/consent banners
+   * @param {Document} doc
+   */
+  removeCookieBanners: function(doc) {
+    if (!state.hideCookieBanners && !state.strict) return;
+    var removed = 0;
+    for (var i = 0; i < COOKIE_SELECTORS.length; i++) {
+      try {
+        var elements = doc.querySelectorAll(COOKIE_SELECTORS[i]);
+        for (var j = 0; j < elements.length; j++) {
+          var el = elements[j];
+          if (!this.isSafeToRemove(el)) continue;
+          el.remove();
+          removed++;
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    if (removed > 0) {
+      state.blocked += removed;
+      console.log('TizenPortal [AdBlock]: Removed', removed, 'cookie/consent elements');
+    }
+  },
+
+  /**
+   * Remove likely ad banner images
+   * @param {Document} doc
+   * @returns {number}
+   */
+  removeImageAds: function(doc) {
+    var removed = 0;
+    var images = doc.querySelectorAll('img');
+    for (var i = 0; i < images.length; i++) {
+      var img = images[i];
+      if (this.isLikelyAdImage(img)) {
+        if (!this.isSafeToRemove(img)) continue;
+        img.remove();
+        removed++;
+      }
+    }
+    return removed;
+  },
+
+  /**
+   * Heuristic to detect ad banner images
+   * @param {HTMLImageElement} img
+   * @returns {boolean}
+   */
+  isLikelyAdImage: function(img) {
+    if (!img || !img.src) return false;
+    var src = (img.src || '').toLowerCase();
+
+    if (this.isAllowlisted(src)) return false;
+
+    var className = (img.className || '').toLowerCase();
+    var id = (img.id || '').toLowerCase();
+    var combined = className + ' ' + id + ' ' + src;
+
+    var hasKeyword = false;
+    for (var i = 0; i < BANNER_KEYWORDS.length; i++) {
+      if (combined.indexOf(BANNER_KEYWORDS[i]) !== -1) {
+        hasKeyword = true;
+        break;
+      }
+    }
+
+    var wAttr = img.getAttribute ? img.getAttribute('width') : '';
+    var hAttr = img.getAttribute ? img.getAttribute('height') : '';
+    var w = parseInt(wAttr, 10) || img.width || 0;
+    var h = parseInt(hAttr, 10) || img.height || 0;
+
+    var isBannerSize = (w >= 728 && h >= 90) || (w >= 300 && h >= 50) || (w >= 160 && h >= 600) || (w >= 250 && h >= 250) || (w >= 468 && h >= 60);
+    var isGif = src.indexOf('.gif') !== -1;
+
+    if (hasKeyword && (isBannerSize || isGif)) return true;
+    if (state.strict && isGif && (w >= 200 || h >= 200)) return true;
+
+    return false;
   },
 
   /**
@@ -532,6 +705,12 @@ export default {
       if (src && this.isAdURL(src)) {
         return true;
       }
+      if (!src && (state.inlineHeuristics || state.strict)) {
+        var text = node.text || node.textContent || '';
+        if (this.isInlineAdScript(text)) {
+          return true;
+        }
+      }
     }
 
     if (tag === 'IFRAME') {
@@ -558,6 +737,44 @@ export default {
       return true;
     }
 
+    return false;
+  },
+
+  /**
+   * Detect inline ad scripts by heuristics
+   * @param {string} text
+   * @returns {boolean}
+   */
+  isInlineAdScript: function(text) {
+    if (!text || typeof text !== 'string') return false;
+    var lower = text.toLowerCase();
+    var patterns = [
+      'adsbygoogle',
+      'googletag',
+      'gpt',
+      'googlead',
+      'doubleclick',
+      'adservice',
+      'googlesyndication',
+      'prebid',
+      'amazon-adsystem',
+      'taboola',
+      'outbrain',
+      'revcontent',
+      'adroll',
+      'criteo',
+      'mgid',
+      'adsrvr',
+      'adnxs',
+      'rubicon',
+      'openx'
+    ];
+
+    for (var i = 0; i < patterns.length; i++) {
+      if (lower.indexOf(patterns[i]) !== -1) {
+        return true;
+      }
+    }
     return false;
   },
 
@@ -710,6 +927,7 @@ export default {
           self._cleanTimeout = setTimeout(function() {
             self._cleanTimeout = null;
             self.removeAds(doc);
+            self.removeCookieBanners(doc);
           }, 100);
         }
       });
@@ -743,6 +961,7 @@ export default {
         if (doc && doc.body && this.removeAds) {
           // Remove ads periodically (fallback)
           this.removeAds(doc);
+          this.removeCookieBanners(doc);
         }
       } catch (err) {
         // Ignore
@@ -829,6 +1048,15 @@ export default {
       }
     }
     state.strictStyleEl = null;
+
+    if (state.cookieStyleEl && state.cookieStyleEl.parentNode) {
+      try {
+        state.cookieStyleEl.parentNode.removeChild(state.cookieStyleEl);
+      } catch (err) {
+        // Ignore
+      }
+    }
+    state.cookieStyleEl = null;
     
     if (this._cleanTimeout) {
       clearTimeout(this._cleanTimeout);

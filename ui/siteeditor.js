@@ -368,6 +368,13 @@ function updateYellowHintText(text) {
  */
 function getActiveCardForAction() {
   if (state.card) {
+    if (!state.card.id) {
+      var existingEditor = document.getElementById('tp-site-editor');
+      var existingCardId = existingEditor ? existingEditor.dataset.cardId : '';
+      if (existingCardId) {
+        state.card.id = existingCardId;
+      }
+    }
     return state.card;
   }
 
@@ -397,6 +404,13 @@ function autoSaveCard(reason) {
     return;
   }
 
+  var editor = document.getElementById('tp-site-editor');
+  var editorCardId = editor ? editor.dataset.cardId : '';
+  var effectiveCardId = card.id || editorCardId || '';
+  if (!card.id && effectiveCardId) {
+    card.id = effectiveCardId;
+  }
+
   console.log('TizenPortal: autoSaveCard - state.isEdit =', state.isEdit, 'card.id =', card.id, 'reason =', reason);
 
   var cardName = (card.name || '').trim();
@@ -421,11 +435,11 @@ function autoSaveCard(reason) {
   };
 
   // Check both state.isEdit and whether we have a card ID to determine update vs add
-  var shouldUpdate = state.isEdit && card.id;
+  var shouldUpdate = state.isEdit && effectiveCardId;
   
   if (shouldUpdate) {
-    console.log('TizenPortal: Updating card with ID:', card.id);
-    updateCard(card.id, payload);
+    console.log('TizenPortal: Updating card with ID:', effectiveCardId);
+    updateCard(effectiveCardId, payload);
     showEditorToast('Saved');
   } else {
     console.log('TizenPortal: Adding new card (state.isEdit=' + state.isEdit + ', card.id=' + card.id + ')');

@@ -842,7 +842,7 @@ function injectOverlayStyles() {
     '.tp-log-level.warn { color: #f1c40f; }',
     '.tp-log-level.error { color: #e74c3c; }',
     '.tp-log-message { color: #ccc; flex: 1; word-break: break-word; }',
-    '#tp-diagnostics-footer { margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; font-size: 14px; color: #666; }',
+    '#tp-diagnostics-footer { margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; font-size: 14px; color: #666; text-align: right; }',
   ].join('\n');
   
   document.head.appendChild(style);
@@ -867,6 +867,11 @@ function createSiteHints() {
     '<div class="tp-site-hint"><div class="tp-site-hint-key yellow"></div><div class="tp-site-hint-text"><span>Portal</span><span class="tp-site-hint-sub">Hold: Cycle</span></div></div>',
     '<div class="tp-site-hint"><div class="tp-site-hint-key blue"></div><div class="tp-site-hint-text"><span>Console</span><span class="tp-site-hint-sub">Hold: Safe Mode</span></div></div>',
   ].join('');
+  // Respect portal preference for color hints visibility
+  var portalConfig = configGet('tp_portal') || {};
+  if (portalConfig.showHints === false) {
+    hints.style.display = 'none';
+  }
   document.body.appendChild(hints);
 }
 
@@ -995,7 +1000,10 @@ function updateYellowHint() {
 function setPortalHintsVisible(visible) {
   var hints = document.getElementById('tp-hints');
   if (!hints) return;
-  hints.style.display = visible ? 'flex' : 'none';
+  var portalConfig = configGet('tp_portal') || {};
+  var enabled = portalConfig.showHints !== false;
+  var shouldShow = visible && enabled;
+  hints.style.display = shouldShow ? 'flex' : 'none';
 }
 
 /**

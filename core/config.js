@@ -26,6 +26,7 @@ var DEFAULT_CONFIG = {
     customColor2: '#161b22',
     backgroundImage: '',
     hudPosition: 'off',
+    showHints: true,
   },
   
   // Global site features

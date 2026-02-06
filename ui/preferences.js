@@ -90,6 +90,7 @@ function normalizeHudPosition(value) {
 var PREFERENCE_ROWS = [
   { id: 'theme', label: 'Theme Mode', type: 'select', options: THEME_OPTIONS, key: 'theme', config: 'portal' },
   { id: 'hudPosition', label: 'Debug HUD', type: 'select', options: HUD_OPTIONS, key: 'hudPosition', config: 'portal' },
+  { id: 'showHints', label: 'Color Hints', type: 'toggle', key: 'showHints', config: 'portal' },
   { id: 'customColor1', label: 'Gradient Color 1', type: 'color', key: 'customColor1', config: 'portal', showIf: 'custom' },
   { id: 'customColor2', label: 'Gradient Color 2', type: 'color', key: 'customColor2', config: 'portal', showIf: 'custom' },
   { id: 'backgroundImage', label: 'Backdrop Image URL', type: 'text', key: 'backgroundImage', config: 'portal', showIf: 'backdrop' },
@@ -277,6 +278,7 @@ function getDefaultPortalConfig() {
     customColor2: '#161b22',
     backgroundImage: '',
     hudPosition: 'off',
+    showHints: true,
   };
 }
 

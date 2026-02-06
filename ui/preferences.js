@@ -26,6 +26,30 @@ var THEME_OPTIONS = [
 ];
 
 /**
+ * Normalize stored theme value to valid option
+ * @param {*} value
+ * @returns {string}
+ */
+function normalizeThemeValue(value) {
+  // If numeric index, map to option
+  if (typeof value === 'number') {
+    var idx = value % THEME_OPTIONS.length;
+    return THEME_OPTIONS[idx].value;
+  }
+
+  // If string but not valid, fall back to dark
+  if (typeof value === 'string') {
+    for (var i = 0; i < THEME_OPTIONS.length; i++) {
+      if (THEME_OPTIONS[i].value === value) {
+        return value;
+      }
+    }
+  }
+
+  return 'dark';
+}
+
+/**
  * Preference rows definition
  * Note: customColor1/customColor2 are conditional rows shown only when theme='custom'
  */
@@ -172,6 +196,15 @@ export function showPreferences() {
     portalConfig: TizenPortal.config.get('tp_portal') || getDefaultPortalConfig(),
     featuresConfig: TizenPortal.config.get('tp_features') || getDefaultFeaturesConfig(),
   };
+
+  // Normalize theme value if needed
+  if (prefsState.settings.portalConfig) {
+    var normalized = normalizeThemeValue(prefsState.settings.portalConfig.theme);
+    if (prefsState.settings.portalConfig.theme !== normalized) {
+      prefsState.settings.portalConfig.theme = normalized;
+      TizenPortal.config.set('tp_portal', prefsState.settings.portalConfig);
+    }
+  }
   
   prefsState.currentRow = 0;
   prefsState.active = true;
@@ -220,7 +253,7 @@ function getDefaultFeaturesConfig() {
  * Get visible preference rows based on current theme setting
  */
 function getVisibleRows() {
-  var currentTheme = prefsState.settings.portalConfig.theme || 'dark';
+  var currentTheme = normalizeThemeValue(prefsState.settings.portalConfig.theme || 'dark');
   var visible = [];
   
   for (var i = 0; i < PREFERENCE_ROWS.length; i++) {
@@ -509,7 +542,7 @@ export function applyPortalPreferences(config) {
   var shell = document.getElementById('tp-shell');
   if (!shell) return;
   
-  var theme = config.theme || 'dark';
+  var theme = normalizeThemeValue(config.theme || 'dark');
   
   // Handle automatic theme (sunset-based)
   if (theme === 'auto') {
@@ -525,12 +558,12 @@ export function applyPortalPreferences(config) {
   shell.style.background = '';
   
   // Apply theme-specific styles
-  if (config.theme === 'custom') {
+  if (theme === 'custom') {
     // Custom gradient colors
     var color1 = config.customColor1 || '#0d1117';
     var color2 = config.customColor2 || '#161b22';
     shell.style.background = 'linear-gradient(135deg, ' + color1 + ' 0%, ' + color2 + ' 100%)';
-  } else if (config.theme === 'backdrop') {
+  } else if (theme === 'backdrop') {
     // Custom backdrop image
     if (config.backgroundImage) {
       shell.style.backgroundImage = 'url(' + config.backgroundImage + ')';

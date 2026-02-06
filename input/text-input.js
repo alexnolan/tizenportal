@@ -56,6 +56,11 @@ export function wrapTextInputs(selector, options) {
     if (wrappedInputs.has(input) || input.classList.contains('tp-wrapped')) {
       continue;
     }
+
+    // Skip non-textual inputs or TP UI inputs
+    if (!isTextualInput(input) || isTizenPortalInput(input)) {
+      continue;
+    }
     
     // Skip hidden inputs
     if (input.type === 'hidden' || input.closest('[style*="display: none"]')) {
@@ -75,6 +80,42 @@ export function wrapTextInputs(selector, options) {
   }
   
   return count;
+}
+
+/**
+ * Check if input is a text-like field
+ * @param {Element} el
+ * @returns {boolean}
+ */
+function isTextualInput(el) {
+  if (!el || !el.tagName) return false;
+  var tag = el.tagName.toUpperCase();
+  if (tag === 'TEXTAREA') return true;
+  if (tag !== 'INPUT') return false;
+
+  var type = (el.getAttribute('type') || '').toLowerCase();
+  if (!type) return true;
+  return type === 'text' || type === 'search' || type === 'email' || type === 'url' || type === 'password' || type === 'tel' || type === 'number';
+}
+
+/**
+ * Skip TizenPortal UI inputs
+ * @param {Element} el
+ * @returns {boolean}
+ */
+function isTizenPortalInput(el) {
+  try {
+    if (!el) return false;
+    var id = el.id || '';
+    var className = el.className || '';
+    if (id.indexOf('tp-') === 0 || className.indexOf('tp-') !== -1) return true;
+    if (el.closest && (el.closest('#tp-addressbar') || el.closest('#tp-site-editor') || el.closest('#tp-preferences') || el.closest('#tp-modal-container'))) {
+      return true;
+    }
+  } catch (err) {
+    // Ignore
+  }
+  return false;
 }
 
 /**

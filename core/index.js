@@ -118,12 +118,7 @@ var textInputInterval = null;
 /**
  * Selector for text inputs to wrap (exclude TizenPortal UI inputs)
  */
-var TEXT_INPUT_SELECTOR = 'input[type="text"]:not([id^="tp-"]):not([class*="tp-"]), '
-  + 'input[type="search"]:not([id^="tp-"]):not([class*="tp-"]), '
-  + 'input[type="email"]:not([id^="tp-"]):not([class*="tp-"]), '
-  + 'input[type="url"]:not([id^="tp-"]):not([class*="tp-"]), '
-  + 'input[type="password"]:not([id^="tp-"]):not([class*="tp-"]), '
-  + 'textarea:not([id^="tp-"]):not([class*="tp-"])';
+var TEXT_INPUT_SELECTOR = 'input, textarea';
 
 function saveLastCard(card) {
   if (!card) return;
@@ -161,6 +156,11 @@ function startTextInputProtection() {
   } else {
     console.log('TizenPortal [TextInput]: Protection enabled, wrapped', count);
   }
+
+  // Retry a few times to catch late-rendered inputs
+  setTimeout(function() { wrapTextInputs(TEXT_INPUT_SELECTOR); }, 500);
+  setTimeout(function() { wrapTextInputs(TEXT_INPUT_SELECTOR); }, 1500);
+  setTimeout(function() { wrapTextInputs(TEXT_INPUT_SELECTOR); }, 3000);
 
   if (textInputObserver) {
     textInputObserver.disconnect();

@@ -67,7 +67,11 @@ export function wrapTextInputs(selector, options) {
   }
   
   if (count > 0) {
-    console.log('TizenPortal [TextInput]: Wrapped', count, 'inputs');
+    if (window.TizenPortal && window.TizenPortal.log) {
+      TizenPortal.log('TextInput: Wrapped ' + count + ' inputs');
+    } else {
+      console.log('TizenPortal [TextInput]: Wrapped', count, 'inputs');
+    }
   }
   
   return count;
@@ -103,7 +107,24 @@ function wrapSingleInput(input, opts) {
   // Mark input as wrapped
   input.classList.add('tp-wrapped');
   input.setAttribute('tabindex', '-1');
+  // Remove autofocus and hide input by default to prevent OSK popup
+  if (input.hasAttribute('autofocus')) {
+    input.removeAttribute('autofocus');
+  }
+  input.style.display = 'none';
   wrappedInputs.set(input, { wrapper: wrapper, display: display, opts: opts });
+
+  // If input was focused, move focus to wrapper
+  try {
+    if (document.activeElement === input) {
+      input.blur();
+      setTimeout(function() {
+        wrapper.focus();
+      }, 0);
+    }
+  } catch (err) {
+    // Ignore
+  }
   
   // Handle wrapper activation (Enter key or click)
   wrapper.addEventListener('keydown', function(e) {

@@ -155,7 +155,12 @@ function loadLastCard() {
 }
 
 function startTextInputProtection() {
-  wrapTextInputs(TEXT_INPUT_SELECTOR);
+  var count = wrapTextInputs(TEXT_INPUT_SELECTOR);
+  if (window.TizenPortal && window.TizenPortal.log) {
+    TizenPortal.log('TextInput: Protection enabled (wrapped ' + count + ')');
+  } else {
+    console.log('TizenPortal [TextInput]: Protection enabled, wrapped', count);
+  }
 
   if (textInputObserver) {
     textInputObserver.disconnect();
@@ -191,11 +196,19 @@ function stopTextInputProtection() {
     textInputInterval = null;
   }
   unwrapTextInputs(TEXT_INPUT_SELECTOR);
+  if (window.TizenPortal && window.TizenPortal.log) {
+    TizenPortal.log('TextInput: Protection disabled');
+  } else {
+    console.log('TizenPortal [TextInput]: Protection disabled');
+  }
 }
 
 function applyTextInputProtectionFromConfig() {
   var features = configGet('tp_features') || {};
   var enabled = features.wrapTextInputs !== false;
+  if (window.TizenPortal && window.TizenPortal.log) {
+    TizenPortal.log('TextInput: wrapTextInputs=' + enabled);
+  }
   if (enabled) {
     startTextInputProtection();
   } else {
@@ -377,6 +390,13 @@ async function initTargetSite() {
 
   // Protect text inputs from TV keyboard auto-popup
   applyTextInputProtectionFromConfig();
+
+  // Re-apply when preferences change
+  configOnChange(function(event) {
+    if (event && event.key === 'tp_features') {
+      applyTextInputProtectionFromConfig();
+    }
+  });
 
   // Initialize standard UI components (same as portal, they create their own elements)
   initAddressBar();

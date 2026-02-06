@@ -940,6 +940,15 @@ function initColorHints() {
 function updateYellowHint() {
   var hintText = document.getElementById('tp-hint-yellow-text');
   if (!hintText) return;
+
+  // Hide hints while overlays are open
+  if (isSiteEditorOpen() || isPreferencesOpen()) {
+    setPortalHintsVisible(false);
+    hintText.textContent = 'Close';
+    return;
+  }
+
+  setPortalHintsVisible(true);
   
   // Check if site editor is open
   if (isSiteEditorOpen()) {
@@ -955,6 +964,16 @@ function updateYellowHint() {
 
   // Portal default
   hintText.textContent = 'Preferences';
+}
+
+/**
+ * Show/hide the portal color hints
+ * @param {boolean} visible
+ */
+function setPortalHintsVisible(visible) {
+  var hints = document.getElementById('tp-hints');
+  if (!hints) return;
+  hints.style.display = visible ? 'flex' : 'none';
 }
 
 /**
@@ -1162,6 +1181,7 @@ var TizenPortalAPI = {
   loadSite: loadSite,
   closeSite: closeSite,
   returnToPortal: returnToPortal,
+  setPortalHintsVisible: setPortalHintsVisible,
   getCurrentCard: function() {
     return state.currentCard;
   },

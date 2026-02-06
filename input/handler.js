@@ -11,7 +11,7 @@ import { toggleDiagnosticsPanel, clearDiagnosticsLogs, isDiagnosticsPanelVisible
 import { toggleAddressBar, isAddressBarVisible } from '../ui/addressbar.js';
 import { toggleBundleMenu, isBundleMenuVisible, cycleBundle } from '../ui/bundlemenu.js';
 import { showAddSiteEditor, showEditSiteEditor, isSiteEditorOpen, closeSiteEditor } from '../ui/siteeditor.js';
-import { showPreferences } from '../ui/preferences.js';
+import { showPreferences, isPreferencesOpen } from '../ui/preferences.js';
 import { getFocusedCard } from '../ui/portal.js';
 import { isPointerActive, handlePointerKeyDown, handlePointerKeyUp, togglePointer } from './pointer.js';
 import {
@@ -380,6 +380,10 @@ export function executeColorAction(action) {
         if (window.TizenPortal && window.TizenPortal.returnToPortal) {
           window.TizenPortal.returnToPortal();
         }
+        break;
+      }
+      // Disable while editor or preferences is open
+      if (isSiteEditorOpen() || isPreferencesOpen()) {
         break;
       }
       // Open preferences modal

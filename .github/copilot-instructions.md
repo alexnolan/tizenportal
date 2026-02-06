@@ -547,6 +547,8 @@ TizenPortal.input.isIMEActive();
 
 **Always bump `package.json` before tagging** so CDN cache busting is verifiable.
 
+**Always run the build after version bump** to inject the new version into `dist/tizenportal.js`.
+
 1. Update version in `package.json`:
    ```json
    "version": "0302"

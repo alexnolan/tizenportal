@@ -386,6 +386,8 @@ function openEditor() {
     if (firstField) {
       firstField.focus();
     }
+    // Update yellow hint to show disabled while editor open
+    updateYellowHintText('Disabled');
   }, 100);
 }
 
@@ -398,6 +400,8 @@ export function closeSiteEditor() {
     editor.classList.remove('visible');
   }
   state.active = false;
+  // Update yellow hint back to portal default
+  updateYellowHintText('Preferences');
   if (window.TizenPortal && window.TizenPortal.refreshYellowHint) {
     window.TizenPortal.refreshYellowHint();
   }

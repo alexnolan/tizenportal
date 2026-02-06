@@ -133,6 +133,12 @@ var TEXT_INPUT_SELECTOR = 'input, textarea';
 function saveLastCard(card) {
   if (!card) return;
   try {
+    var showHints = null;
+    if (card._payload && typeof card._payload.showHints === 'boolean') {
+      showHints = card._payload.showHints;
+    } else if (typeof card.showHints === 'boolean') {
+      showHints = card.showHints;
+    }
     var payload = {
       name: card.name || '',
       url: card.url || '',
@@ -142,6 +148,9 @@ function saveLastCard(card) {
       bundleOptions: card.bundleOptions || {},
       bundleOptionData: card.bundleOptionData || {},
     };
+    if (showHints !== null) {
+      payload.showHints = showHints;
+    }
     sessionStorage.setItem(LAST_CARD_KEY, JSON.stringify(payload));
   } catch (err) {
     // Ignore
@@ -448,6 +457,7 @@ function getCardFromHash() {
       featureBundle: payload.bundleName || 'default',
       bundleOptions: payload.bundleOptions || {},
       bundleOptionData: payload.bundleOptionData || {},
+      showHints: payload.showHints,
       // Store raw payload for CSS/JS injection
       _payload: payload
     };
@@ -867,9 +877,8 @@ function createSiteHints() {
     '<div class="tp-site-hint"><div class="tp-site-hint-key yellow"></div><div class="tp-site-hint-text"><span>Portal</span><span class="tp-site-hint-sub">Hold: Cycle</span></div></div>',
     '<div class="tp-site-hint"><div class="tp-site-hint-key blue"></div><div class="tp-site-hint-text"><span>Console</span><span class="tp-site-hint-sub">Hold: Safe Mode</span></div></div>',
   ].join('');
-  // Respect portal preference for color hints visibility
-  var portalConfig = configGet('tp_portal') || {};
-  if (portalConfig.showHints === false) {
+  // Respect hints preference (payload or config)
+  if (!getHintsEnabled()) {
     hints.style.display = 'none';
   }
   document.body.appendChild(hints);
@@ -982,11 +991,32 @@ function updateYellowHint() {
  */
 function setPortalHintsVisible(visible) {
   var hints = document.getElementById('tp-hints');
-  if (!hints) return;
-  var portalConfig = configGet('tp_portal') || {};
-  var enabled = portalConfig.showHints !== false;
+  var enabled = getHintsEnabled();
   var shouldShow = visible && enabled;
-  hints.style.display = shouldShow ? 'flex' : 'none';
+  if (hints) {
+    hints.style.display = shouldShow ? 'flex' : 'none';
+  }
+  var siteHints = document.querySelector('.tp-site-hints');
+  if (siteHints) {
+    siteHints.style.display = shouldShow ? 'flex' : 'none';
+  }
+}
+
+/**
+ * Determine if color hints should be shown
+ * @returns {boolean}
+ */
+function getHintsEnabled() {
+  if (!state.isPortalPage && state.currentCard) {
+    if (state.currentCard._payload && typeof state.currentCard._payload.showHints === 'boolean') {
+      return state.currentCard._payload.showHints;
+    }
+    if (typeof state.currentCard.showHints === 'boolean') {
+      return state.currentCard.showHints;
+    }
+  }
+  var portalConfig = configGet('tp_portal') || {};
+  return portalConfig.showHints !== false;
 }
 
 /**
@@ -1021,6 +1051,8 @@ function loadSite(card) {
       bundleOptions: card.bundleOptions || {},
       bundleOptionData: card.bundleOptionData || {}
     };
+    var portalConfig = configGet('tp_portal') || {};
+    payload.showHints = portalConfig.showHints !== false;
     
     // Add bundle CSS
     if (bundle && bundle.style) {

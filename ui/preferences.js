@@ -255,6 +255,12 @@ export function showPreferences() {
   
   // Show preferences
   prefs.classList.add('visible');
+
+  // Update yellow hint while preferences open
+  var hintText = document.getElementById('tp-hint-yellow-text');
+  if (hintText) {
+    hintText.textContent = 'Disabled';
+  }
   
   // Focus first row
   setTimeout(function() {
@@ -528,6 +534,11 @@ export function closePreferences() {
     prefs.classList.remove('visible');
   }
   prefsState.active = false;
+
+  var hintText = document.getElementById('tp-hint-yellow-text');
+  if (hintText) {
+    hintText.textContent = 'Preferences';
+  }
 
   if (window.TizenPortal && window.TizenPortal.refreshYellowHint) {
     window.TizenPortal.refreshYellowHint();

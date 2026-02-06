@@ -943,31 +943,12 @@ function updateYellowHint() {
   
   // Check if site editor is open
   if (isSiteEditorOpen()) {
-    hintText.textContent = 'Save';
+    hintText.textContent = 'Close';
     return;
   }
-  
-  // Check what's focused
-  var focused = document.activeElement;
-  if (!focused) {
-    hintText.textContent = 'Add Site';
-    return;
-  }
-  
-  // If Add Site button is focused
-  if (focused.classList.contains('tp-card-add')) {
-    hintText.textContent = 'Add Site';
-    return;
-  }
-  
-  // If a site card is focused
-  if (focused.classList.contains('tp-card') && focused.hasAttribute('data-card-id')) {
-    hintText.textContent = 'Edit Site';
-    return;
-  }
-  
-  // Default
-  hintText.textContent = 'Add Site';
+
+  // Portal default
+  hintText.textContent = 'Preferences';
 }
 
 /**

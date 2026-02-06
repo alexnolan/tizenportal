@@ -401,7 +401,7 @@ export function closeSiteEditor() {
   }
   state.active = false;
   // Update yellow hint back to context-appropriate text
-  updateYellowHintText('Add Site');
+  updateYellowHintText('Preferences');
   
   // Restore focus to the portal grid
   restoreFocusToPortal();

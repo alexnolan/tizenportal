@@ -947,6 +947,12 @@ function updateYellowHint() {
     return;
   }
 
+  // Check if preferences is open
+  if (isPreferencesOpen()) {
+    hintText.textContent = 'Close';
+    return;
+  }
+
   // Portal default
   hintText.textContent = 'Preferences';
 }

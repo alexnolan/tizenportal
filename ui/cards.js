@@ -82,6 +82,21 @@ function loadCards() {
           needsSave = true;
         }
 
+        if (!card.hasOwnProperty('viewportMode')) {
+          card.viewportMode = null;
+          needsSave = true;
+        }
+
+        if (!card.hasOwnProperty('focusOutlineMode')) {
+          card.focusOutlineMode = null;
+          needsSave = true;
+        }
+
+        if (!card.hasOwnProperty('userAgent')) {
+          card.userAgent = null;
+          needsSave = true;
+        }
+
         // Ensure bundle options storage exists
         if (!card.hasOwnProperty('bundleOptions') || typeof card.bundleOptions !== 'object' || card.bundleOptions === null) {
           card.bundleOptions = {};
@@ -146,7 +161,9 @@ export function addCard(cardData) {
     name: cardData.name || 'Untitled',
     url: cardData.url || '',
     featureBundle: cardData.featureBundle || null,
-    userAgent: cardData.userAgent || 'tizen',
+    viewportMode: cardData.hasOwnProperty('viewportMode') ? cardData.viewportMode : null,
+    focusOutlineMode: cardData.hasOwnProperty('focusOutlineMode') ? cardData.focusOutlineMode : null,
+    userAgent: cardData.hasOwnProperty('userAgent') ? cardData.userAgent : null,
     icon: cardData.icon || null,
     bundleOptions: cardData.bundleOptions || {},
     bundleOptionData: cardData.bundleOptionData || {},

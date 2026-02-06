@@ -4,16 +4,12 @@
  * Manages bundle registration and lookup.
  */
 
-import adblockBundle from './adblock/main.js';
-import audiobookshelfBundle from './audiobookshelf/main.js';
+import { bundles as generatedBundles } from './registry.generated.js';
 
 /**
  * Registered bundles (feature bundles only, no default)
  */
-var bundles = {
-  'adblock': adblockBundle,
-  'audiobookshelf': audiobookshelfBundle,
-};
+var bundles = Object.assign({}, generatedBundles || {});
 
 /**
  * Register a bundle

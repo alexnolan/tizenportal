@@ -37,6 +37,33 @@ var HUD_OPTIONS = [
 ];
 
 /**
+ * Viewport mode options
+ */
+var VIEWPORT_OPTIONS = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'locked', label: 'Locked (1920)' },
+  { value: 'unlocked', label: 'Unlocked' },
+];
+
+/**
+ * Focus outline options
+ */
+var FOCUS_OUTLINE_OPTIONS = [
+  { value: 'on', label: 'On (Blue)' },
+  { value: 'high', label: 'High Contrast (Yellow)' },
+  { value: 'off', label: 'Off' },
+];
+
+/**
+ * User Agent mode options
+ */
+var UA_MODE_OPTIONS = [
+  { value: 'tizen', label: 'Tizen TV' },
+  { value: 'desktop', label: 'Desktop' },
+  { value: 'mobile', label: 'Mobile' },
+];
+
+/**
  * Normalize stored theme value to valid option
  * @param {*} value
  * @returns {string}
@@ -94,7 +121,9 @@ var PREFERENCE_ROWS = [
   { id: 'customColor1', label: 'Gradient Color 1', type: 'color', key: 'customColor1', config: 'portal', showIf: 'custom' },
   { id: 'customColor2', label: 'Gradient Color 2', type: 'color', key: 'customColor2', config: 'portal', showIf: 'custom' },
   { id: 'backgroundImage', label: 'Backdrop Image URL', type: 'text', key: 'backgroundImage', config: 'portal', showIf: 'backdrop' },
-  { id: 'focusStyling', label: 'Focus Styling (blue outline)', type: 'toggle', key: 'focusStyling', config: 'features' },
+  { id: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_OPTIONS, key: 'viewportMode', config: 'features' },
+  { id: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS, key: 'focusOutlineMode', config: 'features' },
+  { id: 'uaMode', label: 'User Agent Mode', type: 'select', options: UA_MODE_OPTIONS, key: 'uaMode', config: 'features' },
   { id: 'tabindexInjection', label: 'Auto-focusable Elements', type: 'toggle', key: 'tabindexInjection', config: 'features' },
   { id: 'scrollIntoView', label: 'Scroll-into-view on Focus', type: 'toggle', key: 'scrollIntoView', config: 'features' },
   { id: 'safeArea', label: 'TV Safe Area (5% inset)', type: 'toggle', key: 'safeArea', config: 'features' },
@@ -292,12 +321,15 @@ function getDefaultPortalConfig() {
 function getDefaultFeaturesConfig() {
   return {
     focusStyling: true,
+    focusOutlineMode: 'on',
     tabindexInjection: true,
     scrollIntoView: true,
     safeArea: false,
     gpuHints: true,
     cssReset: true,
     wrapTextInputs: true,
+    viewportMode: 'locked',
+    uaMode: 'tizen',
   };
 }
 

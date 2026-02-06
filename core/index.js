@@ -130,14 +130,99 @@ var textInputInterval = null;
  */
 var TEXT_INPUT_SELECTOR = 'input, textarea';
 
+function resolveFocusOutlineMode(card) {
+  var features = configGet('tp_features') || {};
+  var mode = features.focusOutlineMode || (features.focusStyling ? 'on' : 'off');
+  if (card && card.focusOutlineMode) {
+    mode = card.focusOutlineMode;
+  } else if (features.focusStyling === false) {
+    mode = 'off';
+  }
+  return mode || 'on';
+}
+
+function resolveViewportMode(card, bundle) {
+  if (bundle && (bundle.viewportLock === 'force' || bundle.viewportLock === true)) {
+    return 'locked';
+  }
+
+  var features = configGet('tp_features') || {};
+  var mode = features.viewportMode || 'locked';
+  if (card && card.viewportMode) {
+    mode = card.viewportMode;
+  }
+  return mode || 'locked';
+}
+
+function resolveUserAgentMode(card) {
+  if (card && card.userAgent) {
+    return card.userAgent;
+  }
+  var features = configGet('tp_features') || {};
+  return features.uaMode || 'tizen';
+}
+
+function shouldLockViewportAuto() {
+  var width = window.innerWidth || document.documentElement.clientWidth || 1920;
+  var screenWidth = (window.screen && window.screen.width) ? window.screen.width : width;
+  var maxWidth = Math.max(width, screenWidth);
+  return maxWidth < 2560;
+}
+
+function applyViewportMode(mode) {
+  try {
+    if (mode === 'unlocked') {
+      unlockViewport();
+      log('Viewport: Unlocked');
+      return;
+    }
+
+    if (mode === 'auto') {
+      if (shouldLockViewportAuto()) {
+        lockViewport({ width: 1920, initialScale: 1, userScalable: false });
+        log('Viewport: Auto -> Locked (1920)');
+      } else {
+        unlockViewport();
+        log('Viewport: Auto -> Unlocked');
+      }
+      return;
+    }
+
+    lockViewport({ width: 1920, initialScale: 1, userScalable: false });
+    log('Viewport: Locked (1920)');
+  } catch (err) {
+    warn('Viewport: Failed to apply mode:', err.message);
+  }
+}
+
+function applyGlobalFeaturesForCard(card, bundle) {
+  var focusMode = resolveFocusOutlineMode(card);
+  var viewportMode = resolveViewportMode(card, bundle);
+
+  try {
+    featureLoader.applyFeatures(document, { focusOutlineMode: focusMode });
+  } catch (e) {
+    error('Failed to apply features: ' + e.message);
+  }
+
+  applyViewportMode(viewportMode);
+}
+
 function saveLastCard(card) {
   if (!card) return;
   try {
+    var featureBundle = card.featureBundle;
+    if (!featureBundle && card.bundle) {
+      featureBundle = card.bundle;
+    }
+    var resolvedUserAgent = resolveUserAgentMode(card);
     var payload = {
       name: card.name || '',
       url: card.url || '',
-      featureBundle: card.featureBundle || 'default',
-      userAgent: card.userAgent || 'tizen',
+      featureBundle: featureBundle || 'default',
+      viewportMode: card.hasOwnProperty('viewportMode') ? card.viewportMode : null,
+      focusOutlineMode: card.hasOwnProperty('focusOutlineMode') ? card.focusOutlineMode : null,
+      userAgent: resolvedUserAgent,
       icon: card.icon || null,
       bundleOptions: card.bundleOptions || {},
       bundleOptionData: card.bundleOptionData || {},
@@ -405,6 +490,7 @@ async function initTargetSite() {
   configOnChange(function(event) {
     if (event && event.key === 'tp_features') {
       applyTextInputProtectionFromConfig();
+      applyGlobalFeaturesForCard(state.currentCard, getBundle(state.currentBundle || 'default'));
     }
   });
 
@@ -446,6 +532,9 @@ function getCardFromHash() {
       name: payload.cardName || 'Unknown Site',
       url: window.location.href.replace(/[#&]tp=[^&#]+/, ''),
       featureBundle: payload.bundleName || 'default',
+      viewportMode: payload.viewportMode || null,
+      focusOutlineMode: payload.focusOutlineMode || null,
+      userAgent: payload.ua || null,
       bundleOptions: payload.bundleOptions || {},
       bundleOptionData: payload.bundleOptionData || {},
       // Store raw payload for CSS/JS injection
@@ -479,21 +568,59 @@ function findMatchingCard(url) {
   
   // Normalize URL for comparison
   var normalizedUrl = url.toLowerCase().replace(/\/$/, '');
+  var needsSave = false;
   
   for (var i = 0; i < apps.length; i++) {
     var card = apps[i];
     if (!card.url) continue;
+
+    // Migrate legacy bundle field if needed
+    if (card.bundle && !card.featureBundle) {
+      if (card.bundle === 'default') {
+        card.featureBundle = null;
+      } else {
+        card.featureBundle = card.bundle;
+      }
+      delete card.bundle;
+      needsSave = true;
+    }
+    if (!card.hasOwnProperty('featureBundle')) {
+      card.featureBundle = null;
+      needsSave = true;
+    }
     
     var cardUrl = card.url.toLowerCase().replace(/\/$/, '');
     
     // Check if current URL starts with card URL (handles subpages)
     if (normalizedUrl.indexOf(cardUrl) === 0) {
+      if (needsSave) {
+        try {
+          localStorage.setItem('tp_apps', JSON.stringify(apps));
+        } catch (err) {
+          // Ignore
+        }
+      }
       return card;
     }
     
     // Also check if card URL starts with current URL (handles base domain matching)
     if (cardUrl.indexOf(normalizedUrl.split('?')[0].split('#')[0]) === 0) {
+      if (needsSave) {
+        try {
+          localStorage.setItem('tp_apps', JSON.stringify(apps));
+        } catch (err) {
+          // Ignore
+        }
+      }
       return card;
+    }
+  }
+
+  if (needsSave) {
+    try {
+      localStorage.setItem('tp_apps', JSON.stringify(apps));
+    } catch (err) {
+      // Ignore
     }
   }
   
@@ -564,12 +691,8 @@ async function applyBundleToPage(card) {
   }
   
   // Apply global features from preferences (focusStyling, tabindexInjection, etc.)
-  try {
-    log('Applying global features from preferences...');
-    featureLoader.applyFeatures(document);
-  } catch (e) {
-    error('Failed to apply features: ' + e.message);
-  }
+  log('Applying global features from preferences...');
+  applyGlobalFeaturesForCard(card, bundle);
   
   try {
     if (bundle.onAfterLoad) {
@@ -1028,6 +1151,7 @@ function loadSite(card) {
   // Get the bundle for this card
   var bundleName = card.featureBundle || 'default';
   var bundle = getBundle(bundleName);
+  var resolvedUa = resolveUserAgentMode(card);
   
   // Build payload with bundle info: { css, js, ua, bundleName }
   var targetUrl = card.url;
@@ -1035,7 +1159,9 @@ function loadSite(card) {
     var payload = {
       css: '',
       js: '',
-      ua: '',
+      ua: resolvedUa,
+      viewportMode: card.hasOwnProperty('viewportMode') ? card.viewportMode : null,
+      focusOutlineMode: card.hasOwnProperty('focusOutlineMode') ? card.focusOutlineMode : null,
       bundleOptions: card.bundleOptions || {},
       bundleOptionData: card.bundleOptionData || {}
     };

@@ -193,6 +193,7 @@ export default {
   name: 'adblock',
   displayName: 'Ad Blocker',
   description: 'Blocks advertisements and tracking scripts for cleaner browsing',
+  viewportLock: false,
   options: [
     {
       key: 'strict',

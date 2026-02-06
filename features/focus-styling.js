@@ -12,11 +12,17 @@ export default {
   /**
    * CSS to inject
    */
-  getCSS: function() {
+  getCSS: function(mode) {
+    var color = '#00a8ff';
+    var width = 3;
+    if (mode === 'high') {
+      color = '#fcd34d';
+      width = 4;
+    }
     return [
       '/* TizenPortal Focus Styling */',
       ':focus {',
-      '  outline: 3px solid #00a8ff !important;',
+      '  outline: ' + width + 'px solid ' + color + ' !important;',
       '  outline-offset: 2px;',
       '}',
       '',
@@ -31,7 +37,7 @@ export default {
       'input:focus,',
       'select:focus,',
       'textarea:focus {',
-      '  outline: 3px solid #00a8ff !important;',
+      '  outline: ' + width + 'px solid ' + color + ' !important;',
       '  outline-offset: 2px;',
       '}',
       '',
@@ -47,10 +53,13 @@ export default {
    */
   apply: function(doc) {
     if (!doc) return;
-    
+    var mode = arguments.length > 1 ? arguments[1] : 'on';
+    this.remove(doc);
+    if (mode === 'off') return;
+
     var style = doc.createElement('style');
     style.id = 'tp-focus-styling';
-    style.textContent = this.getCSS();
+    style.textContent = this.getCSS(mode);
     
     var head = doc.head || doc.documentElement;
     if (head) {

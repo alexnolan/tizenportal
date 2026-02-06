@@ -7,6 +7,22 @@
 
 import defaultStyles from './style.css';
 
+function tpLog() {
+  if (window.TizenPortal && typeof TizenPortal.log === 'function') {
+    TizenPortal.log.apply(TizenPortal, arguments);
+  } else if (console && typeof console.log === 'function') {
+    console.log.apply(console, arguments);
+  }
+}
+
+function tpWarn() {
+  if (window.TizenPortal && typeof TizenPortal.warn === 'function') {
+    TizenPortal.warn.apply(TizenPortal, arguments);
+  } else if (console && typeof console.warn === 'function') {
+    console.warn.apply(console, arguments);
+  }
+}
+
 export default {
   name: 'default',
   displayName: 'Default',
@@ -23,7 +39,7 @@ export default {
    * @param {Object} card
    */
   onBeforeLoad: function(win, card) {
-    console.log('TizenPortal [default]: Loading', card.url);
+    tpLog('TizenPortal [default]: Loading', card.url);
   },
 
   /**
@@ -32,18 +48,7 @@ export default {
    * @param {Object} card
    */
   onAfterLoad: function(win, card) {
-    console.log('TizenPortal [default]: Loaded', card.url);
-
-    // Try to inject basic focusable styling
-    try {
-      var doc = win.document || document;
-      if (doc) {
-        this.injectBasicStyles(doc);
-        this.makeFocusable(doc);
-      }
-    } catch (err) {
-      console.warn('TizenPortal [default]: Error accessing document');
-    }
+    tpLog('TizenPortal [default]: Loaded', card.url);
   },
 
   /**
@@ -52,7 +57,7 @@ export default {
    * @param {Object} card
    */
   onActivate: function(win, card) {
-    console.log('TizenPortal [default]: Activated');
+    tpLog('TizenPortal [default]: Activated');
   },
 
   /**
@@ -61,7 +66,7 @@ export default {
    * @param {Object} card
    */
   onDeactivate: function(win, card) {
-    console.log('TizenPortal [default]: Deactivated');
+    tpLog('TizenPortal [default]: Deactivated');
   },
 
   /**
@@ -69,7 +74,7 @@ export default {
    * @param {string} url
    */
   onNavigate: function(url) {
-    console.log('TizenPortal [default]: Navigated to', url);
+    tpLog('TizenPortal [default]: Navigated to', url);
   },
 
   /**
@@ -88,6 +93,10 @@ export default {
    * @param {Document} doc
    */
   injectBasicStyles: function(doc) {
+    if (!doc || doc.getElementById('tp-default-styles')) {
+      return;
+    }
+
     var style = doc.createElement('style');
     style.id = 'tp-default-styles';
     style.textContent = [
@@ -104,7 +113,9 @@ export default {
     ].join('\n');
 
     var head = doc.head || doc.documentElement;
-    head.appendChild(style);
+    if (head) {
+      head.appendChild(style);
+    }
   },
 
   /**
@@ -123,14 +134,24 @@ export default {
     ];
 
     var elements = doc.querySelectorAll(selectors.join(','));
+    var changed = 0;
 
     for (var i = 0; i < elements.length; i++) {
       var el = elements[i];
-      if (!el.hasAttribute('tabindex')) {
-        el.setAttribute('tabindex', '0');
+      var disabled = el.disabled || el.getAttribute('aria-disabled') === 'true';
+      if (disabled) continue;
+
+      var tabindex = el.getAttribute('tabindex');
+      if (tabindex !== null) {
+        var tabindexValue = parseInt(tabindex, 10);
+        if (!isNaN(tabindexValue) && tabindexValue < 0) continue;
+        continue;
       }
+
+      el.setAttribute('tabindex', '0');
+      changed++;
     }
 
-    console.log('TizenPortal [default]: Made', elements.length, 'elements focusable');
+    tpLog('TizenPortal [default]: Made', changed, 'elements focusable');
   },
 };

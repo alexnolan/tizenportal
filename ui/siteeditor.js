@@ -46,15 +46,34 @@ function setEditorMode(mode, cardId) {
 /**
  * Field definitions for the editor
  */
+var VIEWPORT_MODE_OPTIONS = [
+  { value: null, label: 'Global (default)' },
+  { value: 'auto', label: 'Auto' },
+  { value: 'locked', label: 'Locked (1920)' },
+  { value: 'unlocked', label: 'Unlocked' },
+];
+
+var FOCUS_OUTLINE_OPTIONS = [
+  { value: null, label: 'Global (default)' },
+  { value: 'on', label: 'On (Blue)' },
+  { value: 'high', label: 'High Contrast (Yellow)' },
+  { value: 'off', label: 'Off' },
+];
+
+var UA_MODE_OPTIONS = [
+  { value: null, label: 'Global (default)' },
+  { value: 'tizen', label: 'Tizen TV' },
+  { value: 'mobile', label: 'Mobile' },
+  { value: 'desktop', label: 'Desktop' },
+];
+
 var FIELDS = [
   { name: 'name', label: 'Site Name', type: 'text', placeholder: 'My Site', required: true },
   { name: 'url', label: 'URL', type: 'text', placeholder: 'https://example.com', required: true },
   { name: 'featureBundle', label: 'Site-specific Bundle', type: 'bundle', required: false },
-  { name: 'userAgent', label: 'User Agent', type: 'select', options: [
-    { value: 'tizen', label: 'Tizen TV (Default)' },
-    { value: 'mobile', label: 'Mobile' },
-    { value: 'desktop', label: 'Desktop' },
-  ]},
+  { name: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_MODE_OPTIONS },
+  { name: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS },
+  { name: 'userAgent', label: 'User Agent Mode', type: 'select', options: UA_MODE_OPTIONS },
   { name: 'icon', label: 'Icon URL', type: 'text', placeholder: 'https://... (optional)', required: false },
 ];
 
@@ -304,7 +323,9 @@ export function showAddSiteEditor(onComplete) {
     name: '',
     url: '',
     featureBundle: null,
-    userAgent: 'tizen',
+    viewportMode: null,
+    focusOutlineMode: null,
+    userAgent: null,
     icon: '',
     bundleOptions: {},
     bundleOptionData: {},
@@ -334,7 +355,9 @@ export function showEditSiteEditor(card, onComplete) {
     name: card.name || '',
     url: card.url || '',
     featureBundle: card.featureBundle || null,
-    userAgent: card.userAgent || 'tizen',
+    viewportMode: card.hasOwnProperty('viewportMode') ? card.viewportMode : null,
+    focusOutlineMode: card.hasOwnProperty('focusOutlineMode') ? card.focusOutlineMode : null,
+    userAgent: card.hasOwnProperty('userAgent') ? card.userAgent : null,
     icon: card.icon || '',
     bundleOptions: card.bundleOptions || {},
     bundleOptionData: card.bundleOptionData || {},
@@ -495,7 +518,9 @@ function autoSaveCard(reason) {
     name: cardName,
     url: cardUrl,
     featureBundle: state.card.featureBundle || null,
-    userAgent: state.card.userAgent || 'tizen',
+    viewportMode: state.card.hasOwnProperty('viewportMode') ? state.card.viewportMode : null,
+    focusOutlineMode: state.card.hasOwnProperty('focusOutlineMode') ? state.card.focusOutlineMode : null,
+    userAgent: state.card.hasOwnProperty('userAgent') ? state.card.userAgent : null,
     icon: state.card.icon || null,
     bundleOptions: state.card.bundleOptions || {},
     bundleOptionData: state.card.bundleOptionData || {},
@@ -593,12 +618,13 @@ function renderFields() {
 
   for (var i = 0; i < FIELDS.length; i++) {
     var field = FIELDS[i];
-    var value = state.card[field.name] || '';
+    var rawValue = state.card.hasOwnProperty(field.name) ? state.card[field.name] : null;
+    var value = (rawValue === null || rawValue === undefined) ? '' : rawValue;
     
     if (field.type === 'bundle') {
       html += renderBundleField(field, value);
     } else if (field.type === 'select') {
-      html += renderSelectField(field, value);
+      html += renderSelectField(field, rawValue);
     } else {
       html += renderTextField(field, value);
     }

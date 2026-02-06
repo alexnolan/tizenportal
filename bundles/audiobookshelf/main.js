@@ -47,7 +47,6 @@ import {
   enableScrollIntoView,
   disableScrollIntoView,
   setInitialFocus,
-  lockViewport,
   observeDOM,
   stopObservingDOM,
 } from '../../focus/manager.js';
@@ -337,6 +336,7 @@ export default {
   name: 'audiobookshelf',
   displayName: 'Audiobookshelf',
   description: 'Media controls, library navigation, and player integration for Audiobookshelf',
+  viewportLock: 'force',
   
   /**
    * CSS to inject (imported from style.css)
@@ -361,9 +361,6 @@ export default {
     
     console.log('TizenPortal [ABS]: Activating');
     isActivated = true;
-    
-    // CORE: Lock viewport for TV (disables pinch zoom, etc.)
-    lockViewport();
     
     // Wait for DOM to be ready
     if (document.readyState === 'loading') {

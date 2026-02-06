@@ -6,6 +6,9 @@
  */
 
 import { getBundleNames, getBundle } from '../bundles/registry.js';
+import { getCards, updateCard } from './cards.js';
+
+var LAST_CARD_KEY = 'tp_last_card';
 
 /**
  * Bundle menu element
@@ -252,7 +255,13 @@ function selectBundle(bundleName) {
   }
   
   // Update card bundle (this will be used on reload or can trigger bundle switch)
-  state.currentCard.bundle = bundleName;
+  state.currentCard.featureBundle = bundleName;
+
+  // Persist to localStorage if we can match the card
+  persistCardBundle(state.currentCard, bundleName);
+
+  // Update last-card session cache so cross-site navigation keeps the choice
+  persistLastCardBundle(state.currentCard, bundleName);
   
   // TODO: In Phase 4, implement hot bundle switching
   // For now, just notify user they need to reload
@@ -261,6 +270,52 @@ function selectBundle(bundleName) {
   }
   
   hideBundleMenu();
+}
+
+function persistCardBundle(card, bundleName) {
+  if (!card) return;
+
+  if (card.id) {
+    updateCard(card.id, { featureBundle: bundleName });
+    return;
+  }
+
+  var cards = getCards();
+  if (!cards || !cards.length || !card.url) return;
+
+  var normalizedUrl = String(card.url).toLowerCase().replace(/\/$/, '');
+
+  for (var i = 0; i < cards.length; i++) {
+    var stored = cards[i];
+    if (!stored.url) continue;
+    var storedUrl = String(stored.url).toLowerCase().replace(/\/$/, '');
+
+    if (normalizedUrl.indexOf(storedUrl) === 0 || storedUrl.indexOf(normalizedUrl.split('?')[0].split('#')[0]) === 0) {
+      updateCard(stored.id, { featureBundle: bundleName });
+      return;
+    }
+  }
+}
+
+function persistLastCardBundle(card, bundleName) {
+  if (!card) return;
+
+  try {
+    var payload = {
+      name: card.name || '',
+      url: card.url || '',
+      featureBundle: bundleName || 'default',
+      viewportMode: card.hasOwnProperty('viewportMode') ? card.viewportMode : null,
+      focusOutlineMode: card.hasOwnProperty('focusOutlineMode') ? card.focusOutlineMode : null,
+      userAgent: card.hasOwnProperty('userAgent') ? card.userAgent : null,
+      icon: card.icon || null,
+      bundleOptions: card.bundleOptions || {},
+      bundleOptionData: card.bundleOptionData || {},
+    };
+    sessionStorage.setItem(LAST_CARD_KEY, JSON.stringify(payload));
+  } catch (err) {
+    // Ignore
+  }
 }
 
 /**

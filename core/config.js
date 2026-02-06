@@ -32,12 +32,15 @@ var DEFAULT_CONFIG = {
   // Global site features
   tp_features: {
     focusStyling: true,
+    focusOutlineMode: 'on',
     tabindexInjection: true,
     scrollIntoView: true,
     safeArea: false,
     gpuHints: true,
     cssReset: true,
     wrapTextInputs: true,
+    viewportMode: 'locked',
+    uaMode: 'tizen',
   },
 };
 

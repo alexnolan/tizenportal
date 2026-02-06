@@ -29,12 +29,15 @@ var features = {
 function getDefaults() {
   return {
     focusStyling: true,
+    focusOutlineMode: 'on',
     tabindexInjection: true,
     scrollIntoView: true,
     safeArea: false,
     gpuHints: true,
     cssReset: true,
     wrapTextInputs: true,
+    viewportMode: 'locked',
+    uaMode: 'tizen',
   };
 }
 
@@ -60,12 +63,16 @@ function getConfig() {
  * Apply enabled features to a document
  * @param {Document} [doc] - Document to apply features to (defaults to current document)
  */
-function applyFeatures(doc) {
+function applyFeatures(doc, overrides) {
   if (!doc) {
     doc = document;
   }
   
   var config = getConfig();
+  var focusMode = config.focusOutlineMode || (config.focusStyling ? 'on' : 'off');
+  if (overrides && overrides.focusOutlineMode) {
+    focusMode = overrides.focusOutlineMode;
+  }
   
   try {
     // Apply scroll-into-view (doesn't need document)
@@ -78,8 +85,12 @@ function applyFeatures(doc) {
       features.cssReset.apply(doc);
     }
     
-    if (config.focusStyling && features.focusStyling) {
-      features.focusStyling.apply(doc);
+    if (features.focusStyling) {
+      if (focusMode === 'off') {
+        features.focusStyling.remove(doc);
+      } else {
+        features.focusStyling.apply(doc, focusMode);
+      }
     }
     
     if (config.gpuHints && features.gpuHints) {

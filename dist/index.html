@@ -547,9 +547,18 @@
     }
     
     #tp-diagnostics-header h2 {
+      display: flex;
+      align-items: center;
       font-size: 28px;
       font-weight: 500;
       color: #00a8ff;
+    }
+
+    #tp-diagnostics-filter {
+      margin-left: 10px;
+      font-size: 12px;
+      font-weight: normal;
+      color: #888;
     }
     
     #tp-diagnostics-info {
@@ -1627,11 +1636,11 @@
     <!-- Diagnostics panel -->
     <div id="tp-diagnostics">
       <div id="tp-diagnostics-header">
-        <h2>Diagnostics</h2>
+        <h2>Diagnostics <span id="tp-diagnostics-filter"></span></h2>
         <div id="tp-diagnostics-info"></div>
       </div>
       <div id="tp-diagnostics-logs"></div>
-      <div id="tp-diagnostics-footer">Press BLUE to expand/close | YELLOW to clear logs</div>
+      <div id="tp-diagnostics-footer">Press BLUE to expand/close | YELLOW to clear logs | Arrows: Up/Down scroll, Left/Right filter</div>
     </div>
     
     <!-- Color button hints -->

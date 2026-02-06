@@ -7,7 +7,7 @@
 
 import { KEYS, COLOR_ACTIONS, isColorButton, getKeyName } from './keys.js';
 import { configRead, configWrite } from '../core/config.js';
-import { toggleDiagnosticsPanel, clearDiagnosticsLogs, isDiagnosticsPanelVisible, scrollDiagnosticsLogs } from '../ui/diagnostics.js';
+import { toggleDiagnosticsPanel, clearDiagnosticsLogs, isDiagnosticsPanelVisible, scrollDiagnosticsLogs, cycleDiagnosticsLogFilter } from '../ui/diagnostics.js';
 import { toggleAddressBar, isAddressBarVisible } from '../ui/addressbar.js';
 import { toggleBundleMenu, isBundleMenuVisible, cycleBundle } from '../ui/bundlemenu.js';
 import { showAddSiteEditor, showEditSiteEditor, isSiteEditorOpen, closeSiteEditor } from '../ui/siteeditor.js';
@@ -112,8 +112,11 @@ function handleKeyDown(event) {
       scrollDiagnosticsLogs(-100); // Scroll up
     } else if (keyCode === KEYS.DOWN) {
       scrollDiagnosticsLogs(100);  // Scroll down
+    } else if (keyCode === KEYS.LEFT) {
+      cycleDiagnosticsLogFilter(-1);
+    } else if (keyCode === KEYS.RIGHT) {
+      cycleDiagnosticsLogFilter(1);
     }
-    // Left/Right do nothing for now
     return;
   }
 

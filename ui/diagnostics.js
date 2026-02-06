@@ -23,6 +23,11 @@ var logsElement = null;
 var infoElement = null;
 
 /**
+ * Filter label element
+ */
+var filterElement = null;
+
+/**
  * Whether panel is visible
  */
 var isVisible = false;
@@ -38,6 +43,16 @@ var displayState = 'hidden';
 var unsubscribe = null;
 
 /**
+ * Current log filter
+ */
+var logFilter = 'all';
+
+/**
+ * Log filter order
+ */
+var LOG_FILTERS = ['all', 'log', 'info', 'warn', 'error'];
+
+/**
  * Initialize diagnostics panel
  */
 export function initDiagnosticsPanel() {
@@ -49,6 +64,7 @@ export function initDiagnosticsPanel() {
   panelElement = document.getElementById('tp-diagnostics');
   logsElement = document.getElementById('tp-diagnostics-logs');
   infoElement = document.getElementById('tp-diagnostics-info');
+  filterElement = document.getElementById('tp-diagnostics-filter');
 
   if (!panelElement || !logsElement) {
     console.error('TizenPortal: Diagnostics panel elements not found');
@@ -58,10 +74,15 @@ export function initDiagnosticsPanel() {
   // Subscribe to new log entries when panel is visible
   unsubscribe = onLogEntry(function(entry) {
     if (isVisible) {
-      appendLogEntry(entry);
-      scrollToBottom();
+      if (isEntryVisible(entry)) {
+        appendLogEntry(entry);
+        scrollToBottom();
+      }
     }
   });
+
+  // Initialize filter label
+  updateFilterLabel();
 }
 
 /**
@@ -72,11 +93,11 @@ function createDiagnosticsPanel() {
   panel.id = 'tp-diagnostics';
   panel.innerHTML = [
     '<div id="tp-diagnostics-header">',
-    '  <h2>Console</h2>',
+    '  <h2>Console <span id="tp-diagnostics-filter"></span></h2>',
     '  <div id="tp-diagnostics-info"></div>',
     '</div>',
     '<div id="tp-diagnostics-logs"></div>',
-    '<div id="tp-diagnostics-footer">Press BLUE to expand/close | YELLOW to clear</div>',
+    '<div id="tp-diagnostics-footer">Press BLUE to expand/close | YELLOW to clear | Arrows: Up/Down scroll, Left/Right filter</div>',
   ].join('');
   document.body.appendChild(panel);
 }
@@ -92,6 +113,9 @@ export function showDiagnosticsPanel() {
 
   // Update info
   updateInfo();
+
+  // Update filter label
+  updateFilterLabel();
 
   // Render all existing logs
   renderAllLogs();
@@ -238,6 +262,10 @@ function renderAllLogs() {
 function appendLogEntry(entry) {
   if (!logsElement) return;
 
+  if (!isEntryVisible(entry)) {
+    return;
+  }
+
   var el = document.createElement('div');
   el.className = 'tp-log-entry';
 
@@ -281,4 +309,43 @@ function scrollToBottom() {
 export function scrollDiagnosticsLogs(amount) {
   if (!logsElement) return;
   logsElement.scrollTop += amount;
+}
+
+/**
+ * Cycle the diagnostics log filter
+ * @param {number} direction - 1 for next, -1 for previous
+ */
+export function cycleDiagnosticsLogFilter(direction) {
+  var currentIndex = LOG_FILTERS.indexOf(logFilter);
+  if (currentIndex === -1) currentIndex = 0;
+
+  if (direction > 0) {
+    currentIndex = (currentIndex + 1) % LOG_FILTERS.length;
+  } else if (direction < 0) {
+    currentIndex = (currentIndex - 1 + LOG_FILTERS.length) % LOG_FILTERS.length;
+  }
+
+  logFilter = LOG_FILTERS[currentIndex];
+  updateFilterLabel();
+  renderAllLogs();
+  scrollToBottom();
+}
+
+/**
+ * Update filter label text
+ */
+function updateFilterLabel() {
+  if (!filterElement) return;
+  filterElement.textContent = logFilter.toUpperCase();
+}
+
+/**
+ * Check if an entry should be visible for current filter
+ * @param {Object} entry
+ * @returns {boolean}
+ */
+function isEntryVisible(entry) {
+  if (!entry) return false;
+  if (logFilter === 'all') return true;
+  return entry.level === logFilter;
 }

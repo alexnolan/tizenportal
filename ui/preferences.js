@@ -61,6 +61,29 @@ function normalizeThemeValue(value) {
 }
 
 /**
+ * Normalize stored HUD position value to valid option
+ * @param {*} value
+ * @returns {string}
+ */
+function normalizeHudPosition(value) {
+  // If numeric index, map to option
+  if (typeof value === 'number') {
+    var idx = value % HUD_OPTIONS.length;
+    return HUD_OPTIONS[idx].value;
+  }
+
+  if (typeof value === 'string') {
+    for (var i = 0; i < HUD_OPTIONS.length; i++) {
+      if (HUD_OPTIONS[i].value === value) {
+        return value;
+      }
+    }
+  }
+
+  return 'off';
+}
+
+/**
  * Preference rows definition
  * Note: customColor1/customColor2 are conditional rows shown only when theme='custom'
  */
@@ -216,6 +239,11 @@ export function showPreferences() {
       prefsState.settings.portalConfig.theme = normalized;
       TizenPortal.config.set('tp_portal', prefsState.settings.portalConfig);
     }
+    var hudNormalized = normalizeHudPosition(prefsState.settings.portalConfig.hudPosition);
+    if (prefsState.settings.portalConfig.hudPosition !== hudNormalized) {
+      prefsState.settings.portalConfig.hudPosition = hudNormalized;
+      TizenPortal.config.set('tp_portal', prefsState.settings.portalConfig);
+    }
   }
   
   prefsState.currentRow = 0;
@@ -348,7 +376,7 @@ function formatDisplayValue(row, value) {
         return row.options[i].label;
       }
     }
-    return value || 'Dark';
+    return row.options.length ? row.options[0].label : (value || '(not set)');
   }
   if (row.type === 'color') {
     // Show color swatch indicator
@@ -603,7 +631,7 @@ export function applyPortalPreferences(config) {
   }
 
   // Apply HUD position
-  applyHudPosition(config.hudPosition || 'off');
+  applyHudPosition(normalizeHudPosition(config.hudPosition || 'off'));
 }
 
 /**

@@ -2,7 +2,7 @@
 
 > **Version:** 3.0  
 > **Date:** January 31, 2026  
-> **Status:** Universal Runtime (v0391)  
+> **Status:** Universal Runtime (v0420)  
 
 ---
 
@@ -79,6 +79,21 @@ export default {
   displayName: 'My Bundle',
   description: 'Description for bundle menu',
   style: myStyles,
+  options: [
+    {
+      key: 'strict',
+      label: 'Strict Mode',
+      type: 'toggle',
+      default: false,
+      description: 'Enable stricter behavior'
+    },
+    {
+      key: 'allowlistUrl',
+      label: 'Allowlist URL',
+      type: 'url',
+      placeholder: 'https://example.com/allowlist.txt'
+    }
+  ],
   
   onActivate(window, card) {
     console.log('Bundle activated');
@@ -125,6 +140,43 @@ a:focus, button:focus, [tabindex]:focus {
 
 ---
 
+## 2.1 Bundle Options (Per-Site Settings)
+
+Bundles can declare **options** that appear in the Site Editor. These are saved per card and passed to the bundle at runtime.
+
+Supported option types:
+
+- `toggle` — boolean on/off
+- `select` — fixed list of options
+- `text` — free text
+- `url` — URL input; contents are fetched and stored
+
+Example:
+
+```js
+export default {
+  name: 'my-bundle',
+  options: [
+    { key: 'strict', label: 'Strict Mode', type: 'toggle', default: false },
+    { key: 'mode', label: 'Mode', type: 'select', options: [
+      { value: 'basic', label: 'Basic' },
+      { value: 'advanced', label: 'Advanced' },
+    ]},
+    { key: 'customCss', label: 'Custom CSS', type: 'text' },
+    { key: 'allowlistUrl', label: 'Allowlist URL', type: 'url' },
+  ]
+};
+```
+
+At runtime the selected values are available on the card:
+
+- `card.bundleOptions` — key/value map of option values
+- `card.bundleOptionData` — fetched data for `url` options
+
+Use these inside your bundle lifecycle hooks to drive behavior.
+
+---
+
 ## 3. Creating a Bundle
 
 ### Step 1: Create Bundle Folder
@@ -159,13 +211,11 @@ export default {
 
 ```js
 // bundles/registry.js
-import defaultBundle from './default/main.js';
 import adblockBundle from './adblock/main.js';
 import audiobookshelfBundle from './audiobookshelf/main.js';
 import mySiteBundle from './my-site/main.js';  // Add import
 
 var bundles = {
-  'default': defaultBundle,
   'adblock': adblockBundle,
   'audiobookshelf': audiobookshelfBundle,
   'my-site': mySiteBundle,  // Add to registry

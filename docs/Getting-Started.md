@@ -34,7 +34,7 @@ Launch TizenBrew on your Samsung TV from the app list.
 2. Select **Add Module**
 3. Enter the module identifier:
    ```
-   alexnolan/tizenportal@0391
+   alexnolan/tizenportal@0421
    ```
 4. Confirm the addition
 
@@ -58,12 +58,12 @@ When TizenPortal first loads, you'll see:
 
 1. Use the **D-pad** to navigate to the **+** card
 2. Press **Enter** to open the site editor
-3. Fill in the details:
+3. Fill in the details (changes auto-save):
    - **Name**: Display name for the card (e.g., "My Audiobookshelf")
    - **URL**: Full URL including `https://` (e.g., `https://abs.myserver.com`)
    - **Bundle**: Select from available options
    - **Icon**: Click "Fetch Favicon" or enter a custom icon URL
-4. Press **Save**
+4. Press **Close** when you’re done
 
 Your new site card will appear in the grid!
 
@@ -84,7 +84,7 @@ Your new site card will appear in the grid!
 |--------|-------------|------------|
 | 🔴 Red | Address bar | Reload page |
 | 🟢 Green | Mouse mode | Focus highlight |
-| 🟡 Yellow | Bundle menu | Cycle bundles |
+| 🟡 Yellow | Preferences (portal) / Return to portal (sites) | Cycle bundles |
 | 🔵 Blue | Diagnostics | Safe mode |
 
 ---

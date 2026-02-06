@@ -38,7 +38,7 @@ No, TizenPortal runs through TizenBrew, which handles any necessary permissions.
 ### How do I install TizenPortal?
 
 1. Install [TizenBrew](https://github.com/reisxd/TizenBrew) on your TV
-2. Add the module: `alexnolan/tizenportal@0391`
+2. Add the module: `alexnolan/tizenportal@0421`
 3. Launch TizenPortal from TizenBrew
 
 See the [Getting Started](Getting-Started.md) guide for detailed instructions.
@@ -80,7 +80,7 @@ Yes! If your TV supports Samsung's SmartThings remote app, you can use it with T
 
 ### How do I type text?
 
-Navigate to a text input field and press **Enter**. Your TV's on-screen keyboard will appear. Use the D-pad to type.
+Text inputs are protected by default to avoid the on-screen keyboard popping up. Navigate to an input and press **Enter** to activate the keyboard. You can disable this in **Preferences → Protect Text Inputs (TV Keyboard)**.
 
 ### Can I cast/mirror to TizenPortal?
 
@@ -122,7 +122,7 @@ These streaming services have their own Tizen apps and typically block browser a
 
 ### Does TizenPortal block ads?
 
-Yes! Use the `adblock` bundle for sites with intrusive ads. Note that ad blocking is best-effort and may not catch everything.
+Yes! Use the `adblock` bundle for sites with intrusive ads. It supports **Strict Mode**, **Allowlist URL**, **Hide Cookie Banners**, and **Inline Ad Heuristics** for better coverage. Ad blocking is still best-effort and may not catch everything.
 
 ---
 

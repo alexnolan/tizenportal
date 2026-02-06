@@ -33,7 +33,7 @@ The portal is your home screen — a grid of site cards you can navigate with yo
 │  Site 1 │  Site 2 │  Site 3 │  Site 4 │  Site 5 │  +   │
 │         │         │         │         │         │      │
 ├─────────┴─────────┴─────────┴─────────┴─────────┴──────┤
-│  🔴 Address  🟢 Mouse  🟡 Bundle  🔵 Diagnostics       │
+│  🔴 Address  🟢 Mouse  🟡 Preferences  🔵 Diagnostics  │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -60,14 +60,14 @@ The portal is your home screen — a grid of site cards you can navigate with yo
 | Bundle | Compatibility bundle | "audiobookshelf" |
 | Icon | Card icon (optional) | Click "Fetch Favicon" |
 
-4. Press **Save** to add the card
+4. Press **Close** when finished (changes auto-save)
 
 ### Editing a Site
 
 1. Navigate to the site card
 2. Press and **hold Enter** (or use a menu option if available)
 3. Modify the fields as needed
-4. Press **Save**
+4. Press **Close**
 
 ### Deleting a Site
 
@@ -119,7 +119,7 @@ Press **🟡 Yellow** button to return to the portal launcher.
 |--------|-------------|------------|
 | 🔴 Red | Open address bar | Reload current page |
 | 🟢 Green | Toggle mouse mode | Toggle focus highlight |
-| 🟡 Yellow | Open bundle menu | Cycle through bundles |
+| 🟡 Yellow | Preferences (portal) / Return to portal (sites) | Add Site (portal) |
 | 🔵 Blue | Toggle diagnostics | Enter safe mode |
 
 ### Short Press vs Long Press
@@ -197,6 +197,21 @@ Long-press **🔴 Red** to reload the current page without opening the address b
 
 ---
 
+## Preferences
+
+Open Preferences with **🟡 Yellow** on the portal.
+
+### Theme & Appearance
+- **Theme Mode**: Light, Dark, Automatic (Sunset), Custom Backdrop, Custom Colours
+- **Custom Colours**: Two gradient colors
+- **Backdrop**: Custom background image URL
+- **Debug HUD**: Off or position in any corner
+
+### Input & Behavior
+- **Protect Text Inputs (TV Keyboard)**: prevents the on-screen keyboard from opening until you press Enter
+
+---
+
 ## Bundle System
 
 Bundles are site-specific enhancements that improve TV compatibility.
@@ -205,27 +220,24 @@ Bundles are site-specific enhancements that improve TV compatibility.
 
 | Bundle | Best For | Features |
 |--------|----------|----------|
-| `default` | Any website | Viewport lock, focus styling |
 | `audiobookshelf` | Audiobookshelf | Full navigation, media keys |
-| `adblock` | Ad-heavy sites | Blocks common ads |
+| `adblock` | Ad-heavy sites | Blocks common ads and trackers |
 
 ### Selecting a Bundle
 
 **When adding a site:**
 1. In the site editor, use the Bundle dropdown
 2. Select the appropriate bundle
-3. Save the card
+3. Press **Close**
 
-**While browsing:**
-1. Press **🟡 Yellow** to open bundle menu
-2. Navigate to a different bundle
-3. Press **Enter** to switch
+### Bundle Options
 
-### Bundle Menu
+Some bundles expose per-site options in the editor. For example, **Adblock** supports:
 
-The bundle menu shows all available bundles with the current one highlighted.
-
-Long-press **🟡 Yellow** to quickly cycle to the next bundle without opening the menu.
+- **Strict Mode** — more aggressive blocking
+- **Allowlist URL** — download allowed hosts/paths
+- **Hide Cookie Banners** — remove consent popups
+- **Inline Ad Heuristics** — block inline ad scripts and banner images
 
 ---
 
@@ -271,12 +283,12 @@ Long-press **🔵 Blue** to enter safe mode:
 
 ## Keyboard Input
 
-When a text field is focused, the TV's on-screen keyboard appears.
+Text inputs are protected by default to prevent the TV keyboard from opening on focus.
 
 ### Using the TV Keyboard
 
 1. Navigate to a text input field
-2. Press **Enter** to activate
+2. Press **Enter** to activate the keyboard
 3. Use the on-screen keyboard to type
 4. Press **Done** or **Enter** to confirm
 

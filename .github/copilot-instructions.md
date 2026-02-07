@@ -1,7 +1,7 @@
 # Copilot Instructions for TizenPortal
 
 > **Last Updated:** February 6, 2026  
-> **Current Version:** 0440  
+> **Current Version:** 0441  
 > **Architecture:** Universal Runtime
 
 ---
@@ -530,33 +530,46 @@ TizenPortal.input.isIMEActive();
 | Tag | Semantic | Example |
 |-----|----------|--------|
 | `0100` | 0.1.00 | Starting version |
-| `0440` | 0.4.40 | Current version |
+| `0441` | 0.4.41 | Current version |
 | `1000` | 1.0.00 | 1.0 release |
 
 **Why:** Typing `alexnolan/tizenportal@0301` on a TV remote is much faster than `@v0.3.1`.
 
 ### Version Bumping
 
-**Single source of truth:** `package.json` is the only place you need to update the version.
+**Single source of truth for build injection:** `package.json` → Rollup replaces `__VERSION__` at build time.
 
-**Always bump `package.json` before tagging** so CDN cache busting is verifiable.
+**However**, many docs and this file contain hardcoded version references. **All of them must be updated when bumping.**
 
-**Always run the build after version bump** to inject the new version into `dist/tizenportal.js`.
+**Always bump version before tagging** so CDN cache busting is verifiable.
 
 1. Update version in `package.json`:
    ```json
    "version": "0302"
    ```
 
-2. Rebuild to inject version into output:
+2. Update **all** hardcoded version references in:
+   - `README.md` (badge + install instruction)
+   - `.github/copilot-instructions.md` (header + version table)
+   - `docs/Api-Reference.md`, `docs/Architecture.md`, `docs/Build-System.md` (status lines + examples)
+   - `docs/Contributing.md` (bug template)
+   - `docs/Engineering-Plan.md` (status + version table)
+   - `docs/FAQ.md`, `docs/Getting-Started.md`, `docs/Troubleshooting.md` (module references)
+   - `docs/Home.md` (version table)
+   - `docs/Progress.md` (current version + add new version history entry)
+   - `docs/User-Guide.md` (diagnostics example)
+
+   > **Tip:** Use a workspace-wide search for the old version number to catch every occurrence.
+
+3. Rebuild to inject version into output:
    ```bash
    npm run build
    ```
 
-3. Commit and tag:
+4. Commit and tag:
    ```bash
    git add .
-   git commit -m "Bump version to 0302"
+   git commit -m "v0302: Brief description of changes"
    git tag 0302
    git push origin master --tags
    ```

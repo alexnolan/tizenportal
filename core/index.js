@@ -34,6 +34,7 @@ import '../navigation/spatial-navigation-polyfill.js';
 
 // Import core modules
 import { configRead, configWrite, configOnChange, configInit, configGet, configSet } from './config.js';
+import { sanitizeUrl, isValidHttpUrl, sanitizeCss } from './utils.js';
 import { initPolyfills, hasPolyfill, getLoadedPolyfills } from '../polyfills/index.js';
 import { KEYS } from '../input/keys.js';
 import { initInputHandler, executeColorAction, registerKeyHandler } from '../input/handler.js';
@@ -626,7 +627,47 @@ function getCardFromHash() {
     
     // Decode base64 JSON
     var decoded = decodeURIComponent(escape(atob(match[1])));
+    
+    // Reject oversized payloads (256 KB limit)
+    if (decoded.length > 262144) {
+      error('Payload too large (' + decoded.length + ' bytes), rejected');
+      return null;
+    }
+    
     var payload = JSON.parse(decoded);
+    
+    // Validate payload is a plain object
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      error('Invalid payload type, rejected');
+      return null;
+    }
+    
+    // Allowlisted payload keys — strip anything unexpected
+    var ALLOWED_KEYS = [
+      'css', 'js', 'ua', 'bundleName', 'cardName',
+      'viewportMode', 'focusOutlineMode',
+      'tabindexInjection', 'scrollIntoView', 'safeArea',
+      'gpuHints', 'cssReset', 'hideScrollbars', 'wrapTextInputs',
+      'bundleOptions', 'bundleOptionData'
+    ];
+    var cleanPayload = {};
+    for (var ki = 0; ki < ALLOWED_KEYS.length; ki++) {
+      var pk = ALLOWED_KEYS[ki];
+      if (payload.hasOwnProperty(pk)) {
+        cleanPayload[pk] = payload[pk];
+      }
+    }
+    payload = cleanPayload;
+    
+    // Type-check string fields
+    var STRING_FIELDS = ['css', 'js', 'ua', 'bundleName', 'cardName', 'viewportMode', 'focusOutlineMode'];
+    for (var si = 0; si < STRING_FIELDS.length; si++) {
+      var sf = STRING_FIELDS[si];
+      if (payload[sf] !== undefined && payload[sf] !== null && typeof payload[sf] !== 'string') {
+        warn('Payload field "' + sf + '" has wrong type, discarding');
+        delete payload[sf];
+      }
+    }
     
     log('Decoded payload from hash: ' + JSON.stringify(payload));
     
@@ -769,9 +810,17 @@ async function applyBundleToPage(card) {
   var cssContent = bundle.style || '';
   
   // Also check for payload CSS from URL hash
+  // Payload CSS is decoded from the URL — sanitize it to strip dangerous constructs
   if (card._payload && card._payload.css) {
-    log('Adding payload CSS from URL hash');
-    cssContent += '\n\n/* Payload CSS */\n' + card._payload.css;
+    var rawPayloadCss = card._payload.css;
+    var cleanPayloadCss = sanitizeCss(rawPayloadCss);
+    if (cleanPayloadCss !== rawPayloadCss) {
+      warn('Payload CSS was sanitized — some constructs were stripped for security');
+    }
+    if (cleanPayloadCss) {
+      log('Adding sanitized payload CSS from URL hash');
+      cssContent += '\n\n/* Payload CSS */\n' + cleanPayloadCss;
+    }
   }
   
   if (cssContent) {
@@ -1305,6 +1354,15 @@ function loadSite(card) {
   }
   
   log('Final URL: ' + targetUrl.substring(0, 100) + '...');
+  
+  // Validate final URL scheme before navigation
+  if (!isValidHttpUrl(targetUrl)) {
+    error('Unsafe URL scheme in loadSite, navigation blocked: ' + targetUrl.substring(0, 60));
+    if (window.TizenPortal) {
+      window.TizenPortal.showToast('Invalid URL — must be http:// or https://');
+    }
+    return;
+  }
   
   // Navigate to the site - runtime will handle bundle injection
   window.location.href = targetUrl;

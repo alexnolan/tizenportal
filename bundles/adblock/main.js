@@ -1014,54 +1014,89 @@ export default {
    * Clean up observers and state
    */
   cleanup: function() {
-    if (state.observer) {
-      state.observer.disconnect();
+    // Each restoration step is independently try-caught so that a failure
+    // in one does not prevent the remaining steps from executing.
+
+    try {
+      if (state.observer) {
+        state.observer.disconnect();
+        state.observer = null;
+      }
+    } catch (err) {
+      console.warn('TizenPortal [AdBlock]: cleanup observer error:', err.message);
       state.observer = null;
     }
 
-    if (state.cleanupInterval) {
-      clearInterval(state.cleanupInterval);
+    try {
+      if (state.cleanupInterval) {
+        clearInterval(state.cleanupInterval);
+        state.cleanupInterval = null;
+      }
+    } catch (err) {
+      console.warn('TizenPortal [AdBlock]: cleanup interval error:', err.message);
       state.cleanupInterval = null;
     }
 
+    // Restore original DOM prototype methods one at a time
     if (state.domIntercepted) {
       try {
         var proto = Element && Element.prototype;
-        if (proto) {
-          if (state.originalAppendChild) proto.appendChild = state.originalAppendChild;
-          if (state.originalInsertBefore) proto.insertBefore = state.originalInsertBefore;
-          if (state.originalReplaceChild) proto.replaceChild = state.originalReplaceChild;
+        if (proto && state.originalAppendChild) {
+          proto.appendChild = state.originalAppendChild;
         }
       } catch (err) {
-        // Ignore
+        console.warn('TizenPortal [AdBlock]: cleanup appendChild error:', err.message);
       }
+
+      try {
+        var proto2 = Element && Element.prototype;
+        if (proto2 && state.originalInsertBefore) {
+          proto2.insertBefore = state.originalInsertBefore;
+        }
+      } catch (err) {
+        console.warn('TizenPortal [AdBlock]: cleanup insertBefore error:', err.message);
+      }
+
+      try {
+        var proto3 = Element && Element.prototype;
+        if (proto3 && state.originalReplaceChild) {
+          proto3.replaceChild = state.originalReplaceChild;
+        }
+      } catch (err) {
+        console.warn('TizenPortal [AdBlock]: cleanup replaceChild error:', err.message);
+      }
+
       state.domIntercepted = false;
       state.originalAppendChild = null;
       state.originalInsertBefore = null;
       state.originalReplaceChild = null;
     }
 
-    if (state.strictStyleEl && state.strictStyleEl.parentNode) {
-      try {
+    try {
+      if (state.strictStyleEl && state.strictStyleEl.parentNode) {
         state.strictStyleEl.parentNode.removeChild(state.strictStyleEl);
-      } catch (err) {
-        // Ignore
       }
+    } catch (err) {
+      console.warn('TizenPortal [AdBlock]: cleanup strictStyleEl error:', err.message);
     }
     state.strictStyleEl = null;
 
-    if (state.cookieStyleEl && state.cookieStyleEl.parentNode) {
-      try {
+    try {
+      if (state.cookieStyleEl && state.cookieStyleEl.parentNode) {
         state.cookieStyleEl.parentNode.removeChild(state.cookieStyleEl);
-      } catch (err) {
-        // Ignore
       }
+    } catch (err) {
+      console.warn('TizenPortal [AdBlock]: cleanup cookieStyleEl error:', err.message);
     }
     state.cookieStyleEl = null;
     
-    if (this._cleanTimeout) {
-      clearTimeout(this._cleanTimeout);
-      this._cleanTimeout = null;
+    try {
+      if (this._cleanTimeout) {
+        clearTimeout(this._cleanTimeout);
+        this._cleanTimeout = null;
+      }
+    } catch (err) {
+      console.warn('TizenPortal [AdBlock]: cleanup timeout error:', err.message);
     }
   },
 };

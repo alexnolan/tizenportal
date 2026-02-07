@@ -313,10 +313,17 @@ function scrollPage(amount) {
     } catch (err) {
       // Cross-origin - try postMessage approach
       try {
+        var targetOrigin = '*';
+        if (iframe.src) {
+          var originMatch = iframe.src.match(/^(https?:\/\/[^\/]+)/);
+          if (originMatch && originMatch[1]) {
+            targetOrigin = originMatch[1];
+          }
+        }
         iframe.contentWindow.postMessage({
           type: 'tp-scroll',
           amount: amount
-        }, '*');
+        }, targetOrigin);
       } catch (e) {
         console.log('TizenPortal: Cannot scroll iframe (cross-origin)');
       }

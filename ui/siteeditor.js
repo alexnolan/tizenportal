@@ -8,6 +8,7 @@
 import { addCard, updateCard, deleteCard, getCards } from './cards.js';
 import { getFeatureBundles, getBundle } from '../bundles/registry.js';
 import { refreshPortal } from './modal.js';
+import { escapeHtml, sanitizeUrl } from '../core/utils.js';
 
 /**
  * Editor state
@@ -543,9 +544,14 @@ function autoSaveCard(reason) {
   var cardName = (state.card.name || '').trim();
   var cardUrl = (state.card.url || '').trim();
 
-  if (cardUrl && cardUrl.indexOf('://') === -1) {
-    cardUrl = 'https://' + cardUrl;
+  // Validate and sanitise URL scheme
+  var sanitized = sanitizeUrl(cardUrl);
+  if (cardUrl && sanitized) {
+    cardUrl = sanitized;
     state.card.url = cardUrl;
+  } else if (cardUrl && !sanitized) {
+    console.log('TizenPortal: Auto-save skipped - invalid URL scheme');
+    return;
   }
 
   if (!cardName || !cardUrl) {
@@ -1282,7 +1288,14 @@ function updatePreview() {
   
   if (iconEl) {
     if (state.card.icon) {
-      iconEl.innerHTML = '<img src="' + escapeHtml(state.card.icon) + '" alt="" onerror="this.parentNode.textContent=\'?\'">';
+      iconEl.textContent = '';
+      var previewImg = document.createElement('img');
+      previewImg.src = state.card.icon;
+      previewImg.alt = '';
+      previewImg.addEventListener('error', function() {
+        iconEl.textContent = '?';
+      });
+      iconEl.appendChild(previewImg);
     } else if (state.card.name) {
       iconEl.textContent = state.card.name.charAt(0).toUpperCase();
     } else {
@@ -1419,14 +1432,4 @@ export function isSiteEditorOpen() {
   return state.active;
 }
 
-/**
- * Escape HTML
- */
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+// escapeHtml imported from core/utils.js

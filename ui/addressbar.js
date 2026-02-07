@@ -5,6 +5,8 @@
  * Activated with Red button (short press).
  */
 
+import { sanitizeUrl } from '../core/utils.js';
+
 /**
  * Address bar element
  */
@@ -545,18 +547,16 @@ function handleReload() {
 function handleGo() {
   if (!urlInputElement) return;
   
-  var url = urlInputElement.value.trim();
-  if (!url) return;
+  var raw = urlInputElement.value.trim();
+  if (!raw) return;
   
-  // Ensure URL has protocol
-  if (url.indexOf('://') === -1) {
-    // Check if it looks like a domain
-    if (url.indexOf('.') !== -1 || url.indexOf('localhost') !== -1) {
-      url = 'https://' + url;
-    } else {
-      // Treat as search (could be expanded to use a search engine)
-      url = 'https://' + url;
+  // Sanitise URL — blocks javascript:, data:, and other dangerous schemes
+  var url = sanitizeUrl(raw);
+  if (!url) {
+    if (window.TizenPortal) {
+      window.TizenPortal.showToast('Invalid URL scheme — use http:// or https://');
     }
+    return;
   }
   
   console.log('TizenPortal: Address bar - Go to:', url);

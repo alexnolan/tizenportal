@@ -1,7 +1,7 @@
 # TizenPortal Progress Tracker
 
 > **Last Updated:** February 7, 2026  
-> **Current Version:** 0440  
+> **Current Version:** 0441  
 > **Architecture:** Universal Runtime
 
 ---
@@ -43,7 +43,16 @@ TizenPortal uses a single unified runtime (`tizenportal.js`) on all pages:
 
 ## Version History
 
-### v0440 (Current)
+### v0441 (Current)
+
+- Security hardening: shared escapeHtml, URL scheme validation, #tp= payload schema validation
+- CSS injection sanitization for untrusted payload CSS
+- Content Security Policy meta tag added to portal page
+- postMessage origin scoping, localStorage CSS value re-validation
+- Adblock bundle cleanup hardened with per-step error handling
+- Replaced innerHTML+onerror with DOM API in site editor
+
+### v0440
 
 - Audiobookshelf bundle refactored as best-practice example
 - Core utilities in focus/manager.js and input/text-input.js

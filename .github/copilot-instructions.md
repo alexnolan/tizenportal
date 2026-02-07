@@ -1,7 +1,7 @@
 # Copilot Instructions for TizenPortal
 
 > **Last Updated:** February 6, 2026  
-> **Current Version:** 0453  
+> **Current Version:** 0454  
 > **Architecture:** Universal Runtime
 
 ---
@@ -530,7 +530,7 @@ TizenPortal.input.isIMEActive();
 | Tag | Semantic | Example |
 |-----|----------|--------|
 | `0100` | 0.1.00 | Starting version |
-| `0453` | 0.4.53 | Current version |
+| `0454` | 0.4.54 | Current version |
 | `1000` | 1.0.00 | 1.0 release |
 
 **Why:** Typing `alexnolan/tizenportal@0301` on a TV remote is much faster than `@v0.3.1`.
@@ -570,6 +570,23 @@ TizenPortal.input.isIMEActive();
 3. Add new module: `alexnolan/tizenportal@vNEW`
 
 **Critical:** CDN caches by tag. Without a new tag, old code is served.
+
+### Portal Cache-Busting (when portal shows old version)
+
+If the portal page itself is stale while the injected runtime is new, also
+cache-bust the **portal entrypoint**:
+
+1. Update `package.json` `websiteURL` to include a version query:
+  ```json
+  "websiteURL": "https://alexnolan.github.io/tizenportal/dist/index.html?v=0453"
+  ```
+2. Update `dist/index.html` to load the runtime with a version query:
+  ```html
+  <script src="tizenportal.js?v=0453"></script>
+  ```
+3. Run `npm run build`, commit, tag, and push as usual.
+
+This forces CDN and browser caches to fetch the new portal HTML + JS.
 
 ---
 
@@ -668,7 +685,7 @@ This project uses code from the following open-source projects:
 
 | Component | Status |
 |-----------|--------|
-| Universal Runtime | ✅ Deployed (v0453) |
+| Universal Runtime | ✅ Deployed (v0454) |
 | Portal launcher | ✅ Working |
 | Bundle injection | ✅ Working |
 | Address bar overlay | ✅ Working |

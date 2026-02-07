@@ -1467,9 +1467,16 @@ function loadSite(card) {
   }
   
   log('Final URL: ' + targetUrl.substring(0, 100) + '...');
-  
+
+  if (state.isPortalPage) {
+    showLoading('Launching ' + (card.name || card.url) + ' (bundle: ' + bundleName + ')...');
+  }
+
   // Navigate to the site - runtime will handle bundle injection
-  window.location.href = targetUrl;
+  // Small delay ensures toast/HUD render before navigation
+  setTimeout(function() {
+    window.location.href = targetUrl;
+  }, 250);
 }
 
 /**

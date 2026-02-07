@@ -363,7 +363,7 @@ What actually happens
 ## Environment
 - TV Model: [e.g., Samsung UN55TU8000]
 - TV Year: [e.g., 2020]
-- TizenPortal Version: [e.g., 0453]
+- TizenPortal Version: [e.g., 0454]
 - Site URL: [if applicable]
 
 ## Screenshots/Logs

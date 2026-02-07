@@ -327,9 +327,34 @@ function saveLastCard(card) {
       bundleOptions: card.bundleOptions || {},
       bundleOptionData: card.bundleOptionData || {},
     };
-    sessionStorage.setItem(LAST_CARD_KEY, JSON.stringify(payload));
+    var json = JSON.stringify(payload);
+    sessionStorage.setItem(LAST_CARD_KEY, json);
+    // Also persist to window.name for cross-origin survival.
+    // sessionStorage is per-origin and won't carry over when the portal
+    // navigates to a different-origin target site. window.name persists
+    // across navigations in the same tab, even across origins.
+    try { window.name = 'tp:' + json; } catch (e) { /* ignore */ }
   } catch (err) {
     // Ignore
+  }
+}
+
+/**
+ * Load card from window.name (cross-origin fallback).
+ * window.name persists across navigations in the same tab, even
+ * across different origins — unlike sessionStorage/localStorage.
+ * We prefix our data with 'tp:' to avoid collisions.
+ */
+function loadCardFromWindowName() {
+  try {
+    var name = window.name;
+    if (!name || typeof name !== 'string' || name.indexOf('tp:') !== 0) return null;
+    var json = name.substring(3);
+    var card = JSON.parse(json);
+    if (card && card.featureBundle) return card;
+    return null;
+  } catch (err) {
+    return null;
   }
 }
 
@@ -543,10 +568,27 @@ async function initTargetSite() {
     }
   }
   
-  // Fallback: reuse last card from session (explicitly selected by user)
-  // Check this BEFORE localStorage URL matching — the session card is
-  // authoritative because the user chose it on the portal. URL matching
-  // can fail when sites redirect (e.g. login pages).
+  // Fallback: check window.name (cross-origin persistence).
+  // When the portal navigates to a different-origin target site,
+  // sessionStorage and localStorage are inaccessible (per-origin).
+  // window.name survives cross-origin navigations in the same tab.
+  if (!matchedCard) {
+    var windowCard = loadCardFromWindowName();
+    if (windowCard) {
+      matchedCard = Object.assign({}, windowCard, {
+        url: window.location.href,
+        name: windowCard.name || document.title || 'Unknown Site'
+      });
+      log('Card from window.name: ' + (matchedCard.featureBundle || 'default'));
+      tpHud('Card (window): ' + (matchedCard.name || 'Window'));
+      // Save to sessionStorage for this origin's future navigations
+      saveLastCard(matchedCard);
+    }
+  }
+
+  // Fallback: reuse last card from session (same-origin navigations).
+  // After the first successful match on this origin, subsequent page
+  // loads (e.g. SPA navigations within the site) can use sessionStorage.
   if (!matchedCard) {
     var lastCard = loadLastCard();
     if (lastCard) {

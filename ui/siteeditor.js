@@ -73,21 +73,32 @@ var FEATURE_TOGGLE_OPTIONS = [
   { value: false, label: 'Off' },
 ];
 
+var SECTION_DEFS = [
+  { id: 'details', label: 'Site Details', defaultCollapsed: false },
+  { id: 'options', label: 'Site Options', defaultCollapsed: true },
+];
+
+var sectionCollapsed = {
+  details: false,
+  options: true,
+};
+
 var FIELDS = [
-  { name: 'name', label: 'Site Name', type: 'text', placeholder: 'My Site', required: true },
-  { name: 'url', label: 'URL', type: 'text', placeholder: 'https://example.com', required: true },
+  { name: 'name', label: 'Site Name', type: 'text', placeholder: 'My Site', required: true, section: 'details' },
+  { name: 'url', label: 'URL', type: 'text', placeholder: 'https://example.com', required: true, section: 'details' },
+  { name: 'icon', label: 'Icon URL', type: 'text', placeholder: 'https://... (optional)', required: false, section: 'details' },
   { name: 'featureBundle', label: 'Site-specific Bundle', type: 'bundle', required: false },
-  { name: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_MODE_OPTIONS },
-  { name: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS },
-  { name: 'userAgent', label: 'User Agent Mode', type: 'select', options: UA_MODE_OPTIONS },
-  { name: 'tabindexInjection', label: 'Auto-focusable Elements', type: 'select', options: FEATURE_TOGGLE_OPTIONS },
-  { name: 'scrollIntoView', label: 'Scroll-into-view on Focus', type: 'select', options: FEATURE_TOGGLE_OPTIONS },
-  { name: 'safeArea', label: 'TV Safe Area (5% inset)', type: 'select', options: FEATURE_TOGGLE_OPTIONS },
-  { name: 'gpuHints', label: 'GPU Acceleration Hints', type: 'select', options: FEATURE_TOGGLE_OPTIONS },
-  { name: 'cssReset', label: 'CSS Normalization', type: 'select', options: FEATURE_TOGGLE_OPTIONS },
-  { name: 'hideScrollbars', label: 'Hide Scrollbars', type: 'select', options: FEATURE_TOGGLE_OPTIONS },
-  { name: 'wrapTextInputs', label: 'Protect Text Inputs (TV Keyboard)', type: 'select', options: FEATURE_TOGGLE_OPTIONS },
-  { name: 'icon', label: 'Icon URL', type: 'text', placeholder: 'https://... (optional)', required: false },
+  { name: '__section_options', label: 'Site Options', type: 'section', sectionId: 'options' },
+  { name: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_MODE_OPTIONS, section: 'options' },
+  { name: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS, section: 'options' },
+  { name: 'userAgent', label: 'User Agent Mode', type: 'select', options: UA_MODE_OPTIONS, section: 'options' },
+  { name: 'tabindexInjection', label: 'Auto-focusable Elements', type: 'select', options: FEATURE_TOGGLE_OPTIONS, section: 'options' },
+  { name: 'scrollIntoView', label: 'Scroll-into-view on Focus', type: 'select', options: FEATURE_TOGGLE_OPTIONS, section: 'options' },
+  { name: 'safeArea', label: 'TV Safe Area (5% inset)', type: 'select', options: FEATURE_TOGGLE_OPTIONS, section: 'options' },
+  { name: 'gpuHints', label: 'GPU Acceleration Hints', type: 'select', options: FEATURE_TOGGLE_OPTIONS, section: 'options' },
+  { name: 'cssReset', label: 'CSS Normalization', type: 'select', options: FEATURE_TOGGLE_OPTIONS, section: 'options' },
+  { name: 'hideScrollbars', label: 'Hide Scrollbars', type: 'select', options: FEATURE_TOGGLE_OPTIONS, section: 'options' },
+  { name: 'wrapTextInputs', label: 'Protect Text Inputs (TV Keyboard)', type: 'select', options: FEATURE_TOGGLE_OPTIONS, section: 'options' },
 ];
 
 /**
@@ -648,10 +659,21 @@ function renderFields() {
     return;
   }
 
+  ensureSectionState();
+
   var html = '';
 
   for (var i = 0; i < FIELDS.length; i++) {
     var field = FIELDS[i];
+    if (field.type === 'section') {
+      html += renderSectionRow(field);
+      continue;
+    }
+
+    if (field.section && sectionCollapsed[field.section]) {
+      continue;
+    }
+
     var rawValue = state.card.hasOwnProperty(field.name) ? state.card[field.name] : null;
     var value = (rawValue === null || rawValue === undefined) ? '' : rawValue;
     
@@ -668,6 +690,26 @@ function renderFields() {
 
   // Set up field event listeners
   setupFieldListeners(container);
+}
+
+function ensureSectionState() {
+  for (var i = 0; i < SECTION_DEFS.length; i++) {
+    var def = SECTION_DEFS[i];
+    if (!sectionCollapsed.hasOwnProperty(def.id)) {
+      sectionCollapsed[def.id] = def.defaultCollapsed;
+    }
+  }
+}
+
+function renderSectionRow(field) {
+  var sectionId = field.sectionId;
+  var collapsed = !!sectionCollapsed[sectionId];
+  var indicator = collapsed ? '▶' : '▼';
+  return '' +
+    '<div class="tp-field-row tp-field-section-row" data-type="section" data-section="' + sectionId + '" tabindex="0">' +
+      '<div class="tp-field-label">' + field.label + '</div>' +
+      '<div class="tp-field-value">' + indicator + '</div>' +
+    '</div>';
 }
 
 /**
@@ -906,6 +948,11 @@ function activateFieldInput(row) {
   var fieldName = row.dataset.field;
   var fieldType = row.dataset.type || 'text';
   var field = getFieldDef(fieldName);
+
+  if (fieldType === 'section') {
+    toggleSection(row.dataset.section);
+    return;
+  }
   
   if (!field) return;
 
@@ -915,6 +962,20 @@ function activateFieldInput(row) {
   } else {
     // Show text input prompt
     showTextInputPrompt(fieldName, field);
+  }
+}
+
+function toggleSection(sectionId) {
+  if (!sectionId) return;
+  sectionCollapsed[sectionId] = !sectionCollapsed[sectionId];
+  renderFields();
+  focusSection(sectionId);
+}
+
+function focusSection(sectionId) {
+  var row = document.querySelector('.tp-field-section-row[data-section="' + sectionId + '"]');
+  if (row) {
+    row.focus();
   }
 }
 

@@ -12,6 +12,7 @@ var prefsState = {
   active: false,
   currentRow: 0,
   settings: {},
+  sectionCollapsed: {},
 };
 
 /**
@@ -115,22 +116,28 @@ function normalizeHudPosition(value) {
  * Note: customColor1/customColor2 are conditional rows shown only when theme='custom'
  */
 var PREFERENCE_ROWS = [
-  { id: 'theme', label: 'Theme Mode', type: 'select', options: THEME_OPTIONS, key: 'theme', config: 'portal' },
-  { id: 'hudPosition', label: 'Debug HUD', type: 'select', options: HUD_OPTIONS, key: 'hudPosition', config: 'portal' },
-  { id: 'showHints', label: 'Color Hints', type: 'toggle', key: 'showHints', config: 'portal' },
-  { id: 'customColor1', label: 'Gradient Color 1', type: 'color', key: 'customColor1', config: 'portal', showIf: 'custom' },
-  { id: 'customColor2', label: 'Gradient Color 2', type: 'color', key: 'customColor2', config: 'portal', showIf: 'custom' },
-  { id: 'backgroundImage', label: 'Backdrop Image URL', type: 'text', key: 'backgroundImage', config: 'portal', showIf: 'backdrop' },
-  { id: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_OPTIONS, key: 'viewportMode', config: 'features' },
-  { id: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS, key: 'focusOutlineMode', config: 'features' },
-  { id: 'uaMode', label: 'User Agent Mode', type: 'select', options: UA_MODE_OPTIONS, key: 'uaMode', config: 'features' },
-  { id: 'tabindexInjection', label: 'Auto-focusable Elements', type: 'toggle', key: 'tabindexInjection', config: 'features' },
-  { id: 'scrollIntoView', label: 'Scroll-into-view on Focus', type: 'toggle', key: 'scrollIntoView', config: 'features' },
-  { id: 'safeArea', label: 'TV Safe Area (5% inset)', type: 'toggle', key: 'safeArea', config: 'features' },
-  { id: 'gpuHints', label: 'GPU Acceleration Hints', type: 'toggle', key: 'gpuHints', config: 'features' },
-  { id: 'cssReset', label: 'CSS Normalization', type: 'toggle', key: 'cssReset', config: 'features' },
-  { id: 'hideScrollbars', label: 'Hide Scrollbars', type: 'toggle', key: 'hideScrollbars', config: 'features' },
-  { id: 'wrapTextInputs', label: 'Protect Text Inputs (TV Keyboard)', type: 'toggle', key: 'wrapTextInputs', config: 'features' },
+  { id: 'theme', label: 'Theme Mode', type: 'select', options: THEME_OPTIONS, key: 'theme', config: 'portal', section: 'appearance' },
+  { id: 'customColor1', label: 'Gradient Color 1', type: 'color', key: 'customColor1', config: 'portal', showIf: 'custom', section: 'appearance' },
+  { id: 'customColor2', label: 'Gradient Color 2', type: 'color', key: 'customColor2', config: 'portal', showIf: 'custom', section: 'appearance' },
+  { id: 'backgroundImage', label: 'Backdrop Image URL', type: 'text', key: 'backgroundImage', config: 'portal', showIf: 'backdrop', section: 'appearance' },
+  { id: 'hudPosition', label: 'Debug HUD', type: 'select', options: HUD_OPTIONS, key: 'hudPosition', config: 'portal', section: 'portal' },
+  { id: 'showHints', label: 'Color Hints', type: 'toggle', key: 'showHints', config: 'portal', section: 'portal' },
+  { id: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_OPTIONS, key: 'viewportMode', config: 'features', section: 'features' },
+  { id: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS, key: 'focusOutlineMode', config: 'features', section: 'features' },
+  { id: 'uaMode', label: 'User Agent Mode', type: 'select', options: UA_MODE_OPTIONS, key: 'uaMode', config: 'features', section: 'features' },
+  { id: 'tabindexInjection', label: 'Auto-focusable Elements', type: 'toggle', key: 'tabindexInjection', config: 'features', section: 'features' },
+  { id: 'scrollIntoView', label: 'Scroll-into-view on Focus', type: 'toggle', key: 'scrollIntoView', config: 'features', section: 'features' },
+  { id: 'safeArea', label: 'TV Safe Area (5% inset)', type: 'toggle', key: 'safeArea', config: 'features', section: 'features' },
+  { id: 'gpuHints', label: 'GPU Acceleration Hints', type: 'toggle', key: 'gpuHints', config: 'features', section: 'features' },
+  { id: 'cssReset', label: 'CSS Normalization', type: 'toggle', key: 'cssReset', config: 'features', section: 'features' },
+  { id: 'hideScrollbars', label: 'Hide Scrollbars', type: 'toggle', key: 'hideScrollbars', config: 'features', section: 'features' },
+  { id: 'wrapTextInputs', label: 'Protect Text Inputs (TV Keyboard)', type: 'toggle', key: 'wrapTextInputs', config: 'features', section: 'features' },
+];
+
+var SECTION_DEFS = [
+  { id: 'appearance', label: 'Appearance', defaultCollapsed: false },
+  { id: 'portal', label: 'Portal', defaultCollapsed: false },
+  { id: 'features', label: 'Site Features', defaultCollapsed: true },
 ];
 
 /**
@@ -285,6 +292,7 @@ export function showPreferences() {
   prefsState.currentRow = 0;
   prefsState.active = true;
 
+  prefsState.sectionCollapsed = getSectionDefaults();
   if (window.TizenPortal && window.TizenPortal.updatePortalHints) {
     window.TizenPortal.updatePortalHints();
   }
@@ -314,6 +322,14 @@ function getDefaultPortalConfig() {
     hudPosition: 'off',
     showHints: true,
   };
+}
+
+function getSectionDefaults() {
+  var defaults = {};
+  for (var i = 0; i < SECTION_DEFS.length; i++) {
+    defaults[SECTION_DEFS[i].id] = SECTION_DEFS[i].defaultCollapsed;
+  }
+  return defaults;
 }
 
 /**
@@ -370,6 +386,35 @@ function getVisibleRows() {
   return visible;
 }
 
+function getVisibleRowsWithSections() {
+  var rows = getVisibleRows();
+  var grouped = {};
+
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var section = row.section || 'features';
+    if (!grouped[section]) grouped[section] = [];
+    grouped[section].push(row);
+  }
+
+  var ordered = [];
+  for (var j = 0; j < SECTION_DEFS.length; j++) {
+    var def = SECTION_DEFS[j];
+    ordered.push({ type: 'section', id: def.id, label: def.label });
+
+    if (prefsState.sectionCollapsed[def.id]) {
+      continue;
+    }
+
+    var sectionRows = grouped[def.id] || [];
+    for (var k = 0; k < sectionRows.length; k++) {
+      ordered.push(sectionRows[k]);
+    }
+  }
+
+  return ordered;
+}
+
 /**
  * Render preferences rows
  */
@@ -377,19 +422,28 @@ function renderPreferencesUI() {
   var container = document.getElementById('tp-prefs-rows');
   if (!container) return;
 
-  var visibleRows = getVisibleRows();
+  var visibleRows = getVisibleRowsWithSections();
   var html = '';
 
   for (var i = 0; i < visibleRows.length; i++) {
     var row = visibleRows[i];
-    var value = getValue(row);
-    var displayValue = formatDisplayValue(row, value);
-
-    html += '' +
-      '<div class="tp-prefs-row" data-index="' + i + '" data-id="' + row.id + '" tabindex="0">' +
-        '<div class="tp-prefs-label">' + row.label + '</div>' +
-        '<div class="tp-prefs-value">' + displayValue + '</div>' +
-      '</div>';
+    if (row.type === 'section') {
+      var collapsed = !!prefsState.sectionCollapsed[row.id];
+      var indicator = collapsed ? '▶' : '▼';
+      html += '' +
+        '<div class="tp-prefs-row tp-prefs-section-row" data-index="' + i + '" data-id="' + row.id + '" data-type="section" tabindex="0">' +
+          '<div class="tp-prefs-label">' + row.label + '</div>' +
+          '<div class="tp-prefs-value">' + indicator + '</div>' +
+        '</div>';
+    } else {
+      var value = getValue(row);
+      var displayValue = formatDisplayValue(row, value);
+      html += '' +
+        '<div class="tp-prefs-row" data-index="' + i + '" data-id="' + row.id + '" tabindex="0">' +
+          '<div class="tp-prefs-label">' + row.label + '</div>' +
+          '<div class="tp-prefs-value">' + displayValue + '</div>' +
+        '</div>';
+    }
   }
 
   container.innerHTML = html;
@@ -448,7 +502,7 @@ function formatDisplayValue(row, value) {
  * Now includes Close button as final navigation target
  */
 function navigatePreferences(direction) {
-  var visibleRows = getVisibleRows();
+  var visibleRows = getVisibleRowsWithSections();
   var totalItems = visibleRows.length + 1; // +1 for Close button
   var newIndex = prefsState.currentRow + direction;
   
@@ -466,7 +520,7 @@ function navigatePreferences(direction) {
  * Focus a preferences row or the Close button
  */
 function focusPreferencesRow(index) {
-  var visibleRows = getVisibleRows();
+  var visibleRows = getVisibleRowsWithSections();
   
   // If index is beyond visible rows, focus Close button
   if (index >= visibleRows.length) {
@@ -491,10 +545,17 @@ function focusPreferencesRow(index) {
  */
 function activatePreferenceRow(rowEl) {
   var index = parseInt(rowEl.dataset.index, 10);
-  var visibleRows = getVisibleRows();
+  var visibleRows = getVisibleRowsWithSections();
   var row = visibleRows[index];
 
   if (!row) return;
+
+  if (row.type === 'section') {
+    prefsState.sectionCollapsed[row.id] = !prefsState.sectionCollapsed[row.id];
+    renderPreferencesUI();
+    focusPreferencesRow(index);
+    return;
+  }
 
   console.log('TizenPortal: Activate preference row:', row.id, 'type:', row.type);
 

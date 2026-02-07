@@ -1,8 +1,8 @@
 # TizenPortal Architecture Specification
 
 > **Version:** 3.0  
-> **Date:** January 31, 2026  
-> **Status:** Universal Runtime (v0391)  
+> **Date:** February 7, 2026  
+> **Status:** Universal Runtime (v0439)  
 
 ---
 
@@ -117,16 +117,14 @@ tizenportal/
 ├── ui/                       # UI components
 │   ├── portal.js             # Grid launcher
 │   ├── siteeditor.js         # Card add/edit modal
+│   ├── preferences.js        # Preferences modal
 │   ├── addressbar.js         # Browser chrome
-│   ├── bundlemenu.js         # Bundle selection
 │   ├── diagnostics.js        # Debug panel
 │   ├── modal.js              # Modal system
 │   ├── cards.js              # Card UI rendering
-│   └── iframe.js             # Iframe management
 │
 ├── bundles/                  # Site-specific bundles
 │   ├── registry.js           # Bundle registration
-│   ├── default/              # Fallback bundle
 │   ├── audiobookshelf/       # ABS support
 │   └── adblock/              # Ad blocking
 │
@@ -147,6 +145,15 @@ tizenportal/
 │
 ├── diagnostics/              # Diagnostics system
 │   └── console.js            # Console capture
+│
+├── features/                 # Global site feature toggles
+│   ├── index.js              # Feature loader
+│   ├── focus-styling.js       # Focus highlight styles
+│   ├── tabindex-injection.js  # Auto-focusable elements
+│   ├── scroll-into-view.js    # Focus scroll helper
+│   ├── safe-area.js           # TV safe area inset
+│   ├── gpu-hints.js           # GPU hint styles
+│   └── css-reset.js           # CSS normalization
 │
 └── polyfills/                # Platform polyfills
     ├── index.js              # Polyfill loader
@@ -199,7 +206,7 @@ export function hasBundle(name: string): boolean;
 ```
 
 **Built-in Bundles:**
-- `default` - Basic TV browser support
+- `default` - Basic fallback bundle
 - `audiobookshelf` - Enhanced support for Audiobookshelf
 - `adblock` - Ad blocking for general sites
 
@@ -267,10 +274,23 @@ interface Card {
   id: string;
   name: string;
   url: string;
-  bundle: string;
-  icon: string;
-  ua: 'tizen' | 'mobile' | 'desktop';
+  featureBundle: string | null;
+  icon: string | null;
+  viewportMode: 'auto' | 'locked' | 'unlocked' | null;
+  focusOutlineMode: 'on' | 'high' | 'off' | null;
+  userAgent: 'tizen' | 'mobile' | 'desktop' | null;
+  tabindexInjection: boolean | null;
+  scrollIntoView: boolean | null;
+  safeArea: boolean | null;
+  gpuHints: boolean | null;
+  cssReset: boolean | null;
+  hideScrollbars: boolean | null;
+  wrapTextInputs: boolean | null;
+  bundleOptions: Record<string, any>;
+  bundleOptionData: Record<string, any>;
   order: number;
+  createdAt: number;
+  updatedAt: number;
 }
 ```
 
@@ -280,10 +300,22 @@ interface Card {
 
 ```typescript
 interface Payload {
-  bundleName: string;   // Bundle identifier
-  cardName: string;     // Display name for UI
-  css?: string;         // Additional CSS to inject
-  ua?: string;          // User-Agent override (optional)
+  bundleName: string;       // Feature bundle identifier
+  cardName: string;         // Display name for UI
+  css?: string;             // Bundle CSS (optional)
+  js?: string;              // Bundle JS bootstrap (optional)
+  ua?: string;              // User-Agent override (optional)
+  viewportMode?: string;
+  focusOutlineMode?: string;
+  tabindexInjection?: boolean;
+  scrollIntoView?: boolean;
+  safeArea?: boolean;
+  gpuHints?: boolean;
+  cssReset?: boolean;
+  hideScrollbars?: boolean;
+  wrapTextInputs?: boolean;
+  bundleOptions?: Record<string, any>;
+  bundleOptionData?: Record<string, any>;
 }
 ```
 
@@ -295,7 +327,30 @@ interface Payload {
 interface Config {
   pointerMode: boolean;
   focusHighlight: boolean;
-  diagnosticsVisible: boolean;
+  safeMode: boolean;
+  diagnosticsEnabled: boolean;
+  lastVisitedUrl: string | null;
+  tp_portal: {
+    theme: 'dark' | 'light' | 'auto' | 'backdrop' | 'custom';
+    customColor1: string;
+    customColor2: string;
+    backgroundImage: string;
+    hudPosition: 'off' | 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+    showHints: boolean;
+  };
+  tp_features: {
+    focusStyling: boolean;
+    focusOutlineMode: 'on' | 'high' | 'off';
+    tabindexInjection: boolean;
+    scrollIntoView: boolean;
+    safeArea: boolean;
+    gpuHints: boolean;
+    cssReset: boolean;
+    hideScrollbars: boolean;
+    wrapTextInputs: boolean;
+    viewportMode: 'auto' | 'locked' | 'unlocked';
+    uaMode: 'tizen' | 'desktop' | 'mobile';
+  };
   [key: string]: any;
 }
 ```
@@ -338,7 +393,7 @@ interface LogEntry {
 ```
 1. User presses Enter on card
 2. Portal builds payload:
-   - bundleName from card.bundle
+  - bundleName from card.featureBundle
    - cardName from card.name
    - Encode as base64
 3. Portal navigates: window.location.href = card.url + '#tp=' + base64
@@ -356,7 +411,7 @@ interface LogEntry {
 ### 6.3 Return to Portal
 
 ```
-1. User presses YELLOW button
+1. User presses YELLOW button (short or long)
 2. Runtime navigates to HOME_URL (portal)
 3. TizenBrew injects tizenportal.js into portal
 4. Portal re-renders
@@ -391,7 +446,7 @@ const plugins = [
 
 Source files use placeholder:
 ```js
-const VERSION = '__VERSION__';  // Becomes "0391" at build time
+const VERSION = '__VERSION__';  // Becomes "0439" at build time
 ```
 
 ### 7.3 tizenportal.js Structure (IIFE)
@@ -400,7 +455,7 @@ const VERSION = '__VERSION__';  // Becomes "0391" at build time
 (function () {
   'use strict';
   
-  const VERSION = '0391';
+  const VERSION = '0439';
   
   // Polyfills (core-js, fetch, DOMRect, spatial-navigation)
   // Config (localStorage wrapper)
@@ -409,7 +464,7 @@ const VERSION = '__VERSION__';  // Becomes "0391" at build time
   // Navigation (spatial-navigation-polyfill)
   // Diagnostics (console capture)
   // UI components (portal, siteeditor, overlays)
-  // Bundle registry (default, audiobookshelf, adblock)
+  // Bundle registry (feature bundles: audiobookshelf, adblock)
   // Core init and window.TizenPortal exposure
   
 })();
@@ -426,8 +481,13 @@ Portal builds and encodes payload before navigation:
 ```js
 function buildPayload(card) {
   const payload = {
-    bundleName: card.bundle || 'default',
+    bundleName: card.featureBundle || 'default',
     cardName: card.name,
+    ua: card.userAgent || undefined,
+    viewportMode: card.viewportMode || null,
+    focusOutlineMode: card.focusOutlineMode || null,
+    bundleOptions: card.bundleOptions || {},
+    bundleOptionData: card.bundleOptionData || {}
   };
   
   // Use btoa with UTF-8 encoding
@@ -461,7 +521,12 @@ function getCardFromHash() {
     return {
       name: payload.cardName || 'Unknown Site',
       url: window.location.href.replace(/[#&]tp=[^&#]+/, ''),
-      bundle: payload.bundleName || 'default',
+      featureBundle: payload.bundleName || 'default',
+      viewportMode: payload.viewportMode || null,
+      focusOutlineMode: payload.focusOutlineMode || null,
+      userAgent: payload.ua || null,
+      bundleOptions: payload.bundleOptions || {},
+      bundleOptionData: payload.bundleOptionData || {},
       _payload: payload
     };
   } catch (e) {
@@ -475,7 +540,7 @@ function getCardFromHash() {
 
 ```js
 async function applyBundleToPage(card) {
-  const bundleName = card.bundle || 'default';
+  const bundleName = card.featureBundle || 'default';
   let bundle = getBundle(bundleName);
   
   if (!bundle) {
@@ -521,11 +586,7 @@ Modal for adding/editing site cards.
 
 Browser chrome overlay (RED button) showing current URL.
 
-### 9.4 Bundle Menu (`ui/bundlemenu.js`)
-
-Bundle selection overlay (YELLOW button).
-
-### 9.5 Diagnostics (`ui/diagnostics.js`)
+### 9.4 Diagnostics (`ui/diagnostics.js`)
 
 Debug panel overlay (BLUE button) with console output.
 
@@ -542,7 +603,7 @@ export const KEYS = {
   RIGHT: 39,
   DOWN: 40,
   ENTER: 13,
-  // BACK: 10009, // ⚠️ DO NOT USE - causes crashes!
+  BACK: 10009,
   EXIT: 10182,
   RED: 403,
   GREEN: 404,
@@ -563,7 +624,7 @@ export const KEYS = {
 |-----|-------------|------------|
 | Red | Address bar | Reload page |
 | Green | Pointer toggle | Focus highlight |
-| Yellow | Bundle menu / Home | Cycle bundles |
+| Yellow | Preferences (portal) / Return to portal (sites) | Add Site (portal) / Return to portal (sites) |
 | Blue | Diagnostics | Safe mode |
 
 ---

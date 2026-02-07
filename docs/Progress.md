@@ -1,7 +1,7 @@
 # TizenPortal Progress Tracker
 
-> **Last Updated:** January 31, 2026  
-> **Current Version:** 0391  
+> **Last Updated:** February 7, 2026  
+> **Current Version:** 0439  
 > **Architecture:** Universal Runtime
 
 ---
@@ -18,7 +18,6 @@
 | Spatial Navigation | ✅ Working | W3C polyfill integrated, cross-origin safe |
 | Diagnostics Panel | ✅ Working | BLUE button, 3-state toggle, log scrolling |
 | Address Bar Overlay | ✅ Working | RED button, full browser chrome |
-| Bundle Menu | ✅ Working | YELLOW button |
 | On-Screen Pointer | ✅ Working | GREEN button |
 | Input Handler | ✅ Working | Unified key handling |
 | Focus Management | ✅ Working | Focus manager module |
@@ -44,7 +43,7 @@ TizenPortal uses a single unified runtime (`tizenportal.js`) on all pages:
 
 ## Version History
 
-### v0391 (Current)
+### v0439 (Current)
 
 - Audiobookshelf bundle refactored as best-practice example
 - Core utilities in focus/manager.js and input/text-input.js
@@ -61,7 +60,7 @@ TizenPortal uses a single unified runtime (`tizenportal.js`) on all pages:
 ### v0214
 
 - Arrow keys only blocked for diagnostics panel
-- Address bar and bundle menu allow normal arrow navigation
+- Address bar allows normal arrow navigation
 - Diagnostics up/down scrolling retained
 
 ### v0213
@@ -151,7 +150,7 @@ tizenportal/
 |--------|-------------|------------|--------|
 | Red | Address bar | Reload | ✅ Working |
 | Green | Pointer toggle | Focus toggle | ✅ Working |
-| Yellow | Bundle menu | Cycle bundles | ✅ Working |
+| Yellow | Preferences (portal) / Return to portal (sites) | Add Site (portal) / Return to portal (sites) | ✅ Working |
 | Blue | Diagnostics | Safe mode | ✅ Working |
 
 ---
@@ -177,9 +176,8 @@ tizenportal/
 
 ### Bundles
 
-- [x] Default bundle applies viewport lock
+- [x] Default bundle compiled in (fallback)
 - [x] Audiobookshelf bundle compiled in
-- [x] Jellyfin bundle compiled in
 - [x] Adblock bundle compiled in
 - [ ] Bundles tested on real hardware
 
@@ -189,8 +187,6 @@ tizenportal/
 - [x] Diagnostics scrolls with up/down
 - [x] Address bar opens/closes
 - [x] Address bar navigation works
-- [x] Bundle menu opens/closes
-- [x] Bundle selection works
 
 ### Cross-Origin Safety
 

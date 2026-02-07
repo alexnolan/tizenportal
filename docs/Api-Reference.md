@@ -1,8 +1,8 @@
 # TizenPortal API Reference
 
 > **Version:** 3.0  
-> **Date:** January 31, 2026  
-> **Status:** Universal Runtime (v0391)  
+> **Date:** February 7, 2026  
+> **Status:** Universal Runtime (v0439)  
 
 ---
 
@@ -44,7 +44,7 @@ Version format is 4-digit numeric for easy TV remote entry:
 
 | Format | Example | Meaning |
 |--------|---------|---------|
-| `XXYY` | `0391` | Major 03, Minor 91 |
+| `XXYY` | `0439` | Major 04, Minor 39 |
 
 ```js
 // Check version
@@ -62,20 +62,29 @@ if (parseInt(TizenPortal.version) >= 300) {
 ```typescript
 interface TizenPortal {
   // Metadata
-  version: string;           // "0391"
+  version: string;           // "0439"
   
   // Sub-APIs
   config: ConfigAPI;
   input: InputAPI;
   focus: FocusAPI;
   keys: KeyConstants;
+  cards: CardsAPI;
+  bundles: BundlesAPI;
+  polyfills: PolyfillAPI;
   
   // Navigation
   loadSite: (card: Card) => void;
+  closeSite: () => void;
   returnToPortal: () => void;
+  getCurrentCard: () => Card | null;
   
   // UI
   showToast: (message: string, duration?: number) => void;
+  showLoading: (text: string) => void;
+  hideLoading: () => void;
+  toggleSiteAddressBar: () => void;
+  toggleSiteDiagnostics: () => void;
   
   // Logging
   log: (message: string) => void;
@@ -84,6 +93,25 @@ interface TizenPortal {
   
   // State
   getState: () => StateObject;
+}
+
+interface CardsAPI {
+  register: (config: { selector: string; type?: 'single' | 'multi'; container?: string }) => void;
+  unregister: (selector: string) => void;
+  clear: () => void;
+  process: () => number;
+  getRegistrations: () => Array<{ selector: string; type: string; container?: string | null }>;
+}
+
+interface BundlesAPI {
+  list: () => string[];
+  getActive: () => any | null;
+  getActiveName: () => string | null;
+}
+
+interface PolyfillAPI {
+  has: (name: string) => boolean;
+  loaded: () => string[];
 }
 ```
 
@@ -96,8 +124,8 @@ TizenPortal.loadSite({
   id: 'abc123',
   name: 'My Server',
   url: 'https://abs.example.com',
-  bundle: 'audiobookshelf',
-  ua: 'mobile',
+  featureBundle: 'audiobookshelf',
+  userAgent: 'mobile',
 });
 ```
 
@@ -161,6 +189,8 @@ Configuration management with localStorage persistence.
 interface ConfigAPI {
   read: (key: string) => any;
   write: (key: string, value: any) => void;
+  get: (key: string) => any;
+  set: (key: string, value: any) => void;
   onChange: (callback: (event: ConfigChangeEvent) => void) => void;
 }
 ```
@@ -183,7 +213,7 @@ TizenPortal.config.write('myBundleSetting', { enabled: true });
 
 ```js
 TizenPortal.config.onChange(function(event) {
-  console.log('Config changed:', event.detail.key, event.detail.value);
+  console.log('Config changed:', event.key, event.value);
 });
 ```
 
@@ -193,7 +223,10 @@ TizenPortal.config.onChange(function(event) {
 |-----|------|---------|-------------|
 | `pointerMode` | boolean | false | On-screen mouse enabled |
 | `focusHighlight` | boolean | true | Focus indicators visible |
+| `safeMode` | boolean | false | Safe mode enabled |
 | `diagnosticsEnabled` | boolean | false | Debug overlay enabled |
+| `tp_portal` | object | — | Portal preferences (theme, HUD, color hints) |
+| `tp_features` | object | — | Global site feature toggles |
 
 ---
 
@@ -206,8 +239,13 @@ Input state and handler registration.
 ```typescript
 interface InputAPI {
   isPointerMode: () => boolean;
+  togglePointer: () => boolean;
   isIMEActive: () => boolean;
   registerKeyHandler: (handler: KeyHandler) => void;
+  wrapTextInputs: (selector: string) => number;
+  unwrapTextInputs: (selector: string) => void;
+  activateInput: (el: HTMLElement) => void;
+  deactivateInput: (el: HTMLElement) => void;
 }
 
 type KeyHandler = (event: KeyboardEvent) => boolean;
@@ -226,6 +264,8 @@ if (TizenPortal.input.isPointerMode()) {
 ### input.isIMEActive
 
 Check if TV keyboard/IME is active.
+
+> Note: `isIMEActive()` currently returns `false` (placeholder until IME tracking is implemented).
 
 ```js
 if (TizenPortal.input.isIMEActive()) {
@@ -265,6 +305,7 @@ interface FocusAPI {
   get: () => HTMLElement | null;
   enableScrollIntoView: (options?: ScrollOptions) => void;
   disableScrollIntoView: () => void;
+  setScrollEnabled: (enabled: boolean) => void;
   setInitialFocus: (selectors: string[]) => void;
   lockViewport: () => void;
   unlockViewport: () => void;
@@ -348,8 +389,8 @@ KEYS.DOWN      // 40
 KEYS.ENTER     // 13
 
 // System
+KEYS.BACK      // 10009
 KEYS.EXIT      // 10182
-// KEYS.BACK   // NOT INCLUDED - causes crashes!
 
 // Color buttons
 KEYS.RED       // 403
@@ -380,11 +421,7 @@ document.addEventListener('keydown', function(e) {
 });
 ```
 
-### ⚠️ BACK Button Warning
 
-**DO NOT handle keyCode 10009 (BACK).** It causes crashes on Tizen. The BACK constant is intentionally excluded from the API.
-
----
 
 ## 7. Payload Interface
 
@@ -392,10 +429,22 @@ The payload passed via URL hash when navigating to sites.
 
 ```typescript
 interface Payload {
-  bundleName: string;      // Bundle identifier
+  bundleName: string;      // Feature bundle identifier
   cardName: string;        // Card display name
-  css?: string;            // Additional CSS to inject
+  css?: string;            // Bundle CSS (optional)
+  js?: string;             // Bundle JS bootstrap (optional)
   ua?: string;             // User-Agent override
+  viewportMode?: string;
+  focusOutlineMode?: string;
+  tabindexInjection?: boolean;
+  scrollIntoView?: boolean;
+  safeArea?: boolean;
+  gpuHints?: boolean;
+  cssReset?: boolean;
+  hideScrollbars?: boolean;
+  wrapTextInputs?: boolean;
+  bundleOptions?: Record<string, any>;
+  bundleOptionData?: Record<string, any>;
 }
 ```
 
@@ -437,11 +486,26 @@ interface Card {
   id: string;              // Unique identifier
   name: string;            // Display name
   url: string;             // Target URL
-  bundle: string;          // Bundle name (default: 'default')
-  icon?: string;           // Base64 or URL
-  ua?: string;             // User agent: 'tizen' | 'mobile' | 'desktop'
+  featureBundle: string | null; // Feature bundle name
+  icon?: string | null;    // Base64 or URL
+  viewportMode?: 'auto' | 'locked' | 'unlocked' | null;
+  focusOutlineMode?: 'on' | 'high' | 'off' | null;
+  userAgent?: 'tizen' | 'mobile' | 'desktop' | null;
+  tabindexInjection?: boolean | null;
+  scrollIntoView?: boolean | null;
+  safeArea?: boolean | null;
+  gpuHints?: boolean | null;
+  cssReset?: boolean | null;
+  hideScrollbars?: boolean | null;
+  wrapTextInputs?: boolean | null;
+  bundleOptions?: Record<string, any>;
+  bundleOptionData?: Record<string, any>;
   order?: number;          // Grid position
+  createdAt?: number;
+  updatedAt?: number;
 }
+
+> Note: User-agent spoofing is JavaScript-only (not network-layer). Some sites may still detect the underlying browser.
 ```
 
 ### Storage
@@ -555,7 +619,7 @@ document.addEventListener('keydown', function(e) {
 |--------|-------------|------------|
 | Red (403) | Address bar | Reload |
 | Green (404) | Pointer toggle | Focus highlight toggle |
-| Yellow (405) | Bundle menu | Cycle bundles |
+| Yellow (405) | Preferences (portal) / Return to portal (sites) | Add Site (portal) / Return to portal (sites) |
 | Blue (406) | Diagnostics | Safe mode |
 
 ---

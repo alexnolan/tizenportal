@@ -57,7 +57,7 @@ The portal is your home screen — a grid of site cards you can navigate with yo
 |-------|-------------|---------|
 | Name | Display name on the card | "Audiobookshelf" |
 | URL | Full site URL | "https://abs.myserver.com" |
-| Bundle | Compatibility bundle | "audiobookshelf" |
+| Site-specific Bundle | Compatibility bundle | "audiobookshelf" |
 | Icon | Card icon (optional) | Click "Fetch Favicon" |
 
 4. Press **Close** when finished (changes auto-save)
@@ -68,6 +68,21 @@ The portal is your home screen — a grid of site cards you can navigate with yo
 2. Press and **hold Enter** (or use a menu option if available)
 3. Modify the fields as needed
 4. Press **Close**
+
+### Site Options (Per-Site Overrides)
+
+In the editor, open **Site Options** to override global preferences for this site:
+
+- **Viewport Lock Mode**
+- **Focus Outline**
+- **User Agent Mode**
+- **Auto-focusable Elements**
+- **Scroll-into-view on Focus**
+- **TV Safe Area (5% inset)**
+- **GPU Acceleration Hints**
+- **CSS Normalization**
+- **Hide Scrollbars**
+- **Protect Text Inputs (TV Keyboard)**
 
 ### Deleting a Site
 
@@ -119,7 +134,7 @@ Press **🟡 Yellow** button to return to the portal launcher.
 |--------|-------------|------------|
 | 🔴 Red | Open address bar | Reload current page |
 | 🟢 Green | Toggle mouse mode | Toggle focus highlight |
-| 🟡 Yellow | Preferences (portal) / Return to portal (sites) | Add Site (portal) |
+| 🟡 Yellow | Preferences (portal) / Return to portal (sites) | Add Site (portal) / Return to portal (sites) |
 | 🔵 Blue | Toggle diagnostics | Enter safe mode |
 
 ### Short Press vs Long Press
@@ -169,19 +184,20 @@ Press **🔴 Red** to show/hide the address bar.
 ### Address Bar Controls
 
 ```
-┌────────────────────────────────────────────────────────┐
-│ ← │ → │ ↻ │ https://example.com/page          │ 🏠 │ ✕ │
-└────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│ ⎈ │ 🏠 │ ← │ → │ ↻ │ https://example.com/page                 │ → │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 | Button | Function |
 |--------|----------|
+| ⎈ | Return to portal |
+| 🏠 | Site home URL |
 | ← | Go back |
 | → | Go forward |
 | ↻ | Reload page |
 | URL field | Edit URL (select and type) |
-| 🏠 | Return to portal |
-| ✕ | Close address bar |
+| → (Go) | Navigate to URL |
 
 ### Navigating to a New URL
 
@@ -201,13 +217,27 @@ Long-press **🔴 Red** to reload the current page without opening the address b
 
 Open Preferences with **🟡 Yellow** on the portal.
 
-### Theme & Appearance
+### Appearance
 - **Theme Mode**: Light, Dark, Automatic (Sunset), Custom Backdrop, Custom Colours
-- **Custom Colours**: Two gradient colors
-- **Backdrop**: Custom background image URL
-- **Debug HUD**: Off or position in any corner
+- **Custom Colours**: Two gradient colors (Custom Colours theme)
+- **Backdrop**: Custom background image URL (Custom Backdrop theme)
 
-### Input & Behavior
+### Portal
+- **Debug HUD**: Off or position in any corner
+- **Color Hints**: Show/hide the on-screen color button labels
+
+### Site Features
+- **Viewport Lock Mode**: Auto / Locked (1920) / Unlocked
+- **Focus Outline**: On (Blue) / High Contrast (Yellow) / Off
+- **User Agent Mode**: Tizen TV / Desktop / Mobile
+	- Note: UA spoofing is JS-only (not network-layer), so some sites may still detect Tizen
+- **Auto-focusable Elements**: Adds tabindex to make items focusable
+- **Scroll-into-view on Focus**: Scrolls when focus moves
+- **TV Safe Area (5% inset)**: Adds padding for TV overscan
+- **GPU Acceleration Hints**: Applies GPU hint styles
+- **CSS Normalization**: Applies a reset tuned for TV browsing
+- **Hide Scrollbars**: Visually hides scrollbars
+- **Protect Text Inputs (TV Keyboard)**: prevents the on-screen keyboard from opening until you press Enter
 - **Protect Text Inputs (TV Keyboard)**: prevents the on-screen keyboard from opening until you press Enter
 
 ---
@@ -220,6 +250,7 @@ Bundles are site-specific enhancements that improve TV compatibility.
 
 | Bundle | Best For | Features |
 |--------|----------|----------|
+| `default` | Any site | Basic fallback bundle |
 | `audiobookshelf` | Audiobookshelf | Full navigation, media keys |
 | `adblock` | Ad-heavy sites | Blocks common ads and trackers |
 
@@ -257,7 +288,7 @@ Press **🔵 Blue** to cycle through diagnostics states:
 
 ```
 ┌─────────────────────────────────────────┐
-│ TizenPortal v0391 - Diagnostics         │
+│ TizenPortal v0439 - Diagnostics         │
 ├─────────────────────────────────────────┤
 │ [LOG] Bundle activated: audiobookshelf  │
 │ [LOG] Focus set to .book-card           │
@@ -271,6 +302,8 @@ Press **🔵 Blue** to cycle through diagnostics states:
 When the panel is open:
 - **Up Arrow** — Scroll up through log history
 - **Down Arrow** — Scroll down through log history
+- **Left/Right Arrow** — Cycle log filter (All / Log / Info / Warn / Error)
+- **🟡 Yellow** — Clear logs
 
 ### Safe Mode
 
@@ -296,7 +329,7 @@ Text inputs are protected by default to prevent the TV keyboard from opening on 
 
 - Use the D-pad to navigate the keyboard
 - Some keyboards have a **voice input** option
-- Press **Back** to cancel input (if your TV supports it)
+- **Back** navigates browser history on sites; if diagnostics is open, it closes the panel
 
 ### IME Behavior
 

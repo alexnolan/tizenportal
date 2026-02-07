@@ -1,8 +1,8 @@
 # TizenPortal Engineering Plan
 
 > **Version:** 5.0  
-> **Date:** January 31, 2026  
-> **Status:** Universal Runtime (v0391)
+> **Date:** February 7, 2026  
+> **Status:** Universal Runtime (v0439)
 
 ---
 
@@ -14,9 +14,9 @@ TizenPortal operates as a **TizenBrew Module** (`packageType: "mods"`) that prov
 
 **Current Status:** All core features working:
 - Portal grid with card management
-- Full browser chrome (address bar, bundle menu, diagnostics)
+- Full browser chrome (address bar, diagnostics)
 - Spatial navigation with cross-origin safety
-- 3 built-in bundles (default, audiobookshelf, adblock)
+- 3 bundles (default, audiobookshelf, adblock)
 - All color button functions operational
 
 ---
@@ -28,7 +28,7 @@ TizenPortal operates as a **TizenBrew Module** (`packageType: "mods"`) that prov
 | Tag | Semantic | Notes |
 |-----|----------|-------|
 | `0100` | 0.1.00 | Starting version |
-| `0391` | 0.3.91 | Current - unified runtime |
+| `0439` | 0.4.39 | Current - unified runtime |
 | `1000` | 1.0.00 | 1.0 release milestone |
 
 **Version Source:** `package.json` is the single source of truth. Version is injected at build time via `@rollup/plugin-replace`.
@@ -58,19 +58,17 @@ TizenPortal operates as a **TizenBrew Module** (`packageType: "mods"`) that prov
 - ✅ **Universal Runtime:** Single runtime on all pages
 - ✅ **Version Injection:** Single source of truth in package.json
 - ✅ **Spatial Navigation:** W3C-compliant polyfill, cross-origin safe
-- ✅ **Bundle System:** 4 bundles with CSS/JS injection
+- ✅ **Bundle System:** Bundles with CSS/JS injection (default + site-specific)
 - ✅ **Focus Management:** Focus manager module
 - ✅ **Input Handling:** Unified key handling for remote
 - ✅ **Diagnostics:** Blue-menu debug overlay with scrolling
 - ✅ **Address Bar:** Red-button browser chrome
-- ✅ **Bundle Menu:** Yellow-button bundle selection
 - ✅ **On-Screen Pointer:** Green-button mouse emulation
 - ⏳ **Hardware Testing:** Full validation on Tizen TV
 
 ### Non-Goals (Deferred)
 
 - **Video Player:** Custom playback UI (deferred to 2.0)
-- **BACK Button Handling:** ⚠️ **CRASH RISK** — Let system handle natively
 
 ---
 
@@ -127,7 +125,6 @@ tizenportal/
 │   ├── portal.js             # Grid launcher
 │   ├── siteeditor.js         # Card add/edit modal
 │   ├── addressbar.js         # Browser chrome
-│   ├── bundlemenu.js         # Bundle selection
 │   ├── diagnostics.js        # Debug panel
 │   ├── modal.js              # Modal system
 │   ├── cards.js              # Card UI rendering
@@ -177,7 +174,6 @@ tizenportal/
 | Input Handler | ✅ Complete | Unified key handling |
 | Focus Manager | ✅ Complete | Focus tracking module |
 | Address Bar | ✅ Complete | RED button browser chrome |
-| Bundle Menu | ✅ Complete | YELLOW button selection |
 | Diagnostics | ✅ Complete | BLUE button debug overlay |
 | On-Screen Pointer | ✅ Complete | GREEN button mouse |
 | Hardware Testing | ⏳ Pending | Real TV validation |
@@ -283,10 +279,10 @@ Encoded as: `#tp=eyJidW5kbGVOYW1lIjoiLi4uIn0=`
 
 | Risk | Mitigation |
 |------|------------|
-| Cross-origin restrictions | Payload via URL hash works universally |
+| Cross-origin restrictions | Payload via URL hash works universally; iframe access is guarded |
 | TizenBrew CDN caching | Always create new tag for releases |
 | SPA navigation loses payload | Fall back to sessionStorage |
-| BACK button crashes | Let system handle natively |
+| BACK button handling | Close diagnostics if open, otherwise navigate history on sites |
 
 ---
 
@@ -300,7 +296,6 @@ Encoded as: `#tp=eyJidW5kbGVOYW1lIjoiLi4uIn0=`
 
 ### Critical Constraints
 
-- ⚠️ **No BACK button handling** — Causes crashes
 - All output must be ES5 (Babel transpiles)
 - No frameworks — Vanilla JS only
 - 1920×1080 fixed viewport
@@ -332,7 +327,7 @@ git push origin master --tags
 | Right | 39 | Standard DOM |
 | Down | 40 | Standard DOM |
 | Enter | 13 | Standard DOM |
-| Back | 10009 | ⚠️ DO NOT USE |
+| Back | 10009 | Navigate history (sites), close diagnostics when open |
 | Exit | 10182 | Exit app |
 
 ### Color Buttons
@@ -341,7 +336,7 @@ git push origin master --tags
 |-----|------|-------------------|--------|
 | Red | 403 | `ColorF0Red` | Address bar |
 | Green | 404 | `ColorF1Green` | Pointer toggle |
-| Yellow | 405 | `ColorF2Yellow` | Bundle menu |
+| Yellow | 405 | `ColorF2Yellow` | Preferences / Return to portal |
 | Blue | 406 | `ColorF3Blue` | Diagnostics |
 
 ### Media Keys

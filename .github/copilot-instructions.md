@@ -1,7 +1,7 @@
 # Copilot Instructions for TizenPortal
 
 > **Last Updated:** February 6, 2026  
-> **Current Version:** 0391  
+> **Current Version:** 0439  
 > **Architecture:** Universal Runtime
 
 ---
@@ -174,7 +174,6 @@ tizenportal/
 │   ├── portal.js             # Grid launcher
 │   ├── siteeditor.js         # Card add/edit modal
 │   ├── addressbar.js         # Browser chrome
-│   ├── bundlemenu.js         # Bundle selection
 │   ├── diagnostics.js        # Debug panel
 │   ├── modal.js              # Modal system
 │   ├── cards.js              # Card UI rendering
@@ -304,7 +303,7 @@ TizenBrew automatically calls `tizen.inputdevice.registerKey()` for each key in 
 ]
 ```
 
-⚠️ **Do NOT include "Back"** — causes crashes on Tizen.
+**Back** is not registered in package.json; runtime may handle keyCode 10009 when received.
 
 ### CDN Caching
 
@@ -386,14 +385,9 @@ if (!document.activeElement || document.activeElement === document.body) {
 
 ## 7. Critical Constraints
 
-### ⚠️ BACK Button (CRASH RISK)
+### BACK Button (10009)
 
-**DO NOT register for or handle the BACK button (keyCode 10009).** Intercepting BACK often causes hard crashes on Tizen.
-
-- Let the system handle BACK natively
-- Do not add BACK to `keys` array in package.json
-- Do not add event listeners for keyCode 10009
-- Deferred to 2.0 for investigation
+The runtime may handle BACK for history navigation on sites and to close diagnostics when open. Avoid intercepting BACK in other subsystems unless required.
 
 ### Cross-Origin Iframes
 
@@ -432,7 +426,7 @@ try {
 |--------|-------------|------------|
 | **Red (403)** | Address bar (browser chrome) | Reload page |
 | **Green (404)** | On-screen mouse toggle | Focus highlight toggle |
-| **Yellow (405)** | Bundle menu | Cycle bundles |
+| **Yellow (405)** | Preferences (portal) / Return to portal (sites) | Add Site (portal) / Return to portal (sites) |
 | **Blue (406)** | Diagnostics menu | Safe mode (reload without bundles) |
 
 These mappings are **locked for 1.0**. Do not change without explicit approval.
@@ -448,7 +442,7 @@ These mappings are **locked for 1.0**. Do not change without explicit approval.
 | Right | 39 | `KEYS.RIGHT` | |
 | Down | 40 | `KEYS.DOWN` | |
 | Enter | 13 | `KEYS.ENTER` | |
-| Back | 10009 | — | ⚠️ DO NOT USE! Causes crashes |
+| Back | 10009 | `KEYS.BACK` | History back on sites / close diagnostics |
 | Exit | 10182 | `KEYS.EXIT` | |
 | Red | 403 | `KEYS.RED` | |
 | Green | 404 | `KEYS.GREEN` | |
@@ -536,7 +530,7 @@ TizenPortal.input.isIMEActive();
 | Tag | Semantic | Example |
 |-----|----------|--------|
 | `0100` | 0.1.00 | Starting version |
-| `0391` | 0.3.91 | Current version |
+| `0439` | 0.4.39 | Current version |
 | `1000` | 1.0.00 | 1.0 release |
 
 **Why:** Typing `alexnolan/tizenportal@0301` on a TV remote is much faster than `@v0.3.1`.
@@ -585,7 +579,7 @@ TizenPortal.input.isIMEActive();
 
 | Mistake | Why | Fix |
 |---------|-----|-----|
-| Handle BACK button (10009) | Crashes Tizen | Let system handle it |
+| Handle BACK button (10009) | Conflicts with core behavior | Avoid intercepting in bundles |
 | Use `display: none` to hide host | Breaks `offsetParent` | Use `opacity: 0.001` |
 | Forget to bump tag | Stale code from CDN | Always create new tag |
 | Use ES6+ without Babel | Chrome 47 breaks | Run through build system |
@@ -624,7 +618,7 @@ TizenPortal.input.isIMEActive();
 
 | Priority | Reminder |
 |----------|----------|
-| 🔴 | Do NOT handle BACK button (10009) — causes crashes |
+| 🔴 | BACK handled by core (history/diagnostics) |
 | 🔴 | All output must be ES5 — Chrome 47 compatibility |
 | 🔴 | No frameworks — Vanilla JS only |
 | 🟡 | Test on real hardware before marking complete |
@@ -674,13 +668,12 @@ This project uses code from the following open-source projects:
 
 | Component | Status |
 |-----------|--------|
-| Universal Runtime | ✅ Deployed (v0391) |
+| Universal Runtime | ✅ Deployed (v0439) |
 | Portal launcher | ✅ Working |
 | Bundle injection | ✅ Working |
 | Address bar overlay | ✅ Working |
 | Diagnostics panel | ✅ Working |
 | On-screen pointer | ✅ Working |
-| Bundle menu | ✅ Working |
 | Focus management | ✅ Working |
 | Text input handling | ✅ Working |
 | Audiobookshelf bundle | ✅ Built-in |

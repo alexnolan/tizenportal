@@ -3,9 +3,7 @@
  * 
  * Samsung Tizen remote key codes and mappings.
  * 
- * ⚠️ WARNING: Do NOT register for or handle the BACK button (10009).
- * Intercepting BACK often causes hard crashes on Tizen.
- * Let the system handle BACK natively.
+ * BACK button (10009) is handled by TizenPortal for in-page navigation.
  */
 
 /**
@@ -19,8 +17,8 @@ export var KEYS = {
   DOWN: 40,
   ENTER: 13,
 
-  // ⚠️ DO NOT USE - Causes crashes on Tizen!
-  // BACK: 10009,
+  // Back
+  BACK: 10009,
 
   // Exit
   EXIT: 10182,

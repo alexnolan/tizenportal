@@ -49,7 +49,6 @@ import { initModal } from '../ui/modal.js';
 import { initSiteEditor, showAddSiteEditor, showEditSiteEditor, isSiteEditorOpen } from '../ui/siteeditor.js';
 import { initPreferences, showPreferences, closePreferences, isPreferencesOpen, applyPortalPreferences } from '../ui/preferences.js';
 import { initAddressBar, showAddressBar, hideAddressBar, toggleAddressBar, isAddressBarVisible } from '../ui/addressbar.js';
-import { initBundleMenu, showBundleMenu, hideBundleMenu, toggleBundleMenu, isBundleMenuVisible, cycleBundle } from '../ui/bundlemenu.js';
 import { initDiagnostics, log, warn, error } from '../diagnostics/console.js';
 import { initDiagnosticsPanel, showDiagnosticsPanel, hideDiagnosticsPanel, toggleDiagnosticsPanel } from '../ui/diagnostics.js';
 import { loadBundle, unloadBundle, getActiveBundle, getActiveBundleName, handleBundleKeyDown, setActiveBundle } from './loader.js';
@@ -506,9 +505,6 @@ async function initPortalPage() {
   initAddressBar();
   log('Address bar initialized');
 
-  // Initialize bundle menu
-  initBundleMenu();
-  log('Bundle menu initialized');
 
   // Initialize and render portal UI (card grid)
   initPortal();

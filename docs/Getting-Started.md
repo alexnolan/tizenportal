@@ -34,7 +34,7 @@ Launch TizenBrew on your Samsung TV from the app list.
 2. Select **Add Module**
 3. Enter the module identifier:
    ```
-   alexnolan/tizenportal@0421
+   alexnolan/tizenportal@0439
    ```
 4. Confirm the addition
 
@@ -84,7 +84,7 @@ Your new site card will appear in the grid!
 |--------|-------------|------------|
 | 🔴 Red | Address bar | Reload page |
 | 🟢 Green | Mouse mode | Focus highlight |
-| 🟡 Yellow | Preferences (portal) / Return to portal (sites) | Cycle bundles |
+| 🟡 Yellow | Preferences (portal) / Return to portal (sites) | Add Site (portal) / Return to portal (sites) |
 | 🔵 Blue | Diagnostics | Safe mode |
 
 ---

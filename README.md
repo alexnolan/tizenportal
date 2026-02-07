@@ -1,6 +1,6 @@
 # 📺 TizenPortal
 
-![Version](https://img.shields.io/badge/version-0422-blue) ![Tizen](https://img.shields.io/badge/Tizen-3.0%2B-blueviolet) ![License](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/badge/version-0439-blue) ![Tizen](https://img.shields.io/badge/Tizen-3.0%2B-blueviolet) ![License](https://img.shields.io/badge/license-MIT-green)
 
 **TizenPortal** is a browser shell for Samsung Smart TVs running Tizen OS. It provides a launcher for managing any websites and injects site-specific fixes for TV compatibility (self-hosted apps like **Audiobookshelf** are a great fit, but not required).
 
@@ -17,8 +17,8 @@ A TV-friendly launcher with customizable themes to manage your sites in one plac
 ### 🔧 Site Enhancement
 Runs as a TizenBrew module to inject fixes into any site.
 - Bundle CSS/JS applied automatically
-- Viewport locking for responsive sites
-- Works universally (no cross-origin restrictions)
+- Viewport locking and focus tooling for responsive sites
+- Cross-origin safe (iframe access is limited; runtime guards access)
 
 ### 🎮 Remote Control Support
 - **D-pad navigation** with spatial focus
@@ -35,7 +35,7 @@ Runs as a TizenBrew module to inject fixes into any site.
 This project is designed to be loaded via **TizenBrew** on your Samsung TV.
 
 1. **Open TizenBrew** on your Samsung TV
-2. **Add Module:** `alexnolan/tizenportal@0422`
+2. **Add Module:** `alexnolan/tizenportal@0439`
 3. **Launch** TizenPortal from your TizenBrew dashboard
 
 TizenBrew will open the portal and inject the runtime into all navigated pages.
@@ -49,7 +49,7 @@ TizenBrew will open the portal and inject the runtime into all navigated pages.
 2. Fill in the site details:
    - **Name:** Display name for the card
    - **URL:** Full URL including `http://` or `https://`
-  - **Bundle:** Select a compatibility bundle
+  - **Site-specific Bundle:** Select a compatibility bundle
    - **Icon:** Optional - click "Fetch Favicon" or enter a custom URL
 
 ### Editing Sites
@@ -65,6 +65,10 @@ TizenBrew will open the portal and inject the runtime into all navigated pages.
 - Press **🟡 Yellow** on the portal to open Preferences
 - Theme modes: Light, Dark, Automatic (Sunset), Custom Backdrop, Custom Colours
 - Debug HUD position: Off / Top Right / Top Left / Bottom Right / Bottom Left
+- Portal hints (color button labels)
+- Viewport lock mode, focus outline mode, and user agent mode
+- Auto-focusable elements, scroll-into-view, safe area inset
+- GPU hints, CSS normalization, hide scrollbars
 - Text input protection: prevents the TV keyboard from opening until Enter is pressed
 
 ### Color Button Reference
@@ -72,7 +76,7 @@ TizenBrew will open the portal and inject the runtime into all navigated pages.
 |--------|-------------|------------|
 | 🔴 Red | Address Bar | Reload Page |
 | 🟢 Green | Toggle Mouse | Focus Highlight |
-| 🟡 Yellow | Preferences (portal) / Return to portal (sites) | Add Site |
+| 🟡 Yellow | Preferences (portal) / Return to portal (sites) | Add Site (portal) / Return to portal (sites) |
 | 🔵 Blue | Diagnostics | Safe Mode |
 
 ---
@@ -110,7 +114,7 @@ TizenPortal uses a **Universal Runtime** architecture:
 ### Key Points
 
 - **Single runtime** (`tizenportal.js`) on all pages
-- **No cross-origin issues** — Payload passed via URL hash
+- **Cross-origin safe** — Payload passed via URL hash; iframe access is guarded
 - **Full DOM access** — Runtime runs in page context  
 - **Bundles compiled in** — All bundles included in runtime
 
@@ -132,7 +136,7 @@ TizenPortal uses a **Universal Runtime** architecture:
 | **Target OS** | Samsung Tizen 3.0 - 6.5 |
 | **Browser Engine** | Chrome 47 - 69 (Tizen's Chromium) |
 | **Tested Apps** | ✅ Audiobookshelf |
-| **Built-in Bundles** | audiobookshelf, adblock |
+| **Built-in Bundles** | default, audiobookshelf, adblock |
 
 ---
 

@@ -9,7 +9,6 @@ import { KEYS, COLOR_ACTIONS, isColorButton, getKeyName } from './keys.js';
 import { configRead, configWrite } from '../core/config.js';
 import { toggleDiagnosticsPanel, clearDiagnosticsLogs, isDiagnosticsPanelVisible, scrollDiagnosticsLogs, cycleDiagnosticsLogFilter } from '../ui/diagnostics.js';
 import { toggleAddressBar, isAddressBarVisible } from '../ui/addressbar.js';
-import { toggleBundleMenu, isBundleMenuVisible, cycleBundle } from '../ui/bundlemenu.js';
 import { showAddSiteEditor, showEditSiteEditor, isSiteEditorOpen, closeSiteEditor } from '../ui/siteeditor.js';
 import { showPreferences, isPreferencesOpen } from '../ui/preferences.js';
 import { getFocusedCard } from '../ui/portal.js';
@@ -126,6 +125,29 @@ function handleKeyDown(event) {
     console.log('TizenPortal: Key down - ' + keyName + ' (' + keyCode + ')');
   }
 
+  // BACK key handling
+  if (keyCode === KEYS.BACK) {
+    // If diagnostics panel is open, close it
+    if (isDiagnosticsPanelVisible()) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleDiagnosticsPanel();
+      return;
+    }
+
+    var isOnPortal = window.TizenPortal && window.TizenPortal.isPortalPage;
+    if (!isOnPortal) {
+      event.preventDefault();
+      event.stopPropagation();
+      try {
+        history.back();
+      } catch (err) {
+        console.warn('TizenPortal: Back navigation failed:', err.message);
+      }
+      return;
+    }
+  }
+
   // Check IME keys - must prevent propagation to avoid system handling
   if (keyCode === KEYS.IME_DONE || keyCode === KEYS.IME_CANCEL) {
     event.preventDefault();
@@ -149,7 +171,7 @@ function handleKeyDown(event) {
     var editorOpen = isSiteEditorOpen();
     
     // Check if any modal/overlay is visible
-    var modalOpen = isDiagnosticsPanelVisible() || isAddressBarVisible() || isBundleMenuVisible();
+    var modalOpen = isDiagnosticsPanelVisible() || isAddressBarVisible();
     
     if (isInputActive || editorOpen || modalOpen) {
       // Don't exit - just close the current context
@@ -167,9 +189,6 @@ function handleKeyDown(event) {
       }
       if (isAddressBarVisible()) {
         toggleAddressBar();
-      }
-      if (isBundleMenuVisible()) {
-        toggleBundleMenu();
       }
       return;
     }
@@ -307,6 +326,12 @@ function handleKeyUp(event) {
  * @param {boolean} isLongPress
  */
 function handleColorButton(keyCode, isLongPress) {
+  // If diagnostics panel is open, Yellow clears logs (short or long)
+  if (keyCode === KEYS.YELLOW && isDiagnosticsPanelVisible()) {
+    clearDiagnosticsLogs();
+    return;
+  }
+
   var action = null;
 
   switch (keyCode) {
@@ -413,26 +438,8 @@ export function executeColorAction(action) {
       });
       break;
 
-    case 'addSite':
-      // Portal only
-      if (!isOnPortal) break;
-      if (isSiteEditorOpen() || isPreferencesOpen()) {
-        return;
-      }
-      // Quick add new site
-      if (isSiteEditorOpen()) {
-        return;
-      }
-      showAddSiteEditor(function() {
-        if (window.TizenPortal && window.TizenPortal._refreshPortal) {
-          window.TizenPortal._refreshPortal();
-        }
-      });
-      break;
-
     case 'cycleBundle':
-      // Cycle through bundles
-      cycleBundle();
+      // Bundle menu removed
       break;
 
     case 'diagnostics':

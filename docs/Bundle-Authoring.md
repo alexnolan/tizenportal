@@ -77,7 +77,7 @@ import myStyles from './style.css';
 export default {
   name: 'my-bundle',
   displayName: 'My Bundle',
-  description: 'Description for bundle menu',
+  description: 'Description for bundle selection',
   style: myStyles,
   options: [
     {
@@ -570,7 +570,7 @@ enableScrollIntoView({
 | Enter | 13 | Confirmation |
 | Red | 403 | Address bar |
 | Green | 404 | Pointer toggle |
-| Yellow | 405 | Bundle menu |
+| Yellow | 405 | Preferences (portal) / Return to portal (sites) |
 | Blue | 406 | Diagnostics |
 | Play | 415 | Media play |
 | Pause | 19 | Media pause |
@@ -593,9 +593,9 @@ onKeyDown(event) {
 }
 ```
 
-### ⚠️ NEVER Handle BACK (10009)
+### BACK Button (10009)
 
-The BACK button (keyCode 10009) should NEVER be intercepted. It causes crashes on Tizen.
+The core runtime handles BACK for history navigation and diagnostics close. Bundles should avoid intercepting BACK unless they have a specific, well-tested reason to do so.
 
 ---
 

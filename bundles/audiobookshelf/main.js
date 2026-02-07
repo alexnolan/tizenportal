@@ -50,7 +50,7 @@ import {
 } from '../../focus/manager.js';
 
 // NOTE: registerKeyHandler is accessed via window.TizenPortal.input.registerKeyHandler
-// to avoid circular dependency (handler.js -> bundlemenu.js -> registry.js -> this file)
+// to avoid circular dependency (handler.js -> registry.js -> this file)
 
 // Key constants
 import { KEYS } from '../../input/keys.js';

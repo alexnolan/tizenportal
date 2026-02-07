@@ -42,7 +42,7 @@ Before diving into specific issues, try these quick fixes:
 
 1. **Check the module name** — Ensure you typed it correctly:
    ```
-   alexnolan/tizenportal@0391
+   alexnolan/tizenportal@0439
    ```
 
 2. **Check your internet connection** — TizenBrew needs to download from GitHub
@@ -354,11 +354,11 @@ Before diving into specific issues, try these quick fixes:
 
 **Solutions:**
 
-1. **Check bundle menu** — Press 🟡 Yellow to see current bundle
+1. **Edit card** — Change to the correct bundle in the site editor
 
-2. **Edit card** — Change to correct bundle
+2. **Reload** — Long-press 🔴 Red
 
-3. **Cycle bundles** — Long-press 🟡 Yellow
+3. **Check diagnostics** — Look for bundle load errors
 
 ### Bundle causes errors
 
@@ -370,7 +370,7 @@ Before diving into specific issues, try these quick fixes:
 
 1. **Try safe mode** — Long-press 🔵 Blue
 
-2. **Switch to default** — Use basic bundle
+2. **Disable the bundle** — Set the bundle to “None” in the site editor
 
 3. **Report issue** — Bundle may need updates
 

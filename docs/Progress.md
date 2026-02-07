@@ -1,7 +1,7 @@
 # TizenPortal Progress Tracker
 
 > **Last Updated:** February 7, 2026  
-> **Current Version:** 0443  
+> **Current Version:** 0444  
 > **Architecture:** Universal Runtime
 
 ---
@@ -43,7 +43,13 @@ TizenPortal uses a single unified runtime (`tizenportal.js`) on all pages:
 
 ## Version History
 
-### v0443 (Current)
+### v0444 (Current)
+
+- CSP meta tag on portal page
+- postMessage origin scoping in pointer
+- Adblock cleanup hardened with per-step try-catch
+
+### v0443
 
 - Re-tag of v0440 baseline to bypass CDN caching of reverted tags 0441/0442
 

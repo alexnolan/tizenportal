@@ -1014,14 +1014,22 @@ export default {
    * Clean up observers and state
    */
   cleanup: function() {
-    if (state.observer) {
-      state.observer.disconnect();
-      state.observer = null;
+    try {
+      if (state.observer) {
+        state.observer.disconnect();
+        state.observer = null;
+      }
+    } catch (err) {
+      console.warn('TizenPortal [AdBlock]: cleanup observer error:', err.message);
     }
 
-    if (state.cleanupInterval) {
-      clearInterval(state.cleanupInterval);
-      state.cleanupInterval = null;
+    try {
+      if (state.cleanupInterval) {
+        clearInterval(state.cleanupInterval);
+        state.cleanupInterval = null;
+      }
+    } catch (err) {
+      console.warn('TizenPortal [AdBlock]: cleanup interval error:', err.message);
     }
 
     if (state.domIntercepted) {
@@ -1033,7 +1041,7 @@ export default {
           if (state.originalReplaceChild) proto.replaceChild = state.originalReplaceChild;
         }
       } catch (err) {
-        // Ignore
+        console.warn('TizenPortal [AdBlock]: cleanup DOM intercept error:', err.message);
       }
       state.domIntercepted = false;
       state.originalAppendChild = null;
@@ -1041,27 +1049,31 @@ export default {
       state.originalReplaceChild = null;
     }
 
-    if (state.strictStyleEl && state.strictStyleEl.parentNode) {
-      try {
+    try {
+      if (state.strictStyleEl && state.strictStyleEl.parentNode) {
         state.strictStyleEl.parentNode.removeChild(state.strictStyleEl);
-      } catch (err) {
-        // Ignore
       }
+    } catch (err) {
+      console.warn('TizenPortal [AdBlock]: cleanup strict style error:', err.message);
     }
     state.strictStyleEl = null;
 
-    if (state.cookieStyleEl && state.cookieStyleEl.parentNode) {
-      try {
+    try {
+      if (state.cookieStyleEl && state.cookieStyleEl.parentNode) {
         state.cookieStyleEl.parentNode.removeChild(state.cookieStyleEl);
-      } catch (err) {
-        // Ignore
       }
+    } catch (err) {
+      console.warn('TizenPortal [AdBlock]: cleanup cookie style error:', err.message);
     }
     state.cookieStyleEl = null;
     
-    if (this._cleanTimeout) {
-      clearTimeout(this._cleanTimeout);
-      this._cleanTimeout = null;
+    try {
+      if (this._cleanTimeout) {
+        clearTimeout(this._cleanTimeout);
+        this._cleanTimeout = null;
+      }
+    } catch (err) {
+      console.warn('TizenPortal [AdBlock]: cleanup timeout error:', err.message);
     }
   },
 };

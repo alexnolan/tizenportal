@@ -7,7 +7,6 @@
 
 import { addCard, updateCard, deleteCard, getCards } from './cards.js';
 import { getBundleNames } from '../bundles/registry.js';
-import { escapeHtml, sanitizeUrl } from '../core/utils.js';
 
 /**
  * Refresh portal function (set externally to avoid circular dependency)
@@ -94,11 +93,9 @@ export function showAddCardModal() {
       return false;
     }
     
-    // Validate and sanitise URL scheme
-    url = sanitizeUrl(url);
-    if (!url) {
-      showFormError(form, 'Invalid URL — must be http:// or https://');
-      return false;
+    // Ensure URL has protocol
+    if (url.indexOf('://') === -1) {
+      url = 'https://' + url;
     }
     
     addCard({
@@ -139,11 +136,9 @@ export function showEditCardModal(card) {
       return false;
     }
     
-    // Validate and sanitise URL scheme
-    url = sanitizeUrl(url);
-    if (!url) {
-      showFormError(form, 'Invalid URL — must be http:// or https://');
-      return false;
+    // Ensure URL has protocol
+    if (url.indexOf('://') === -1) {
+      url = 'https://' + url;
     }
     
     updateCard(card.id, {
@@ -372,4 +367,17 @@ export function isModalOpen() {
   return activeModal !== null;
 }
 
-// escapeHtml imported from core/utils.js
+/**
+ * Escape HTML special characters
+ * @param {string} str
+ * @returns {string}
+ */
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}

@@ -34,7 +34,6 @@ import '../navigation/spatial-navigation-polyfill.js';
 
 // Import core modules
 import { configRead, configWrite, configOnChange, configInit, configGet, configSet } from './config.js';
-import { sanitizeUrl, isValidHttpUrl, sanitizeCss } from './utils.js';
 import { initPolyfills, hasPolyfill, getLoadedPolyfills } from '../polyfills/index.js';
 import { KEYS } from '../input/keys.js';
 import { initInputHandler, executeColorAction, registerKeyHandler } from '../input/handler.js';

@@ -568,6 +568,29 @@ async function initTargetSite() {
     }
   }
 
+  // Fallback: try tp payload in query string (survives some redirects)
+  if (!matchedCard) {
+    var queryCard = getCardFromQuery();
+    if (queryCard) {
+      log('Card from URL query: ' + queryCard.name);
+      matchedCard = queryCard;
+      tpHud('Card (query): ' + queryCard.name);
+      saveLastCard(queryCard);
+      // Clear query after reading (clean URL)
+      try {
+        var cleanQueryUrl = window.location.href.replace(/([?&])tp=[^&#]+(&?)/, function(match, prefix, trailing) {
+          if (prefix === '?' && trailing) return '?';
+          if (prefix === '?' && !trailing) return '';
+          return prefix === '&' && trailing ? '&' : '';
+        });
+        cleanQueryUrl = cleanQueryUrl.replace(/[?&]$/, '');
+        history.replaceState(null, document.title, cleanQueryUrl);
+      } catch (e) {
+        // Ignore
+      }
+    }
+  }
+
   if (!matchedCard) {
     var hashHasTp = false;
     try {
@@ -577,6 +600,14 @@ async function initTargetSite() {
       // Ignore
     }
     log('Card hash present: ' + (hashHasTp ? 'yes' : 'no'));
+    var queryHasTp = false;
+    try {
+      var s = window.location.search || '';
+      queryHasTp = /[?&]tp=/.test(s);
+    } catch (e) {
+      // Ignore
+    }
+    log('Card query present: ' + (queryHasTp ? 'yes' : 'no'));
   }
   
   // Fallback: check window.name (cross-origin persistence).
@@ -726,6 +757,52 @@ function getCardFromHash() {
     return card;
   } catch (e) {
     error('Failed to parse hash card: ' + e.message);
+    return null;
+  }
+}
+
+/**
+ * Extract card config from URL query string
+ * Format: ?tp=BASE64(JSON) or &tp=BASE64(JSON)
+ * Payload format: { css, js, bundleName, cardName, ua }
+ * @returns {Object|null} Card object or null
+ */
+function getCardFromQuery() {
+  try {
+    var search = window.location.search;
+    if (!search) return null;
+
+    var match = search.match(/[?&]tp=([^&]+)/);
+    if (!match || !match[1]) return null;
+
+    var decoded = decodeURIComponent(escape(atob(match[1])));
+    var payload = JSON.parse(decoded);
+
+    log('Decoded payload from query: ' + JSON.stringify(payload));
+
+    var card = {
+      name: payload.cardName || 'Unknown Site',
+      url: window.location.href.replace(/[?&]tp=[^&#]+/, ''),
+      featureBundle: payload.bundleName || 'default',
+      viewportMode: payload.viewportMode || null,
+      focusOutlineMode: payload.focusOutlineMode || null,
+      userAgent: payload.ua || null,
+      tabindexInjection: payload.hasOwnProperty('tabindexInjection') ? payload.tabindexInjection : null,
+      scrollIntoView: payload.hasOwnProperty('scrollIntoView') ? payload.scrollIntoView : null,
+      safeArea: payload.hasOwnProperty('safeArea') ? payload.safeArea : null,
+      gpuHints: payload.hasOwnProperty('gpuHints') ? payload.gpuHints : null,
+      cssReset: payload.hasOwnProperty('cssReset') ? payload.cssReset : null,
+      hideScrollbars: payload.hasOwnProperty('hideScrollbars') ? payload.hideScrollbars : null,
+      wrapTextInputs: payload.hasOwnProperty('wrapTextInputs') ? payload.wrapTextInputs : null,
+      bundleOptions: payload.bundleOptions || {},
+      bundleOptionData: payload.bundleOptionData || {},
+      _payload: payload
+    };
+
+    log('Card from URL query: ' + card.name + ' (bundle: ' + (card.featureBundle || 'default') + ')');
+    return card;
+  } catch (e) {
+    error('Failed to parse query card: ' + e.message);
     return null;
   }
 }
@@ -1366,8 +1443,15 @@ function loadSite(card) {
     // Encode payload
     var json = JSON.stringify(payload);
     var encoded = btoa(unescape(encodeURIComponent(json)));
-    
-    // Append to URL hash
+
+    // Append to URL query (survives some redirects)
+    if (targetUrl.indexOf('?') === -1) {
+      targetUrl += '?tp=' + encoded;
+    } else {
+      targetUrl += '&tp=' + encoded;
+    }
+
+    // Append to URL hash (fast path when hash survives)
     if (targetUrl.indexOf('#') === -1) {
       targetUrl += '#tp=' + encoded;
     } else {

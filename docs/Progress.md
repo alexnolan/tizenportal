@@ -1,7 +1,7 @@
 # TizenPortal Progress Tracker
 
 > **Last Updated:** February 7, 2026  
-> **Current Version:** 0441  
+> **Current Version:** 0442  
 > **Architecture:** Universal Runtime
 
 ---
@@ -43,7 +43,11 @@ TizenPortal uses a single unified runtime (`tizenportal.js`) on all pages:
 
 ## Version History
 
-### v0441 (Current)
+### v0442 (Current)
+
+- Rolled back payload validation, CSS sanitization, and URL scheme gate in core/index.js that broke first-load bundle application (login redirect lost the #tp= hash)
+
+### v0441
 
 - Security hardening: shared escapeHtml, URL scheme validation, #tp= payload schema validation
 - CSS injection sanitization for untrusted payload CSS

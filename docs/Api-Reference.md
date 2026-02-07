@@ -2,7 +2,7 @@
 
 > **Version:** 3.0  
 > **Date:** February 7, 2026  
-> **Status:** Universal Runtime (v0441)  
+> **Status:** Universal Runtime (v0442)  
 
 ---
 
@@ -44,7 +44,7 @@ Version format is 4-digit numeric for easy TV remote entry:
 
 | Format | Example | Meaning |
 |--------|---------|---------|
-| `XXYY` | `0441` | Major 04, Minor 41 |
+| `XXYY` | `0442` | Major 04, Minor 42 |
 
 ```js
 // Check version
@@ -62,7 +62,7 @@ if (parseInt(TizenPortal.version) >= 300) {
 ```typescript
 interface TizenPortal {
   // Metadata
-  version: string;           // "0441"
+  version: string;           // "0442"
   
   // Sub-APIs
   config: ConfigAPI;

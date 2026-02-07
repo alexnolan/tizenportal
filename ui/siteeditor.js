@@ -76,6 +76,7 @@ var FEATURE_TOGGLE_OPTIONS = [
 var SECTION_DEFS = [
   { id: 'details', label: 'Site Details', defaultCollapsed: false },
   { id: 'options', label: 'Site Options', defaultCollapsed: true },
+  { id: 'bundleOptions', label: 'Bundle Options', defaultCollapsed: true },
 ];
 
 var sectionCollapsed = {
@@ -829,7 +830,12 @@ function renderBundleOptions(bundleName) {
   }
 
   var html = '<div class="tp-field-section">';
-  html += '<div class="tp-field-section-label">Bundle Options</div>';
+  html += renderBundleOptionsHeader();
+
+  if (sectionCollapsed.bundleOptions) {
+    html += '</div>';
+    return html;
+  }
 
   for (var i = 0; i < bundle.options.length; i++) {
     var opt = bundle.options[i];
@@ -841,6 +847,16 @@ function renderBundleOptions(bundleName) {
 
   html += '</div>';
   return html;
+}
+
+function renderBundleOptionsHeader() {
+  var collapsed = !!sectionCollapsed.bundleOptions;
+  var indicator = collapsed ? '▶' : '▼';
+  return '' +
+    '<div class="tp-field-row tp-field-section-row" data-type="section" data-section="bundleOptions" tabindex="0">' +
+      '<div class="tp-field-label">Bundle Options</div>' +
+      '<div class="tp-field-value">' + indicator + '</div>' +
+    '</div>';
 }
 
 /**

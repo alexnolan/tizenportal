@@ -331,6 +331,17 @@ function getSectionDefaults() {
   }
   return defaults;
 }
+function ensureSectionState() {
+  if (!prefsState.sectionCollapsed) {
+    prefsState.sectionCollapsed = {};
+  }
+  for (var i = 0; i < SECTION_DEFS.length; i++) {
+    var id = SECTION_DEFS[i].id;
+    if (!prefsState.sectionCollapsed.hasOwnProperty(id)) {
+      prefsState.sectionCollapsed[id] = SECTION_DEFS[i].defaultCollapsed;
+    }
+  }
+}
 
 /**
  * Get default features configuration
@@ -387,6 +398,7 @@ function getVisibleRows() {
 }
 
 function getVisibleRowsWithSections() {
+  ensureSectionState();
   var rows = getVisibleRows();
   var grouped = {};
 
@@ -422,6 +434,7 @@ function renderPreferencesUI() {
   var container = document.getElementById('tp-prefs-rows');
   if (!container) return;
 
+  ensureSectionState();
   var visibleRows = getVisibleRowsWithSections();
   var html = '';
 

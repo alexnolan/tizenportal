@@ -237,7 +237,9 @@ function hasCustomUserscripts(scripts) {
 
 function maybeSeedSandboxUserscripts(bundleName) {
   if (!state.card || bundleName !== 'userscript-sandbox') return;
-  ensureUserscriptsInitialized();
+  if (!Array.isArray(state.card.userscripts)) {
+    state.card.userscripts = normalizeUserscripts([]);
+  }
 
   if (hasCustomUserscripts(state.card.userscripts)) return;
 

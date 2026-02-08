@@ -13,6 +13,12 @@ export var bundles = {
   'default': defaultBundle
 };
 
+export var bundleMeta = {
+  'adblock': { jsBytes: 30563, cssBytes: 7880 },
+  'audiobookshelf': { jsBytes: 62092, cssBytes: 80789 },
+  'default': { jsBytes: 2150, cssBytes: 119 }
+};
+
 export var bundleNames = Object.keys(bundles);
 
 export default bundles;

@@ -4,7 +4,7 @@
  * Manages bundle registration and lookup.
  */
 
-import { bundles as generatedBundles } from './registry.generated.js';
+import { bundles as generatedBundles, bundleMeta as generatedBundleMeta } from './registry.generated.js';
 
 /**
  * Registered bundles (feature bundles only, no default)
@@ -65,10 +65,13 @@ export function getBundleNames() {
 export function getFeatureBundles() {
   return Object.keys(bundles).map(function(key) {
     var bundle = bundles[key];
+    var meta = (generatedBundleMeta && generatedBundleMeta[key]) || {};
     return {
       name: key,
       displayName: bundle.displayName || key,
       description: bundle.description || 'No description available',
+      jsBytes: meta.jsBytes || 0,
+      cssBytes: meta.cssBytes || 0,
     };
   });
 }

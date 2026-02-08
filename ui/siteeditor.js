@@ -779,10 +779,16 @@ function formatBytes(bytes) {
   return mb.toFixed(1) + ' MB';
 }
 
-function getBundleCssSizeLabel(bundleName) {
-  var bundle = getBundle(bundleName);
-  if (!bundle || !bundle.style) return '';
-  return 'CSS: ' + formatBytes(bundle.style.length);
+function getBundleSizeLabel(bundle) {
+  if (!bundle) return '';
+  var parts = [];
+  if (bundle.cssBytes && bundle.cssBytes > 0) {
+    parts.push('CSS: ' + formatBytes(bundle.cssBytes));
+  }
+  if (bundle.jsBytes && bundle.jsBytes > 0) {
+    parts.push('JS: ' + formatBytes(bundle.jsBytes));
+  }
+  return parts.join(' • ');
 }
 
 function renderBundleField(field, value) {
@@ -810,7 +816,7 @@ function renderBundleField(field, value) {
     var isSelected = bundleName === value;
     var displayName = bundle.displayName || bundleName;
     var description = bundle.description || 'No description';
-    var sizeLabel = getBundleCssSizeLabel(bundleName);
+    var sizeLabel = getBundleSizeLabel(bundle);
     
     html += '' +
       '<div class="tp-bundle-option' + (isSelected ? ' selected' : '') + '" data-bundle="' + bundleName + '" tabindex="0">' +

@@ -11,6 +11,14 @@ import path from 'path';
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 const VERSION = pkg.version;
 
+function getFileSize(filePath) {
+  try {
+    return statSync(filePath).size;
+  } catch (err) {
+    return 0;
+  }
+}
+
 function generateBundleRegistry() {
   var bundlesDir = path.resolve('bundles');
   var outputFile = path.join(bundlesDir, 'registry.generated.js');
@@ -47,19 +55,27 @@ function generateBundleRegistry() {
   lines.push('');
 
   var bundleMap = [];
+  var bundleMeta = [];
   for (var j = 0; j < bundleDirs.length; j++) {
     var name = bundleDirs[j];
     var varName = name.replace(/[^a-zA-Z0-9_$]/g, '_');
     if (varName === 'default') {
       varName = 'defaultBundle';
     }
+    var mainSize = getFileSize(path.join(bundlesDir, name, 'main.js'));
+    var cssSize = getFileSize(path.join(bundlesDir, name, 'style.css'));
     lines.push("import " + varName + " from './" + name + "/main.js';");
     bundleMap.push("  '" + name + "': " + varName);
+    bundleMeta.push("  '" + name + "': { jsBytes: " + mainSize + ", cssBytes: " + cssSize + " }");
   }
 
   lines.push('');
   lines.push('export var bundles = {');
   lines.push(bundleMap.join(',\n'));
+  lines.push('};');
+  lines.push('');
+  lines.push('export var bundleMeta = {');
+  lines.push(bundleMeta.join(',\n'));
   lines.push('};');
   lines.push('');
   lines.push('export var bundleNames = Object.keys(bundles);');

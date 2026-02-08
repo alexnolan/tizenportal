@@ -118,6 +118,7 @@ const state = {
  * Bundle matcher registry (used when payload is stripped)
  */
 var bundleMatchers = [];
+var builtInMatchersRegistered = false;
 
 /**
  * Persist last matched card for cross-site navigation
@@ -452,6 +453,31 @@ function registerBundleMatcher(matcher) {
   bundleMatchers.push(matcher);
 }
 
+function registerBuiltInMatchers() {
+  if (builtInMatchersRegistered) return;
+  builtInMatchersRegistered = true;
+
+  // Audiobookshelf matcher (used when payload is missing)
+  registerBundleMatcher({
+    bundleName: 'audiobookshelf',
+    titleContains: ['audiobookshelf'],
+    selectors: ['#siderail-buttons-container', '#appbar', '#mediaPlayerContainer'],
+    match: function() {
+      try {
+        var loc = window.location || {};
+        var port = loc.port || '';
+        if (port === '13378') return true;
+        var host = loc.host || '';
+        if (host.indexOf(':13378') !== -1) return true;
+        var href = loc.href || '';
+        return href.indexOf(':13378') !== -1;
+      } catch (e) {
+        return false;
+      }
+    }
+  });
+}
+
 function matchBundleFromRegistry() {
   for (var i = 0; i < bundleMatchers.length; i++) {
     var matcher = bundleMatchers[i];
@@ -530,6 +556,9 @@ async function init() {
     // Step 6: Initialize input handler
     initInputHandler();
     log('Input handler initialized');
+
+    // Register built-in matchers for payload-less detection
+    registerBuiltInMatchers();
 
     if (state.isPortalPage) {
       // Portal-specific initialization

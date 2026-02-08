@@ -1,9 +1,9 @@
-import { string } from 'rollup-plugin-string';
 import terser from '@rollup/plugin-terser';
 import babel from '@rollup/plugin-babel';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import replace from '@rollup/plugin-replace';
+import CleanCSS from 'clean-css';
 import { readFileSync, readdirSync, statSync, writeFileSync, existsSync } from 'fs';
 import path from 'path';
 
@@ -74,6 +74,31 @@ function generateBundleRegistry() {
   }
 }
 
+// CSS minifier for bundle styles (keeps output as JS string)
+const cssMinifier = new CleanCSS({ level: 2 });
+const cssMinifyPlugin = {
+  name: 'css-minify',
+  transform: function(code, id) {
+    if (!id || id.indexOf('.css') === -1) return null;
+    try {
+      var output = cssMinifier.minify(code);
+      if (output.errors && output.errors.length) {
+        console.warn('CSS minify errors in ' + id + ': ' + output.errors.join('; '));
+      }
+      return {
+        code: 'export default ' + JSON.stringify(output.styles || '') + ';',
+        map: { mappings: '' },
+      };
+    } catch (err) {
+      console.warn('CSS minify failed for ' + id + ': ' + err.message);
+      return {
+        code: 'export default ' + JSON.stringify(code) + ';',
+        map: { mappings: '' },
+      };
+    }
+  },
+};
+
 // Shared plugins
 const plugins = [
   // Generate bundle registry from bundles/ folder at build time
@@ -91,10 +116,8 @@ const plugins = [
     },
   }),
 
-  // Import CSS files as strings
-  string({
-    include: '**/*.css',
-  }),
+  // Minify CSS and import as strings
+  cssMinifyPlugin,
 
   // Resolve imports from node_modules
   nodeResolve({

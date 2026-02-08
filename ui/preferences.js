@@ -140,6 +140,7 @@ var SECTION_DEFS = [
   { id: 'appearance', label: 'Appearance', defaultCollapsed: false },
   { id: 'portal', label: 'Portal', defaultCollapsed: false },
   { id: 'features', label: 'Site Features', defaultCollapsed: true },
+  { id: 'userscripts', label: 'User Scripts', defaultCollapsed: true },
 ];
 
 /**
@@ -275,6 +276,7 @@ export function showPreferences() {
   prefsState.settings = {
     portalConfig: TizenPortal.config.get('tp_portal') || getDefaultPortalConfig(),
     featuresConfig: TizenPortal.config.get('tp_features') || getDefaultFeaturesConfig(),
+    userscriptsConfig: TizenPortal.config.get('tp_userscripts') || getDefaultUserscriptsConfig(),
   };
 
   // Normalize theme value if needed
@@ -295,6 +297,7 @@ export function showPreferences() {
   prefsState.active = true;
 
   prefsState.sectionCollapsed = getSectionDefaults();
+  ensureUserscriptsConfig();
   if (window.TizenPortal && window.TizenPortal.updatePortalHints) {
     window.TizenPortal.updatePortalHints();
   }
@@ -364,6 +367,60 @@ function getDefaultFeaturesConfig() {
   };
 }
 
+function createDefaultUserscript(index) {
+  return {
+    id: 'us-' + Date.now() + '-' + Math.floor(Math.random() * 100000),
+    name: 'Custom Script ' + index,
+    enabled: false,
+    url: '',
+    inline: '',
+    cached: '',
+    lastFetched: 0,
+  };
+}
+
+function normalizeUserscripts(list) {
+  var scripts = Array.isArray(list) ? list : [];
+  var normalized = [];
+
+  for (var i = 0; i < scripts.length; i++) {
+    var entry = scripts[i] || {};
+    normalized.push({
+      id: entry.id || ('us-' + Date.now() + '-' + Math.floor(Math.random() * 100000)),
+      name: entry.name || 'Custom Script ' + (i + 1),
+      enabled: entry.enabled === true,
+      url: typeof entry.url === 'string' ? entry.url : '',
+      inline: typeof entry.inline === 'string' ? entry.inline : '',
+      cached: typeof entry.cached === 'string' ? entry.cached : '',
+      lastFetched: typeof entry.lastFetched === 'number' ? entry.lastFetched : 0,
+    });
+  }
+
+  if (!normalized.length) {
+    normalized.push(createDefaultUserscript(1));
+  }
+
+  return normalized;
+}
+
+function getDefaultUserscriptsConfig() {
+  return {
+    scripts: [createDefaultUserscript(1)],
+  };
+}
+
+function ensureUserscriptsConfig() {
+  if (!prefsState.settings.userscriptsConfig || typeof prefsState.settings.userscriptsConfig !== 'object') {
+    prefsState.settings.userscriptsConfig = getDefaultUserscriptsConfig();
+  }
+
+  if (!Array.isArray(prefsState.settings.userscriptsConfig.scripts)) {
+    prefsState.settings.userscriptsConfig.scripts = [];
+  }
+
+  prefsState.settings.userscriptsConfig.scripts = normalizeUserscripts(prefsState.settings.userscriptsConfig.scripts);
+}
+
 /**
  * Get visible preference rows based on current theme setting
  */
@@ -401,6 +458,7 @@ function getVisibleRows() {
 
 function getVisibleRowsWithSections() {
   ensureSectionState();
+  ensureUserscriptsConfig();
   var rows = getVisibleRows();
   var grouped = {};
 
@@ -410,6 +468,8 @@ function getVisibleRowsWithSections() {
     if (!grouped[section]) grouped[section] = [];
     grouped[section].push(row);
   }
+
+  grouped.userscripts = buildUserscriptRows();
 
   var ordered = [];
   for (var j = 0; j < SECTION_DEFS.length; j++) {
@@ -427,6 +487,27 @@ function getVisibleRowsWithSections() {
   }
 
   return ordered;
+}
+
+function buildUserscriptRows() {
+  ensureUserscriptsConfig();
+  var rows = [];
+  var scripts = prefsState.settings.userscriptsConfig.scripts || [];
+  var canRemove = scripts.length > 1;
+
+  for (var i = 0; i < scripts.length; i++) {
+    rows.push({ type: 'userscript-name', scriptIndex: i, label: 'Script ' + (i + 1) + ' Name' });
+    rows.push({ type: 'userscript-enabled', scriptIndex: i, label: 'Script ' + (i + 1) + ' Enabled' });
+    rows.push({ type: 'userscript-url', scriptIndex: i, label: 'Script ' + (i + 1) + ' URL' });
+    rows.push({ type: 'userscript-inline', scriptIndex: i, label: 'Script ' + (i + 1) + ' Inline' });
+    rows.push({ type: 'userscript-refresh', scriptIndex: i, label: 'Refresh Script ' + (i + 1) + ' URL' });
+    if (canRemove) {
+      rows.push({ type: 'userscript-remove', scriptIndex: i, label: 'Remove Script ' + (i + 1) });
+    }
+  }
+
+  rows.push({ type: 'userscript-add', label: 'Add Script' });
+  return rows;
 }
 
 /**
@@ -450,6 +531,8 @@ function renderPreferencesUI() {
           '<div class="tp-prefs-label">' + row.label + '</div>' +
           '<div class="tp-prefs-value">' + indicator + '</div>' +
         '</div>';
+    } else if (row.type && row.type.indexOf('userscript-') === 0) {
+      html += renderUserscriptRow(row, i);
     } else {
       var value = getValue(row);
       var displayValue = formatDisplayValue(row, value);
@@ -470,6 +553,15 @@ function renderPreferencesUI() {
       activatePreferenceRow(this);
     });
   }
+}
+
+function renderUserscriptRow(row, index) {
+  var info = getUserscriptRowDisplay(row);
+  return '' +
+    '<div class="tp-prefs-row tp-prefs-userscript-row" data-index="' + index + '" data-type="' + row.type + '" data-script-index="' + (row.scriptIndex != null ? row.scriptIndex : '') + '" tabindex="0">' +
+      '<div class="tp-prefs-label">' + row.label + '</div>' +
+      '<div class="tp-prefs-value">' + info + '</div>' +
+    '</div>';
 }
 
 /**
@@ -510,6 +602,33 @@ function formatDisplayValue(row, value) {
   }
   // Text field
   return value || '(not set)';
+}
+
+function getUserscriptRowDisplay(row) {
+  ensureUserscriptsConfig();
+  var scripts = prefsState.settings.userscriptsConfig.scripts || [];
+  var idx = row.scriptIndex || 0;
+  var script = scripts[idx] || {};
+
+  if (row.type === 'userscript-name') {
+    return script.name || ('Custom Script ' + (idx + 1));
+  }
+  if (row.type === 'userscript-enabled') {
+    return script.enabled ? '✓ On' : '○ Off';
+  }
+  if (row.type === 'userscript-url') {
+    var url = script.url || '';
+    var suffix = script.cached ? ' (saved)' : '';
+    return (url || '(not set)') + suffix;
+  }
+  if (row.type === 'userscript-inline') {
+    return script.inline ? 'Inline Script (saved)' : '(not set)';
+  }
+  if (row.type === 'userscript-refresh') return '↻';
+  if (row.type === 'userscript-remove') return '🗑';
+  if (row.type === 'userscript-add') return '＋';
+
+  return '';
 }
 
 /**
@@ -572,6 +691,11 @@ function activatePreferenceRow(rowEl) {
     return;
   }
 
+  if (row.type && row.type.indexOf('userscript-') === 0) {
+    handleUserscriptPreferenceRow(row, index);
+    return;
+  }
+
   console.log('TizenPortal: Activate preference row:', row.id, 'type:', row.type);
 
   if (row.type === 'toggle') {
@@ -590,6 +714,93 @@ function activatePreferenceRow(rowEl) {
   } else if (row.type === 'color') {
     // Show color input prompt
     showColorInputPrompt(row, index);
+  }
+}
+
+function handleUserscriptPreferenceRow(row, index) {
+  ensureUserscriptsConfig();
+  var scripts = prefsState.settings.userscriptsConfig.scripts || [];
+  var scriptIndex = row.scriptIndex || 0;
+  var script = scripts[scriptIndex];
+
+  if (row.type === 'userscript-add') {
+    scripts.push(createDefaultUserscript(scripts.length + 1));
+    renderPreferencesUI();
+    focusPreferencesRow(index);
+    savePreferencesAuto('userscript:add');
+    return;
+  }
+
+  if (!script) return;
+
+  if (row.type === 'userscript-remove') {
+    if (scripts.length <= 1) return;
+    scripts.splice(scriptIndex, 1);
+    renderPreferencesUI();
+    focusPreferencesRow(index);
+    savePreferencesAuto('userscript:remove');
+    return;
+  }
+
+  if (row.type === 'userscript-enabled') {
+    script.enabled = !script.enabled;
+    renderPreferencesUI();
+    focusPreferencesRow(index);
+    savePreferencesAuto('userscript:enabled');
+    return;
+  }
+
+  if (row.type === 'userscript-name') {
+    var newName = prompt('Script Name:', script.name || '');
+    if (newName !== null) {
+      script.name = newName;
+      renderPreferencesUI();
+      focusPreferencesRow(index);
+      savePreferencesAuto('userscript:name');
+    }
+    return;
+  }
+
+  if (row.type === 'userscript-url') {
+    var newUrl = prompt('Script URL:', script.url || '');
+    if (newUrl !== null) {
+      if (newUrl) {
+        if (!isValidHttpUrl(newUrl)) {
+          if (window.TizenPortal && window.TizenPortal.showToast) {
+            TizenPortal.showToast('Invalid URL');
+          }
+          return;
+        }
+        script.url = newUrl;
+        renderPreferencesUI();
+        focusPreferencesRow(index);
+        savePreferencesAuto('userscript:url');
+        fetchUserscriptUrl(scriptIndex, index);
+      } else {
+        script.url = '';
+        script.cached = '';
+        script.lastFetched = 0;
+        renderPreferencesUI();
+        focusPreferencesRow(index);
+        savePreferencesAuto('userscript:url');
+      }
+    }
+    return;
+  }
+
+  if (row.type === 'userscript-inline') {
+    var newInline = prompt('Inline Script:', script.inline || '');
+    if (newInline !== null) {
+      script.inline = newInline;
+      renderPreferencesUI();
+      focusPreferencesRow(index);
+      savePreferencesAuto('userscript:inline');
+    }
+    return;
+  }
+
+  if (row.type === 'userscript-refresh') {
+    fetchUserscriptUrl(scriptIndex, index);
   }
 }
 
@@ -655,6 +866,48 @@ function showTextInputPrompt(row, index) {
   }
 }
 
+function fetchUserscriptUrl(scriptIndex, focusIndex) {
+  ensureUserscriptsConfig();
+  var scripts = prefsState.settings.userscriptsConfig.scripts || [];
+  var script = scripts[scriptIndex];
+  if (!script) return;
+
+  if (!script.url || !isValidHttpUrl(script.url)) {
+    if (window.TizenPortal && window.TizenPortal.showToast) {
+      TizenPortal.showToast('Invalid URL');
+    }
+    return;
+  }
+
+  try {
+    if (window.TizenPortal && window.TizenPortal.showToast) {
+      TizenPortal.showToast('Fetching script...');
+    }
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', script.url, true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          script.cached = xhr.responseText || '';
+          script.lastFetched = Date.now();
+          renderPreferencesUI();
+          if (typeof focusIndex === 'number') {
+            focusPreferencesRow(focusIndex);
+          }
+          savePreferencesAuto('userscript:cached');
+        } else if (window.TizenPortal && window.TizenPortal.showToast) {
+          TizenPortal.showToast('Failed to fetch script');
+        }
+      }
+    };
+    xhr.send();
+  } catch (err) {
+    if (window.TizenPortal && window.TizenPortal.showToast) {
+      TizenPortal.showToast('Failed to fetch script');
+    }
+  }
+}
+
 /**
  * Close preferences
  */
@@ -699,6 +952,9 @@ function savePreferencesAuto(reason) {
 
   // Save features config
   TizenPortal.config.set('tp_features', prefsState.settings.featuresConfig);
+
+  // Save userscripts config
+  TizenPortal.config.set('tp_userscripts', prefsState.settings.userscriptsConfig);
 
   // Apply portal preferences immediately
   applyPortalPreferences(prefsState.settings.portalConfig);

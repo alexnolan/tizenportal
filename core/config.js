@@ -43,6 +43,21 @@ var DEFAULT_CONFIG = {
     viewportMode: 'locked',
     uaMode: 'tizen',
   },
+
+  // Global user scripts
+  tp_userscripts: {
+    scripts: [
+      {
+        id: null,
+        name: 'Custom Script 1',
+        enabled: false,
+        url: '',
+        inline: '',
+        cached: '',
+        lastFetched: 0,
+      }
+    ]
+  },
 };
 
 /**

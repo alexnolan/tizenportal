@@ -34,6 +34,42 @@ function generateId() {
   return result.join('-');
 }
 
+function createDefaultUserscript(index) {
+  return {
+    id: generateId(),
+    name: 'Custom Script ' + index,
+    enabled: false,
+    url: '',
+    inline: '',
+    cached: '',
+    lastFetched: 0,
+  };
+}
+
+function normalizeUserscripts(userscripts) {
+  var list = Array.isArray(userscripts) ? userscripts : [];
+  var normalized = [];
+
+  for (var i = 0; i < list.length; i++) {
+    var entry = list[i] || {};
+    normalized.push({
+      id: entry.id || generateId(),
+      name: entry.name || 'Custom Script ' + (i + 1),
+      enabled: entry.enabled === true,
+      url: typeof entry.url === 'string' ? entry.url : '',
+      inline: typeof entry.inline === 'string' ? entry.inline : '',
+      cached: typeof entry.cached === 'string' ? entry.cached : '',
+      lastFetched: typeof entry.lastFetched === 'number' ? entry.lastFetched : 0,
+    });
+  }
+
+  if (!normalized.length) {
+    normalized.push(createDefaultUserscript(1));
+  }
+
+  return normalized;
+}
+
 /**
  * Load cards from localStorage
  * @returns {Array}
@@ -132,6 +168,17 @@ function loadCards() {
           needsSave = true;
         }
 
+        if (!card.hasOwnProperty('userscripts') || !Array.isArray(card.userscripts)) {
+          card.userscripts = normalizeUserscripts(card.userscripts);
+          needsSave = true;
+        } else {
+          var normalizedScripts = normalizeUserscripts(card.userscripts);
+          if (normalizedScripts.length !== card.userscripts.length) {
+            card.userscripts = normalizedScripts;
+            needsSave = true;
+          }
+        }
+
         // Ensure bundle options storage exists
         if (!card.hasOwnProperty('bundleOptions') || typeof card.bundleOptions !== 'object' || card.bundleOptions === null) {
           card.bundleOptions = {};
@@ -209,6 +256,7 @@ export function addCard(cardData) {
     icon: cardData.icon || null,
     bundleOptions: cardData.bundleOptions || {},
     bundleOptionData: cardData.bundleOptionData || {},
+    userscripts: normalizeUserscripts(cardData.userscripts || []),
     order: cards.length,
     createdAt: Date.now(),
     updatedAt: Date.now(),

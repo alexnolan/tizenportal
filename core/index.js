@@ -55,6 +55,7 @@ import { loadBundle, unloadBundle, getActiveBundle, getActiveBundleName, handleB
 import { getBundleNames, getBundle } from '../bundles/registry.js';
 import { isValidHttpUrl, sanitizeCss } from './utils.js';
 import featureLoader from '../features/index.js';
+import userscriptEngine from '../features/userscripts.js';
 import { 
   registerCards, unregisterCards, clearRegistrations, getRegistrations,
   processCards, initCards, shutdownCards 
@@ -333,6 +334,8 @@ function saveLastCard(card) {
       icon: card.icon || null,
       bundleOptions: card.bundleOptions || {},
       bundleOptionData: card.bundleOptionData || {},
+      userscripts: card.userscripts || [],
+      globalUserscripts: userscriptEngine.getGlobalUserscriptsForPayload(),
     };
     var json = JSON.stringify(payload);
     sessionStorage.setItem(LAST_CARD_KEY, json);
@@ -872,6 +875,8 @@ function getCardFromHash() {
       wrapTextInputs: payload.hasOwnProperty('wrapTextInputs') ? payload.wrapTextInputs : null,
       bundleOptions: payload.bundleOptions || {},
       bundleOptionData: payload.bundleOptionData || {},
+      userscripts: payload.userscripts || [],
+      globalUserscripts: payload.globalUserscripts || [],
       // Store raw payload for CSS/JS injection
       _payload: payload
     };
@@ -935,6 +940,14 @@ function normalizePayload(payload) {
     normalized.bundleOptionData = payload.bundleOptionData;
   }
 
+  if (payload.userscripts && Array.isArray(payload.userscripts)) {
+    normalized.userscripts = payload.userscripts;
+  }
+
+  if (payload.globalUserscripts && Array.isArray(payload.globalUserscripts)) {
+    normalized.globalUserscripts = payload.globalUserscripts;
+  }
+
   return normalized;
 }
 
@@ -977,6 +990,8 @@ function getCardFromQuery() {
       wrapTextInputs: payload.hasOwnProperty('wrapTextInputs') ? payload.wrapTextInputs : null,
       bundleOptions: payload.bundleOptions || {},
       bundleOptionData: payload.bundleOptionData || {},
+      userscripts: payload.userscripts || [],
+      globalUserscripts: payload.globalUserscripts || [],
       _payload: payload
     };
 
@@ -1202,6 +1217,12 @@ async function applyBundleToPage(card) {
   } catch (e) {
     error('onActivate error: ' + e.message);
     tpHud('onActivate ERROR: ' + e.message);
+  }
+
+  try {
+    userscriptEngine.applyUserscripts(card, bundle);
+  } catch (e2) {
+    error('Userscripts error: ' + e2.message);
   }
   
   // Initialize card registration system
@@ -1667,7 +1688,9 @@ function loadSite(card) {
       viewportMode: card.hasOwnProperty('viewportMode') ? card.viewportMode : null,
       focusOutlineMode: card.hasOwnProperty('focusOutlineMode') ? card.focusOutlineMode : null,
       bundleOptions: card.bundleOptions || {},
-      bundleOptionData: card.bundleOptionData || {}
+      bundleOptionData: card.bundleOptionData || {},
+      userscripts: userscriptEngine.getCardUserscriptsForPayload(card),
+      globalUserscripts: userscriptEngine.getGlobalUserscriptsForPayload(),
     };
     
     // NOTE: Do NOT embed bundle CSS in the URL payload.
@@ -1868,6 +1891,14 @@ var TizenPortalAPI = {
     list: getBundleNames,
     getActive: getActiveBundle,
     getActiveName: getActiveBundleName,
+  },
+
+  // Userscript engine
+  userscripts: {
+    getConfig: userscriptEngine.getUserscriptsConfig,
+    setConfig: userscriptEngine.setUserscriptsConfig,
+    apply: userscriptEngine.applyUserscripts,
+    clear: userscriptEngine.clearUserscripts,
   },
 
   // UI helpers

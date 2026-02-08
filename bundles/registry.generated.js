@@ -6,17 +6,20 @@
 import adblock from './adblock/main.js';
 import audiobookshelf from './audiobookshelf/main.js';
 import defaultBundle from './default/main.js';
+import userscript_sandbox from './userscript-sandbox/main.js';
 
 export var bundles = {
   'adblock': adblock,
   'audiobookshelf': audiobookshelf,
-  'default': defaultBundle
+  'default': defaultBundle,
+  'userscript-sandbox': userscript_sandbox
 };
 
 export var bundleMeta = {
   'adblock': { jsBytes: 30563, cssBytes: 7880 },
   'audiobookshelf': { jsBytes: 62538, cssBytes: 80789 },
-  'default': { jsBytes: 2150, cssBytes: 119 }
+  'default': { jsBytes: 2150, cssBytes: 119 },
+  'userscript-sandbox': { jsBytes: 619, cssBytes: 46 }
 };
 
 export var bundleNames = Object.keys(bundles);

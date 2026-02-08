@@ -5,6 +5,7 @@
  */
 
 import { getBundle, getBundleNames } from '../bundles/registry.js';
+import userscriptEngine from '../features/userscripts.js';
 
 /**
  * Currently active bundle instance
@@ -45,6 +46,12 @@ export async function unloadBundle() {
     }
   } catch (err) {
     console.error('TizenPortal Loader: Error in onDeactivate:', err.message);
+  }
+
+  try {
+    userscriptEngine.clearUserscripts();
+  } catch (err2) {
+    console.warn('TizenPortal Loader: Failed to clear userscripts:', err2.message);
   }
 
   // Clear state

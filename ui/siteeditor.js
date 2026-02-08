@@ -8,7 +8,7 @@
 import { addCard, updateCard, deleteCard, getCards } from './cards.js';
 import { getFeatureBundles, getBundle } from '../bundles/registry.js';
 import { refreshPortal } from './modal.js';
-import { escapeHtml, sanitizeUrl } from '../core/utils.js';
+import { escapeHtml, sanitizeUrl, isValidHttpUrl } from '../core/utils.js';
 
 /**
  * Editor state
@@ -78,12 +78,31 @@ var SECTION_DEFS = [
   { id: 'details', label: 'Site Details', defaultCollapsed: false },
   { id: 'options', label: 'Site Options', defaultCollapsed: true },
   { id: 'bundleOptions', label: 'Bundle Options', defaultCollapsed: true },
+  { id: 'userscripts', label: 'User Scripts', defaultCollapsed: true },
 ];
 
 var sectionCollapsed = {
   details: false,
   options: true,
 };
+
+var SANDBOX_SAMPLE_SCRIPTS = [
+  {
+    name: 'TV Readability Booster',
+    enabled: true,
+    inline: "(function(){var s=document.createElement('style');s.textContent='body,p,span,div,li,td,th,a,h1,h2,h3{font-size:clamp(18px,2.5vw,32px)!important;line-height:1.7!important}a{text-decoration:underline!important;outline:2px solid cyan!important}';document.head.appendChild(s)})();",
+  },
+  {
+    name: 'Auto Scroll (Slow)',
+    enabled: false,
+    inline: "(function(){var t=setInterval(function(){window.scrollBy(0,1);},50);window.addEventListener('keydown',function(e){if(e.keyCode===19||e.keyCode===415){clearInterval(t);}},{once:true});})();",
+  },
+  {
+    name: 'Dark Invert',
+    enabled: false,
+    inline: "(function(){var s=document.createElement('style');s.textContent='html{filter:invert(1) hue-rotate(180deg) !important;}img,video,canvas{filter:invert(1) hue-rotate(180deg) !important;}';document.head.appendChild(s)})();",
+  },
+];
 
 var FIELDS = [
   { name: 'name', label: 'Site Name', type: 'text', placeholder: 'My Site', required: true, section: 'details' },
@@ -101,6 +120,8 @@ var FIELDS = [
   { name: 'cssReset', label: 'CSS Normalization', type: 'select', options: FEATURE_TOGGLE_OPTIONS, section: 'options' },
   { name: 'hideScrollbars', label: 'Hide Scrollbars', type: 'select', options: FEATURE_TOGGLE_OPTIONS, section: 'options' },
   { name: 'wrapTextInputs', label: 'Protect Text Inputs (TV Keyboard)', type: 'select', options: FEATURE_TOGGLE_OPTIONS, section: 'options' },
+  { name: '__section_userscripts', label: 'User Scripts', type: 'section', sectionId: 'userscripts' },
+  { name: '__userscripts', label: 'User Scripts', type: 'userscripts', section: 'userscripts' },
 ];
 
 /**
@@ -149,6 +170,93 @@ function resetBundleOptionsForBundle(bundleName) {
     var opt = bundle.options[i];
     if (!opt || !opt.key) continue;
     state.card.bundleOptions[opt.key] = opt.hasOwnProperty('default') ? opt.default : null;
+  }
+
+  // Seed userscript sandbox samples when selecting the sandbox bundle
+  maybeSeedSandboxUserscripts(bundleName);
+}
+
+function createDefaultUserscript(index) {
+  return {
+    id: 'us-' + Date.now() + '-' + Math.floor(Math.random() * 100000),
+    name: 'Custom Script ' + index,
+    enabled: false,
+    url: '',
+    inline: '',
+    cached: '',
+    lastFetched: 0,
+  };
+}
+
+function normalizeUserscripts(list) {
+  var scripts = Array.isArray(list) ? list : [];
+  var normalized = [];
+
+  for (var i = 0; i < scripts.length; i++) {
+    var entry = scripts[i] || {};
+    normalized.push({
+      id: entry.id || ('us-' + Date.now() + '-' + Math.floor(Math.random() * 100000)),
+      name: entry.name || 'Custom Script ' + (i + 1),
+      enabled: entry.enabled === true,
+      url: typeof entry.url === 'string' ? entry.url : '',
+      inline: typeof entry.inline === 'string' ? entry.inline : '',
+      cached: typeof entry.cached === 'string' ? entry.cached : '',
+      lastFetched: typeof entry.lastFetched === 'number' ? entry.lastFetched : 0,
+    });
+  }
+
+  if (!normalized.length) {
+    normalized.push(createDefaultUserscript(1));
+  }
+
+  return normalized;
+}
+
+function ensureUserscriptsInitialized() {
+  if (!state.card) return;
+  if (!Array.isArray(state.card.userscripts)) {
+    state.card.userscripts = normalizeUserscripts([]);
+  } else {
+    state.card.userscripts = normalizeUserscripts(state.card.userscripts);
+  }
+
+  if (state.card.featureBundle === 'userscript-sandbox') {
+    maybeSeedSandboxUserscripts(state.card.featureBundle);
+  }
+}
+
+function hasCustomUserscripts(scripts) {
+  if (!Array.isArray(scripts)) return false;
+  if (scripts.length > 1) return true;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = scripts[i] || {};
+    if ((s.url && s.url.trim()) || (s.inline && s.inline.trim())) return true;
+  }
+  return false;
+}
+
+function maybeSeedSandboxUserscripts(bundleName) {
+  if (!state.card || bundleName !== 'userscript-sandbox') return;
+  ensureUserscriptsInitialized();
+
+  if (hasCustomUserscripts(state.card.userscripts)) return;
+
+  var seeded = [];
+  for (var i = 0; i < SANDBOX_SAMPLE_SCRIPTS.length; i++) {
+    var sample = SANDBOX_SAMPLE_SCRIPTS[i];
+    seeded.push({
+      id: 'us-' + Date.now() + '-' + Math.floor(Math.random() * 100000),
+      name: sample.name || ('Sample Script ' + (i + 1)),
+      enabled: sample.enabled === true,
+      url: sample.url || '',
+      inline: sample.inline || '',
+      cached: sample.cached || '',
+      lastFetched: 0,
+    });
+  }
+
+  if (seeded.length) {
+    state.card.userscripts = seeded;
   }
 }
 
@@ -391,6 +499,7 @@ export function showAddSiteEditor(onComplete) {
     icon: '',
     bundleOptions: {},
     bundleOptionData: {},
+    userscripts: normalizeUserscripts([]),
   };
   state.onComplete = onComplete;
   
@@ -430,6 +539,7 @@ export function showEditSiteEditor(card, onComplete) {
     icon: card.icon || '',
     bundleOptions: card.bundleOptions || {},
     bundleOptionData: card.bundleOptionData || {},
+    userscripts: normalizeUserscripts(card.userscripts || []),
   };
   state.onComplete = onComplete;
   
@@ -612,6 +722,7 @@ function autoSaveCard(reason) {
     icon: state.card.icon || null,
     bundleOptions: state.card.bundleOptions || {},
     bundleOptionData: state.card.bundleOptionData || {},
+    userscripts: state.card.userscripts || [],
   };
 
   // Use DOM mode - this is bulletproof
@@ -801,6 +912,7 @@ function renderFields() {
   }
 
   ensureSectionState();
+  ensureUserscriptsInitialized();
 
   var html = '';
 
@@ -822,6 +934,8 @@ function renderFields() {
       html += renderBundleField(field, value);
     } else if (field.type === 'select') {
       html += renderSelectField(field, rawValue);
+    } else if (field.type === 'userscripts') {
+      html += renderUserscriptsField();
     } else {
       html += renderTextField(field, value);
     }
@@ -1022,6 +1136,63 @@ function renderBundleOptionsHeader() {
     '</div>';
 }
 
+function renderUserscriptsField() {
+  ensureUserscriptsInitialized();
+
+  var html = '<div class="tp-field-section">';
+
+  var scripts = state.card.userscripts || [];
+  var canRemove = scripts.length > 1;
+
+  for (var i = 0; i < scripts.length; i++) {
+    var s = scripts[i] || {};
+    var indexLabel = (i + 1);
+    var nameValue = s.name || ('Custom Script ' + indexLabel);
+    var urlValue = s.url || '';
+    var inlineValue = s.inline || '';
+    var hasCached = !!(s.cached && s.cached.length);
+
+    html += '' +
+      '<div class="tp-field-row tp-userscript-row" data-userscript-id="' + s.id + '" data-userscript-field="name" tabindex="0">' +
+        '<div class="tp-field-label">Script ' + indexLabel + ' Name</div>' +
+        '<div class="tp-field-value">' + escapeHtml(nameValue) + '</div>' +
+      '</div>' +
+      '<div class="tp-field-row tp-userscript-row" data-userscript-id="' + s.id + '" data-userscript-field="enabled" tabindex="0">' +
+        '<div class="tp-field-label">Script ' + indexLabel + ' Enabled</div>' +
+        '<div class="tp-field-value">' + (s.enabled ? '✓ On' : '○ Off') + '</div>' +
+      '</div>' +
+      '<div class="tp-field-row tp-userscript-row" data-userscript-id="' + s.id + '" data-userscript-field="url" tabindex="0">' +
+        '<div class="tp-field-label">Script ' + indexLabel + ' URL</div>' +
+        '<div class="tp-field-value' + (!urlValue ? ' empty' : '') + '">' + escapeHtml(urlValue || '(not set)') + (hasCached ? ' (saved)' : '') + '</div>' +
+      '</div>' +
+      '<div class="tp-field-row tp-userscript-row" data-userscript-id="' + s.id + '" data-userscript-field="inline" tabindex="0">' +
+        '<div class="tp-field-label">Script ' + indexLabel + ' Inline</div>' +
+        '<div class="tp-field-value' + (!inlineValue ? ' empty' : '') + '">' + (inlineValue ? 'Inline Script (saved)' : '(not set)') + '</div>' +
+      '</div>' +
+      '<div class="tp-field-row tp-userscript-action" data-userscript-id="' + s.id + '" data-userscript-action="refresh" tabindex="0">' +
+        '<div class="tp-field-label">Refresh Script ' + indexLabel + ' URL</div>' +
+        '<div class="tp-field-value">↻</div>' +
+      '</div>';
+
+    if (canRemove) {
+      html += '' +
+        '<div class="tp-field-row tp-userscript-action" data-userscript-id="' + s.id + '" data-userscript-action="remove" tabindex="0">' +
+          '<div class="tp-field-label">Remove Script ' + indexLabel + '</div>' +
+          '<div class="tp-field-value">🗑</div>' +
+        '</div>';
+    }
+  }
+
+  html += '' +
+    '<div class="tp-field-row tp-userscript-action" data-userscript-action="add" tabindex="0">' +
+      '<div class="tp-field-label">Add Script</div>' +
+      '<div class="tp-field-value">＋</div>' +
+    '</div>';
+
+  html += '</div>';
+  return html;
+}
+
 /**
  * Render a single bundle option row
  */
@@ -1087,6 +1258,35 @@ function setupFieldListeners(container) {
         e.preventDefault();
         e.stopPropagation();
         activateBundleOptionInput(this);
+      }
+    });
+  }
+
+  // Userscript rows (handled separately)
+  var userscriptRows = container.querySelectorAll('.tp-userscript-row');
+  for (var u = 0; u < userscriptRows.length; u++) {
+    userscriptRows[u].addEventListener('click', function() {
+      activateUserscriptInput(this);
+    });
+    userscriptRows[u].addEventListener('keydown', function(e) {
+      if (e.keyCode === 13) {
+        e.preventDefault();
+        e.stopPropagation();
+        activateUserscriptInput(this);
+      }
+    });
+  }
+
+  var userscriptActions = container.querySelectorAll('.tp-userscript-action');
+  for (var ua = 0; ua < userscriptActions.length; ua++) {
+    userscriptActions[ua].addEventListener('click', function() {
+      handleUserscriptAction(this);
+    });
+    userscriptActions[ua].addEventListener('keydown', function(e) {
+      if (e.keyCode === 13) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleUserscriptAction(this);
       }
     });
   }
@@ -1180,6 +1380,106 @@ function activateBundleOptionInput(row) {
     showBundleOptionUrlPrompt(optionKey, option);
   } else {
     showBundleOptionTextPrompt(optionKey, option);
+  }
+}
+
+function getUserscriptById(scriptId) {
+  ensureUserscriptsInitialized();
+  var list = state.card.userscripts || [];
+  for (var i = 0; i < list.length; i++) {
+    if (list[i] && list[i].id === scriptId) {
+      return list[i];
+    }
+  }
+  return null;
+}
+
+function activateUserscriptInput(row) {
+  var scriptId = row.dataset.userscriptId;
+  var field = row.dataset.userscriptField || '';
+  var script = getUserscriptById(scriptId);
+  if (!script) return;
+
+  if (field === 'enabled') {
+    script.enabled = !script.enabled;
+    renderFields();
+    autoSaveCard('userscript:enabled');
+    return;
+  }
+
+  if (field === 'name') {
+    var newName = prompt('Script Name:', script.name || '');
+    if (newName !== null) {
+      script.name = newName;
+      renderFields();
+      autoSaveCard('userscript:name');
+    }
+    return;
+  }
+
+  if (field === 'url') {
+    var newUrl = prompt('Script URL:', script.url || '');
+    if (newUrl !== null) {
+      if (newUrl) {
+        newUrl = sanitizeUrl(newUrl);
+        if (!newUrl || !isValidHttpUrl(newUrl)) {
+          showEditorToast('Invalid URL');
+          return;
+        }
+        script.url = newUrl;
+        renderFields();
+        autoSaveCard('userscript:url');
+        fetchUserscriptUrl(scriptId);
+      } else {
+        script.url = '';
+        script.cached = '';
+        script.lastFetched = 0;
+        renderFields();
+        autoSaveCard('userscript:url');
+      }
+    }
+    return;
+  }
+
+  if (field === 'inline') {
+    var newInline = prompt('Inline Script:', script.inline || '');
+    if (newInline !== null) {
+      script.inline = newInline;
+      renderFields();
+      autoSaveCard('userscript:inline');
+    }
+  }
+}
+
+function handleUserscriptAction(row) {
+  var action = row.dataset.userscriptAction || '';
+  var scriptId = row.dataset.userscriptId || '';
+
+  if (action === 'add') {
+    ensureUserscriptsInitialized();
+    var nextIndex = (state.card.userscripts || []).length + 1;
+    state.card.userscripts.push(createDefaultUserscript(nextIndex));
+    renderFields();
+    autoSaveCard('userscript:add');
+    return;
+  }
+
+  if (action === 'remove') {
+    ensureUserscriptsInitialized();
+    if (state.card.userscripts.length <= 1) return;
+    for (var i = 0; i < state.card.userscripts.length; i++) {
+      if (state.card.userscripts[i].id === scriptId) {
+        state.card.userscripts.splice(i, 1);
+        break;
+      }
+    }
+    renderFields();
+    autoSaveCard('userscript:remove');
+    return;
+  }
+
+  if (action === 'refresh') {
+    fetchUserscriptUrl(scriptId);
   }
 }
 
@@ -1320,6 +1620,39 @@ function fetchBundleOptionUrl(optionKey, url) {
     xhr.send();
   } catch (err) {
     showEditorToast('Failed to fetch ' + optionKey);
+  }
+}
+
+function fetchUserscriptUrl(scriptId) {
+  var script = getUserscriptById(scriptId);
+  if (!script) return;
+
+  var url = (script.url || '').trim();
+  if (!url || !isValidHttpUrl(url)) {
+    showEditorToast('Invalid script URL');
+    return;
+  }
+
+  try {
+    showEditorToast('Fetching script...');
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          script.cached = xhr.responseText || '';
+          script.lastFetched = Date.now();
+          autoSaveCard('userscript:cached');
+          renderFields();
+          showEditorToast('Saved script data');
+        } else {
+          showEditorToast('Failed to fetch script');
+        }
+      }
+    };
+    xhr.send();
+  } catch (err) {
+    showEditorToast('Failed to fetch script');
   }
 }
 

@@ -770,6 +770,21 @@ function renderSelectField(field, value) {
 /**
  * Render the bundle field with visual options
  */
+function formatBytes(bytes) {
+  if (!bytes || bytes <= 0) return '0 B';
+  if (bytes < 1024) return bytes + ' B';
+  var kb = bytes / 1024;
+  if (kb < 1024) return kb.toFixed(1) + ' KB';
+  var mb = kb / 1024;
+  return mb.toFixed(1) + ' MB';
+}
+
+function getBundleCssSizeLabel(bundleName) {
+  var bundle = getBundle(bundleName);
+  if (!bundle || !bundle.style) return '';
+  return 'CSS: ' + formatBytes(bundle.style.length);
+}
+
 function renderBundleField(field, value) {
   var bundles = getFeatureBundles(); // Returns array of {name, displayName, description}
   
@@ -795,6 +810,7 @@ function renderBundleField(field, value) {
     var isSelected = bundleName === value;
     var displayName = bundle.displayName || bundleName;
     var description = bundle.description || 'No description';
+    var sizeLabel = getBundleCssSizeLabel(bundleName);
     
     html += '' +
       '<div class="tp-bundle-option' + (isSelected ? ' selected' : '') + '" data-bundle="' + bundleName + '" tabindex="0">' +
@@ -802,6 +818,7 @@ function renderBundleField(field, value) {
         '<div class="tp-bundle-info">' +
           '<div class="tp-bundle-name">' + escapeHtml(displayName) + '</div>' +
           '<div class="tp-bundle-desc">' + escapeHtml(description) + '</div>' +
+          (sizeLabel ? '<div class="tp-bundle-size">' + escapeHtml(sizeLabel) + '</div>' : '') +
         '</div>' +
       '</div>';
   }

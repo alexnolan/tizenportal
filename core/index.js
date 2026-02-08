@@ -441,6 +441,18 @@ function applyTextInputProtectionFromConfig(card) {
   }
 }
 
+function isAudiobookshelfSite() {
+  try {
+    var title = (document.title || '').toLowerCase();
+    if (title.indexOf('audiobookshelf') !== -1) return true;
+    if (document.querySelector('#siderail-buttons-container') && document.querySelector('#appbar')) return true;
+    if (document.querySelector('#mediaPlayerContainer')) return true;
+  } catch (err) {
+    // Ignore
+  }
+  return false;
+}
+
 /**
  * Check if we're on the portal page vs injected into a target site
  */
@@ -667,6 +679,18 @@ async function initTargetSite() {
     } else {
       log('Card localStorage: no match for ' + window.location.href);
     }
+  }
+
+  // Heuristic fallback for Audiobookshelf when payload is stripped
+  if (!matchedCard && isAudiobookshelfSite()) {
+    matchedCard = {
+      name: 'Audiobookshelf',
+      url: window.location.href,
+      featureBundle: 'audiobookshelf'
+    };
+    log('Heuristic bundle match: audiobookshelf');
+    tpHud('Card (heuristic): Audiobookshelf');
+    saveLastCard(matchedCard);
   }
   
   // Final fallback - create pseudo-card

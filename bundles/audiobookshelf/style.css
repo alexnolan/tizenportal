@@ -2347,9 +2347,7 @@ a[href]:focus:not(#appbar a):not([role="toolbar"] a):not([data-tp-card]) {
   font-size: 1.125rem !important;
 }
 
-/* ==========================================================================
-   SLEEP TIMER MODAL
-   ========================================================================== */
+/* Sleep timer modal */
 
 [class*="sleep-timer-modal"] button {
   min-height: 56px !important;
@@ -2363,9 +2361,7 @@ a[href]:focus:not(#appbar a):not([role="toolbar"] a):not([data-tp-card]) {
   outline-offset: 4px !important;
 }
 
-/* ==========================================================================
-   PLAYER QUEUE MODAL
-   ========================================================================== */
+/* Player queue modal */
 
 [class*="player-queue"] > div {
   padding: 12px 24px !important;
@@ -2379,10 +2375,7 @@ a[href]:focus:not(#appbar a):not([role="toolbar"] a):not([data-tp-card]) {
   background: rgba(26, 214, 145, 0.2) !important;
 }
 
-/* ==========================================================================
-   TV SPECIFIC RESPONSIVE ADJUSTMENTS
-   Force desktop layouts, never collapse to mobile
-   ========================================================================== */
+/* TV responsive: force desktop layouts */
 
 /* Force flex-row on all responsive containers */
 .flex-col.sm\\:flex-row,
@@ -2412,10 +2405,7 @@ a[href]:focus:not(#appbar a):not([role="toolbar"] a):not([data-tp-card]) {
 .flex.md\\:hidden {
   display: none !important;
 }
-/* ==========================================================================
-   TV NAVIGATION ENHANCEMENTS
-   Make focusable elements clearly visible and easy to navigate
-   ========================================================================== */
+/* TV navigation enhancements */
 
 /* Generic focusable item (set by JS) */
 [data-tp-focusable="true"] {

@@ -43,31 +43,21 @@ import {
   logViolations,
 } from '../../navigation/geometry.js';
 
-// ============================================================================
-// ABS-SPECIFIC CONFIGURATION
-// ============================================================================
+// ABS-specific configuration
 
 /**
- * CSS Selectors for Audiobookshelf's DOM structure
- * 
- * These selectors match ABS's Vue/Nuxt-generated HTML.
- * Update these when ABS changes its HTML structure.
- * 
+ * CSS selectors for ABS DOM (update when ABS HTML changes).
  * Reference: https://github.com/advplyr/audiobookshelf/tree/main/client
  */
 var SELECTORS = {
-  // ==========================================================================
-  // LAYOUT CONTAINERS
-  // ==========================================================================
+  // Layout containers
   appbar: '#appbar',
   siderail: '[role="toolbar"][aria-orientation="vertical"]',
   siderailNav: '#siderail-buttons-container a',
   bookshelfRow: '.bookshelfRow, .categorizedBookshelfRow',
   pageWrapper: '#page-wrapper, .page',
   
-  // ==========================================================================
-  // CARDS - Different types have different aspect ratios
-  // ==========================================================================
+  // Cards (different aspect ratios)
   // Book cards: 1:1 aspect ratio (square)
   bookCards: '[id^="book-card-"]',
   
@@ -86,19 +76,14 @@ var SELECTORS = {
   // All cards combined (for marking as focusable)
   allCards: '[id^="book-card-"], [id^="series-card-"], [id^="collection-card-"], [id^="playlist-card-"], .author-card',
   
-  // ==========================================================================
-  // LOGIN PAGE (/login)
-  // ==========================================================================
+  // Login page (/login)
   loginForm: 'form[action*="login"], form',
   loginUsername: 'input[name="username"], input[placeholder*="username" i]',
   loginPassword: 'input[type="password"]',
   loginSubmit: 'button[type="submit"], ui-btn[type="submit"]',
   loginOpenID: 'a[href*="/auth/openid"]',
   
-  // ==========================================================================
-  // BOOK/ITEM DETAIL PAGE (/item/_id)
-  // NOTE: Chrome 47 doesn't support :has() - use simpler selectors
-  // ==========================================================================
+  // Item detail page (/item/_id) - no :has() in Chrome 47
   itemDetailPage: '.page',
   itemCover: '.covers-book-cover, [class*="book-cover"]',
   itemTitle: 'h1',
@@ -108,10 +93,7 @@ var SELECTORS = {
   itemTabs: '[role="tablist"]',
   itemTabPanels: '[role="tabpanel"]',
   
-  // ==========================================================================
-  // PLAYER (bottom bar when playing)
-  // NOTE: Chrome 47 doesn't support :has() - use simpler selectors
-  // ==========================================================================
+  // Player (bottom bar) - no :has() in Chrome 47
   playerContainer: '#mediaPlayerContainer',
   playerCover: '#mediaPlayerContainer .covers-book-cover',
   playerTitle: '#mediaPlayerContainer a[href^="/item/"]',
@@ -122,19 +104,13 @@ var SELECTORS = {
   playerProgress: '#mediaPlayerContainer [class*="progress"], .player-progress-bar',
   playerChapters: '#mediaPlayerContainer [class*="chapter"]',
   
-  // ==========================================================================
-  // APPBAR (top navigation)
-  // NOTE: Chrome 47 doesn't support :has() - use simpler selectors
-  // ==========================================================================
+  // Appbar (top nav) - no :has() in Chrome 47
   appbarButtons: '#appbar button, #appbar a[href]',
   appbarSearch: '#appbar input[type="search"], #appbar input[placeholder*="Search"]',
   appbarLibrarySelect: '#appbar [class*="library-select"], #appbar button',
   appbarUserMenu: '#appbar [class*="user-menu"], #appbar a[href*="/account"]',
   
-  // ==========================================================================
-  // MODALS & DIALOGS
-  // NOTE: Chrome 47 doesn't support :has() - use simpler selectors
-  // ==========================================================================
+  // Modals/dialogs - no :has() in Chrome 47
   modal: '.modal, [role="dialog"]',
   modalClose: '.modal button[aria-label*="Close"], [role="dialog"] button',
   modalButtons: '.modal button, [role="dialog"] button',
@@ -165,17 +141,12 @@ var SELECTORS = {
   settingsInput: 'input, select, textarea',
   settingsButton: 'button[type="submit"], .ui-btn',
   
-  // ==========================================================================
-  // TEXT INPUTS TO WRAP (TV keyboard handling)
-  // ==========================================================================
+  // Text inputs to wrap (TV keyboard handling)
   textInputs: 'input[type="text"], input[type="search"], input[type="password"], input:not([type]), textarea',
 };
 
 /**
- * Initial focus targets by page type (tried in order)
- * 
- * These selectors are passed to setInitialFocus() from core.
- * The first matching element gets focus on page load.
+ * Initial focus targets by page type (in priority order).
  */
 var INITIAL_FOCUS_SELECTORS = {
   // Default (library/home page) - comprehensive list
@@ -261,9 +232,7 @@ function getInitialFocusSelectors() {
 }
 
 
-// ============================================================================
-// BUNDLE STATE
-// ============================================================================
+// Bundle state
 
 /** Track if bundle has been activated */
 var isActivated = false;
@@ -280,9 +249,7 @@ var lastUrl = '';
 /** Cleanup function for URL change detection */
 var stopUrlWatcher = null;
 
-// ============================================================================
-// BUNDLE EXPORT
-// ============================================================================
+// Bundle export
 
 export default {
   name: 'audiobookshelf',

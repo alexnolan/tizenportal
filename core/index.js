@@ -53,6 +53,7 @@ import { initDiagnostics, log, warn, error } from '../diagnostics/console.js';
 import { initDiagnosticsPanel, showDiagnosticsPanel, hideDiagnosticsPanel, toggleDiagnosticsPanel } from '../ui/diagnostics.js';
 import { loadBundle, unloadBundle, getActiveBundle, getActiveBundleName, handleBundleKeyDown, setActiveBundle } from './loader.js';
 import { getBundleNames, getBundle } from '../bundles/registry.js';
+import { isValidHttpUrl, sanitizeCss } from './utils.js';
 import featureLoader from '../features/index.js';
 import { 
   registerCards, unregisterCards, clearRegistrations, getRegistrations,
@@ -728,10 +729,14 @@ function getCardFromHash() {
     
     // Decode base64 JSON
     var decoded = decodeURIComponent(escape(atob(match[1])));
-    var payload = JSON.parse(decoded);
-    
+    var payload = normalizePayload(JSON.parse(decoded));
+    if (!payload) {
+      warn('Invalid payload from hash; ignoring');
+      return null;
+    }
+
     log('Decoded payload from hash: ' + JSON.stringify(payload));
-    
+
     // Convert payload to card format
     var card = {
       name: payload.cardName || 'Unknown Site',
@@ -761,6 +766,60 @@ function getCardFromHash() {
   }
 }
 
+function normalizePayload(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+
+  var normalized = {};
+  var bundleNames = getBundleNames ? getBundleNames() : [];
+
+  if (typeof payload.bundleName === 'string') {
+    if (bundleNames.indexOf(payload.bundleName) !== -1) {
+      normalized.bundleName = payload.bundleName;
+    } else {
+      normalized.bundleName = 'default';
+    }
+  }
+
+  if (typeof payload.cardName === 'string') {
+    normalized.cardName = payload.cardName;
+  }
+
+  if (typeof payload.ua === 'string') {
+    normalized.ua = payload.ua;
+  }
+
+  if (typeof payload.css === 'string') {
+    // Cap size to avoid pathological payloads
+    normalized.css = payload.css.length > 20000 ? payload.css.substring(0, 20000) : payload.css;
+  }
+
+  if (typeof payload.viewportMode === 'string') {
+    normalized.viewportMode = payload.viewportMode;
+  }
+
+  if (typeof payload.focusOutlineMode === 'string') {
+    normalized.focusOutlineMode = payload.focusOutlineMode;
+  }
+
+  if (typeof payload.tabindexInjection === 'boolean') normalized.tabindexInjection = payload.tabindexInjection;
+  if (typeof payload.scrollIntoView === 'boolean') normalized.scrollIntoView = payload.scrollIntoView;
+  if (typeof payload.safeArea === 'boolean') normalized.safeArea = payload.safeArea;
+  if (typeof payload.gpuHints === 'boolean') normalized.gpuHints = payload.gpuHints;
+  if (typeof payload.cssReset === 'boolean') normalized.cssReset = payload.cssReset;
+  if (typeof payload.hideScrollbars === 'boolean') normalized.hideScrollbars = payload.hideScrollbars;
+  if (typeof payload.wrapTextInputs === 'boolean') normalized.wrapTextInputs = payload.wrapTextInputs;
+
+  if (payload.bundleOptions && typeof payload.bundleOptions === 'object' && !Array.isArray(payload.bundleOptions)) {
+    normalized.bundleOptions = payload.bundleOptions;
+  }
+
+  if (payload.bundleOptionData && typeof payload.bundleOptionData === 'object' && !Array.isArray(payload.bundleOptionData)) {
+    normalized.bundleOptionData = payload.bundleOptionData;
+  }
+
+  return normalized;
+}
+
 /**
  * Extract card config from URL query string
  * Format: ?tp=BASE64(JSON) or &tp=BASE64(JSON)
@@ -776,7 +835,11 @@ function getCardFromQuery() {
     if (!match || !match[1]) return null;
 
     var decoded = decodeURIComponent(escape(atob(match[1])));
-    var payload = JSON.parse(decoded);
+    var payload = normalizePayload(JSON.parse(decoded));
+    if (!payload) {
+      warn('Invalid payload from query; ignoring');
+      return null;
+    }
 
     log('Decoded payload from query: ' + JSON.stringify(payload));
 
@@ -916,10 +979,15 @@ async function applyBundleToPage(card) {
   // Inject bundle CSS (bundles export as 'style' property)
   var cssContent = bundle.style || '';
   
-  // Also check for payload CSS from URL hash
+  // Also check for payload CSS from URL hash/query (untrusted)
   if (card._payload && card._payload.css) {
-    log('Adding payload CSS from URL hash');
-    cssContent += '\n\n/* Payload CSS */\n' + card._payload.css;
+    log('Adding payload CSS from URL payload');
+    var safeCss = sanitizeCss(card._payload.css);
+    if (safeCss) {
+      cssContent += '\n\n/* Payload CSS */\n' + safeCss;
+    } else {
+      warn('Payload CSS was empty after sanitization');
+    }
   }
   
   if (cssContent) {
@@ -1399,6 +1467,13 @@ function loadSite(card) {
     error('Cannot load site: invalid card');
     return;
   }
+
+  var trimmedUrl = (card.url || '').trim();
+  if (!isValidHttpUrl(trimmedUrl)) {
+    error('Cannot load site: invalid URL scheme: ' + card.url);
+    return;
+  }
+  card.url = trimmedUrl;
 
   log('Navigating to site: ' + card.url);
   var bundleName = card.featureBundle || 'default';

@@ -558,6 +558,9 @@ function renderPreferencesUI() {
       handleUserscriptButtonAction(this);
     });
     userscriptButtons[k].addEventListener('keydown', function(e) {
+      if (handleUserscriptPrefsButtonKeyDown(e, this)) {
+        return;
+      }
       if (e.keyCode === 13) {
         e.preventDefault();
         e.stopPropagation();
@@ -903,6 +906,7 @@ function handleUserscriptButtonAction(btn) {
     if (newName !== null) {
       script.name = newName;
       renderPreferencesUI();
+      focusUserscriptPrefButton(scriptIndex, action);
       savePreferencesAuto('userscript:name');
     }
     return;
@@ -911,6 +915,7 @@ function handleUserscriptButtonAction(btn) {
   if (action === 'toggle') {
     script.enabled = !script.enabled;
     renderPreferencesUI();
+    focusUserscriptPrefButton(scriptIndex, action);
     savePreferencesAuto('userscript:enabled');
     return;
   }
@@ -918,6 +923,7 @@ function handleUserscriptButtonAction(btn) {
   if (action === 'source') {
     script.source = script.source === 'url' ? 'inline' : 'url';
     renderPreferencesUI();
+    focusUserscriptPrefButton(scriptIndex, action);
     savePreferencesAuto('userscript:source');
     return;
   }
@@ -935,6 +941,7 @@ function handleUserscriptButtonAction(btn) {
           }
           script.url = newUrl;
           renderPreferencesUI();
+          focusUserscriptPrefButton(scriptIndex, action);
           savePreferencesAuto('userscript:url');
           fetchUserscriptUrl(scriptIndex, null);
         } else {
@@ -942,6 +949,7 @@ function handleUserscriptButtonAction(btn) {
           script.cached = '';
           script.lastFetched = 0;
           renderPreferencesUI();
+          focusUserscriptPrefButton(scriptIndex, action);
           savePreferencesAuto('userscript:url');
         }
       }
@@ -950,6 +958,7 @@ function handleUserscriptButtonAction(btn) {
       if (newInline !== null) {
         script.inline = newInline;
         renderPreferencesUI();
+        focusUserscriptPrefButton(scriptIndex, action);
         savePreferencesAuto('userscript:inline');
       }
     }
@@ -969,6 +978,62 @@ function handleUserscriptButtonAction(btn) {
     renderPreferencesUI();
     savePreferencesAuto('userscript:remove');
   }
+}
+
+function focusUserscriptPrefButton(scriptIndex, action) {
+  var selector = '.tp-userscript-btn[data-script-index="' + scriptIndex + '"]';
+  if (action) {
+    selector += '[data-userscript-action="' + action + '"]';
+  }
+  var btn = document.querySelector(selector);
+  if (btn) {
+    btn.focus();
+  }
+}
+
+function handleUserscriptPrefsButtonKeyDown(e, btn) {
+  if (!btn) return false;
+  var key = e.keyCode;
+
+  if (key === 37 || key === 39) {
+    var row = btn.closest('.tp-prefs-row');
+    if (!row) return false;
+    var buttons = row.querySelectorAll('.tp-userscript-btn');
+    var index = -1;
+    for (var i = 0; i < buttons.length; i++) {
+      if (buttons[i] === btn) {
+        index = i;
+        break;
+      }
+    }
+    if (index === -1) return false;
+    var nextIndex = key === 39 ? index + 1 : index - 1;
+    if (nextIndex >= 0 && nextIndex < buttons.length) {
+      e.preventDefault();
+      e.stopPropagation();
+      buttons[nextIndex].focus();
+      return true;
+    }
+    if (nextIndex < 0 && row) {
+      e.preventDefault();
+      e.stopPropagation();
+      row.focus();
+      return true;
+    }
+    return false;
+  }
+
+  if (key === 38 || key === 40) {
+    var parentRow = btn.closest('.tp-prefs-row');
+    if (parentRow) {
+      e.preventDefault();
+      e.stopPropagation();
+      parentRow.focus();
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**

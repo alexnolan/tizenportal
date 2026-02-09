@@ -368,6 +368,25 @@ function loadCardFromWindowName() {
   }
 }
 
+function mergeUserscriptsFromWindow(card) {
+  if (!card) return;
+  var windowCard = loadCardFromWindowName();
+  if (!windowCard) return;
+
+  if ((!card.userscripts || !card.userscripts.length) && Array.isArray(windowCard.userscripts)) {
+    card.userscripts = windowCard.userscripts;
+  }
+
+  if (Array.isArray(windowCard.globalUserscripts)) {
+    if (!card._payload || typeof card._payload !== 'object') {
+      card._payload = {};
+    }
+    if (!Array.isArray(card._payload.globalUserscripts) || !card._payload.globalUserscripts.length) {
+      card._payload.globalUserscripts = windowCard.globalUserscripts;
+    }
+  }
+}
+
 function loadLastCard() {
   try {
     var stored = sessionStorage.getItem(LAST_CARD_KEY);
@@ -880,6 +899,8 @@ function getCardFromHash() {
       // Store raw payload for CSS/JS injection
       _payload: payload
     };
+
+    mergeUserscriptsFromWindow(card);
     
     log('Card from URL hash: ' + card.name + ' (bundle: ' + (card.featureBundle || 'default') + ')');
     return card;
@@ -994,6 +1015,8 @@ function getCardFromQuery() {
       globalUserscripts: payload.globalUserscripts || [],
       _payload: payload
     };
+
+    mergeUserscriptsFromWindow(card);
 
     log('Card from URL query: ' + card.name + ' (bundle: ' + (card.featureBundle || 'default') + ')');
     return card;
@@ -1689,8 +1712,6 @@ function loadSite(card) {
       focusOutlineMode: card.hasOwnProperty('focusOutlineMode') ? card.focusOutlineMode : null,
       bundleOptions: card.bundleOptions || {},
       bundleOptionData: card.bundleOptionData || {},
-      userscripts: userscriptEngine.getCardUserscriptsForPayload(card),
-      globalUserscripts: userscriptEngine.getGlobalUserscriptsForPayload(),
     };
     
     // NOTE: Do NOT embed bundle CSS in the URL payload.

@@ -1159,15 +1159,15 @@ function renderUserscriptsField() {
     var refreshDisabled = s.source !== 'url' ? ' disabled' : '';
 
     html += '' +
-      '<div class="tp-userscript-line" data-userscript-id="' + s.id + '">' +
+      '<div class="tp-userscript-line tp-userscript-row" data-userscript-id="' + s.id + '" data-userscript-index="' + i + '" tabindex="0">' +
         '<div class="tp-userscript-label">Script ' + indexLabel + ': ' + escapeHtml(nameValue) + ' • ' + enabledLabel + ' • ' + status + '</div>' +
         '<div class="tp-userscript-actions">' +
-          '<button type="button" class="tp-userscript-btn" data-userscript-action="rename" data-userscript-id="' + s.id + '" tabindex="0">Rename</button>' +
-          '<button type="button" class="tp-userscript-btn" data-userscript-action="toggle" data-userscript-id="' + s.id + '" tabindex="0">On/Off</button>' +
-          '<button type="button" class="tp-userscript-btn" data-userscript-action="source" data-userscript-id="' + s.id + '" tabindex="0">Source: ' + sourceLabel + '</button>' +
-          '<button type="button" class="tp-userscript-btn" data-userscript-action="edit" data-userscript-id="' + s.id + '" tabindex="0">Edit</button>' +
-          '<button type="button" class="tp-userscript-btn" data-userscript-action="refresh" data-userscript-id="' + s.id + '" tabindex="0"' + refreshDisabled + '>Refresh</button>' +
-          (canRemove ? '<button type="button" class="tp-userscript-btn" data-userscript-action="remove" data-userscript-id="' + s.id + '" tabindex="0">Remove</button>' : '') +
+          '<button type="button" class="tp-userscript-btn" data-userscript-action="rename" data-userscript-id="' + s.id + '" data-userscript-index="' + i + '" tabindex="0">Rename</button>' +
+          '<button type="button" class="tp-userscript-btn" data-userscript-action="toggle" data-userscript-id="' + s.id + '" data-userscript-index="' + i + '" tabindex="0">On/Off</button>' +
+          '<button type="button" class="tp-userscript-btn" data-userscript-action="source" data-userscript-id="' + s.id + '" data-userscript-index="' + i + '" tabindex="0">Source: ' + sourceLabel + '</button>' +
+          '<button type="button" class="tp-userscript-btn" data-userscript-action="edit" data-userscript-id="' + s.id + '" data-userscript-index="' + i + '" tabindex="0">Edit</button>' +
+          '<button type="button" class="tp-userscript-btn" data-userscript-action="refresh" data-userscript-id="' + s.id + '" data-userscript-index="' + i + '" tabindex="0"' + refreshDisabled + '>Refresh</button>' +
+          (canRemove ? '<button type="button" class="tp-userscript-btn" data-userscript-action="remove" data-userscript-id="' + s.id + '" data-userscript-index="' + i + '" tabindex="0">Remove</button>' : '') +
         '</div>' +
       '</div>';
   }
@@ -1262,10 +1262,24 @@ function setupFieldListeners(container) {
       handleUserscriptAction(this);
     });
     userscriptActions[ua].addEventListener('keydown', function(e) {
+      if (handleUserscriptButtonKeyDown(e, this)) {
+        return;
+      }
       if (e.keyCode === 13) {
         e.preventDefault();
         e.stopPropagation();
         handleUserscriptAction(this);
+      }
+    });
+  }
+
+  var userscriptRows = container.querySelectorAll('.tp-userscript-row');
+  for (var ur = 0; ur < userscriptRows.length; ur++) {
+    userscriptRows[ur].addEventListener('keydown', function(e) {
+      if (e.keyCode === 13) {
+        e.preventDefault();
+        e.stopPropagation();
+        focusUserscriptRowButton(this);
       }
     });
   }
@@ -1297,6 +1311,59 @@ function setupFieldListeners(container) {
       }
     });
   }
+}
+
+function focusUserscriptRowButton(rowEl) {
+  if (!rowEl) return;
+  var btn = rowEl.querySelector('.tp-userscript-btn');
+  if (btn) {
+    btn.focus();
+  }
+}
+
+function handleUserscriptButtonKeyDown(e, btn) {
+  if (!btn) return false;
+  var key = e.keyCode;
+
+  if (key === 37 || key === 39) {
+    var row = btn.closest('.tp-userscript-row');
+    if (!row) return false;
+    var buttons = row.querySelectorAll('.tp-userscript-btn');
+    var index = -1;
+    for (var i = 0; i < buttons.length; i++) {
+      if (buttons[i] === btn) {
+        index = i;
+        break;
+      }
+    }
+    if (index === -1) return false;
+    var nextIndex = key === 39 ? index + 1 : index - 1;
+    if (nextIndex >= 0 && nextIndex < buttons.length) {
+      e.preventDefault();
+      e.stopPropagation();
+      buttons[nextIndex].focus();
+      return true;
+    }
+    if (nextIndex < 0 && row) {
+      e.preventDefault();
+      e.stopPropagation();
+      row.focus();
+      return true;
+    }
+    return false;
+  }
+
+  if (key === 38 || key === 40) {
+    var parentRow = btn.closest('.tp-userscript-row');
+    if (parentRow) {
+      e.preventDefault();
+      e.stopPropagation();
+      parentRow.focus();
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -1479,6 +1546,7 @@ function handleUserscriptAction(row) {
     if (newName !== null) {
       script.name = newName;
       renderFields();
+      focusUserscriptButton(scriptId, action);
       autoSaveCard('userscript:name');
     }
     return;
@@ -1487,6 +1555,7 @@ function handleUserscriptAction(row) {
   if (action === 'toggle') {
     script.enabled = !script.enabled;
     renderFields();
+    focusUserscriptButton(scriptId, action);
     autoSaveCard('userscript:enabled');
     return;
   }
@@ -1494,6 +1563,7 @@ function handleUserscriptAction(row) {
   if (action === 'source') {
     script.source = script.source === 'url' ? 'inline' : 'url';
     renderFields();
+    focusUserscriptButton(scriptId, action);
     autoSaveCard('userscript:source');
     return;
   }
@@ -1510,6 +1580,7 @@ function handleUserscriptAction(row) {
           }
           script.url = newUrl;
           renderFields();
+          focusUserscriptButton(scriptId, action);
           autoSaveCard('userscript:url');
           fetchUserscriptUrl(scriptId);
         } else {
@@ -1517,6 +1588,7 @@ function handleUserscriptAction(row) {
           script.cached = '';
           script.lastFetched = 0;
           renderFields();
+          focusUserscriptButton(scriptId, action);
           autoSaveCard('userscript:url');
         }
       }
@@ -1525,6 +1597,7 @@ function handleUserscriptAction(row) {
       if (newInline !== null) {
         script.inline = newInline;
         renderFields();
+        focusUserscriptButton(scriptId, action);
         autoSaveCard('userscript:inline');
       }
     }
@@ -1535,6 +1608,18 @@ function handleUserscriptAction(row) {
     if (script.source === 'url') {
       fetchUserscriptUrl(scriptId);
     }
+  }
+}
+
+function focusUserscriptButton(scriptId, action) {
+  if (!scriptId) return;
+  var selector = '.tp-userscript-btn[data-userscript-id="' + scriptId + '"]';
+  if (action) {
+    selector += '[data-userscript-action="' + action + '"]';
+  }
+  var btn = document.querySelector(selector);
+  if (btn) {
+    btn.focus();
   }
 }
 

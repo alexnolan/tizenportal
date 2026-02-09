@@ -194,7 +194,9 @@ function applyUserscripts(card, bundle) {
   clearUserscripts();
 
   var globalScripts = [];
-  if (card && card._payload && Array.isArray(card._payload.globalUserscripts)) {
+  if (card && Array.isArray(card.globalUserscripts)) {
+    globalScripts = normalizeScriptsArray(card.globalUserscripts);
+  } else if (card && card._payload && Array.isArray(card._payload.globalUserscripts)) {
     globalScripts = normalizeScriptsArray(card._payload.globalUserscripts);
   } else {
     globalScripts = getUserscriptsConfig().scripts;

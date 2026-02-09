@@ -19,6 +19,7 @@ function createDefaultScript(index) {
     id: generateId(),
     name: 'Custom Script ' + index,
     enabled: false,
+    source: 'inline',
     url: '',
     inline: '',
     cached: '',
@@ -32,10 +33,15 @@ function normalizeScriptEntry(entry, index) {
   if (!normalized.id) normalized.id = generateId();
   if (!normalized.name) normalized.name = 'Custom Script ' + (index + 1);
   normalized.enabled = normalized.enabled === true;
+  normalized.source = normalized.source === 'url' ? 'url' : 'inline';
   normalized.url = typeof normalized.url === 'string' ? normalized.url : '';
   normalized.inline = typeof normalized.inline === 'string' ? normalized.inline : '';
   normalized.cached = typeof normalized.cached === 'string' ? normalized.cached : '';
   normalized.lastFetched = typeof normalized.lastFetched === 'number' ? normalized.lastFetched : 0;
+
+  if (normalized.source === 'inline' && !normalized.inline && normalized.cached) {
+    normalized.source = 'url';
+  }
 
   return normalized;
 }
@@ -110,6 +116,7 @@ function cloneScripts(scripts) {
       id: s.id || generateId(),
       name: s.name || 'Custom Script ' + (i + 1),
       enabled: s.enabled === true,
+      source: s.source === 'url' ? 'url' : 'inline',
       url: s.url || '',
       inline: s.inline || '',
       cached: s.cached || '',
@@ -133,10 +140,13 @@ function getCardUserscriptsForPayload(card) {
 
 function resolveScriptSource(script) {
   if (!script) return '';
+  if (script.source === 'url') {
+    var cached = (script.cached || '').trim();
+    if (cached) return cached;
+    return '';
+  }
   var inline = (script.inline || '').trim();
   if (inline) return inline;
-  var cached = (script.cached || '').trim();
-  if (cached) return cached;
   return '';
 }
 

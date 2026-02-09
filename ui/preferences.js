@@ -372,6 +372,7 @@ function createDefaultUserscript(index) {
     id: 'us-' + Date.now() + '-' + Math.floor(Math.random() * 100000),
     name: 'Custom Script ' + index,
     enabled: false,
+    source: 'inline',
     url: '',
     inline: '',
     cached: '',
@@ -389,6 +390,7 @@ function normalizeUserscripts(list) {
       id: entry.id || ('us-' + Date.now() + '-' + Math.floor(Math.random() * 100000)),
       name: entry.name || 'Custom Script ' + (i + 1),
       enabled: entry.enabled === true,
+      source: entry.source === 'url' ? 'url' : 'inline',
       url: typeof entry.url === 'string' ? entry.url : '',
       inline: typeof entry.inline === 'string' ? entry.inline : '',
       cached: typeof entry.cached === 'string' ? entry.cached : '',
@@ -493,17 +495,9 @@ function buildUserscriptRows() {
   ensureUserscriptsConfig();
   var rows = [];
   var scripts = prefsState.settings.userscriptsConfig.scripts || [];
-  var canRemove = scripts.length > 1;
 
   for (var i = 0; i < scripts.length; i++) {
-    rows.push({ type: 'userscript-name', scriptIndex: i, label: 'Script ' + (i + 1) + ' Name' });
-    rows.push({ type: 'userscript-enabled', scriptIndex: i, label: 'Script ' + (i + 1) + ' Enabled' });
-    rows.push({ type: 'userscript-url', scriptIndex: i, label: 'Script ' + (i + 1) + ' URL' });
-    rows.push({ type: 'userscript-inline', scriptIndex: i, label: 'Script ' + (i + 1) + ' Inline' });
-    rows.push({ type: 'userscript-refresh', scriptIndex: i, label: 'Refresh Script ' + (i + 1) + ' URL' });
-    if (canRemove) {
-      rows.push({ type: 'userscript-remove', scriptIndex: i, label: 'Remove Script ' + (i + 1) });
-    }
+    rows.push({ type: 'userscript', scriptIndex: i, label: 'Script ' + (i + 1) });
   }
 
   rows.push({ type: 'userscript-add', label: 'Add Script' });
@@ -624,6 +618,13 @@ function getUserscriptRowDisplay(row) {
   if (row.type === 'userscript-inline') {
     return script.inline ? 'Inline Script (saved)' : '(not set)';
   }
+  if (row.type === 'userscript') {
+    var source = script.source === 'url' ? 'URL' : 'Inline';
+    var hasData = script.source === 'url' ? !!script.cached : !!script.inline;
+    var status = source + (hasData ? ' (saved)' : ' (empty)');
+    var enabledLabel = script.enabled ? 'On' : 'Off';
+    return (script.name || ('Custom Script ' + (idx + 1))) + ' • ' + enabledLabel + ' • ' + status;
+  }
   if (row.type === 'userscript-refresh') return '↻';
   if (row.type === 'userscript-remove') return '🗑';
   if (row.type === 'userscript-add') return '＋';
@@ -733,74 +734,8 @@ function handleUserscriptPreferenceRow(row, index) {
 
   if (!script) return;
 
-  if (row.type === 'userscript-remove') {
-    if (scripts.length <= 1) return;
-    scripts.splice(scriptIndex, 1);
-    renderPreferencesUI();
-    focusPreferencesRow(index);
-    savePreferencesAuto('userscript:remove');
-    return;
-  }
-
-  if (row.type === 'userscript-enabled') {
-    script.enabled = !script.enabled;
-    renderPreferencesUI();
-    focusPreferencesRow(index);
-    savePreferencesAuto('userscript:enabled');
-    return;
-  }
-
-  if (row.type === 'userscript-name') {
-    var newName = prompt('Script Name:', script.name || '');
-    if (newName !== null) {
-      script.name = newName;
-      renderPreferencesUI();
-      focusPreferencesRow(index);
-      savePreferencesAuto('userscript:name');
-    }
-    return;
-  }
-
-  if (row.type === 'userscript-url') {
-    var newUrl = prompt('Script URL:', script.url || '');
-    if (newUrl !== null) {
-      if (newUrl) {
-        if (!isValidHttpUrl(newUrl)) {
-          if (window.TizenPortal && window.TizenPortal.showToast) {
-            TizenPortal.showToast('Invalid URL');
-          }
-          return;
-        }
-        script.url = newUrl;
-        renderPreferencesUI();
-        focusPreferencesRow(index);
-        savePreferencesAuto('userscript:url');
-        fetchUserscriptUrl(scriptIndex, index);
-      } else {
-        script.url = '';
-        script.cached = '';
-        script.lastFetched = 0;
-        renderPreferencesUI();
-        focusPreferencesRow(index);
-        savePreferencesAuto('userscript:url');
-      }
-    }
-    return;
-  }
-
-  if (row.type === 'userscript-inline') {
-    var newInline = prompt('Inline Script:', script.inline || '');
-    if (newInline !== null) {
-      script.inline = newInline;
-      renderPreferencesUI();
-      focusPreferencesRow(index);
-      savePreferencesAuto('userscript:inline');
-    }
-    return;
-  }
-
-  if (row.type === 'userscript-refresh') {
-    fetchUserscriptUrl(scriptIndex, index);
+  if (row.type === 'userscript') {
+    showUserscriptPreferencesMenu(scriptIndex, index);
   }
 }
 
@@ -905,6 +840,105 @@ function fetchUserscriptUrl(scriptIndex, focusIndex) {
     if (window.TizenPortal && window.TizenPortal.showToast) {
       TizenPortal.showToast('Failed to fetch script');
     }
+  }
+}
+
+function showUserscriptPreferencesMenu(scriptIndex, focusIndex) {
+  ensureUserscriptsConfig();
+  var scripts = prefsState.settings.userscriptsConfig.scripts || [];
+  var script = scripts[scriptIndex];
+  if (!script) return;
+
+  var canRemove = scripts.length > 1;
+  var options = [
+    '1) Rename',
+    '2) Toggle On/Off',
+    '3) Set Source (URL/Inline)',
+    '4) Edit Script Content',
+    '5) Refresh URL',
+    canRemove ? '6) Remove Script' : null
+  ];
+  var promptText = 'Script Action:\n' + options.filter(Boolean).join('\n') + '\n\nEnter a number:';
+  var choice = prompt(promptText, '');
+  if (choice === null) return;
+
+  if (choice === '1') {
+    var newName = prompt('Script Name:', script.name || '');
+    if (newName !== null) {
+      script.name = newName;
+      renderPreferencesUI();
+      focusPreferencesRow(focusIndex);
+      savePreferencesAuto('userscript:name');
+    }
+    return;
+  }
+
+  if (choice === '2') {
+    script.enabled = !script.enabled;
+    renderPreferencesUI();
+    focusPreferencesRow(focusIndex);
+    savePreferencesAuto('userscript:enabled');
+    return;
+  }
+
+  if (choice === '3') {
+    var newSource = prompt('Source (url/inline):', script.source || 'inline');
+    if (newSource !== null) {
+      script.source = (newSource && newSource.toLowerCase() === 'url') ? 'url' : 'inline';
+      renderPreferencesUI();
+      focusPreferencesRow(focusIndex);
+      savePreferencesAuto('userscript:source');
+    }
+    return;
+  }
+
+  if (choice === '4') {
+    if (script.source === 'url') {
+      var newUrl = prompt('Script URL:', script.url || '');
+      if (newUrl !== null) {
+        if (newUrl) {
+          if (!isValidHttpUrl(newUrl)) {
+            if (window.TizenPortal && window.TizenPortal.showToast) {
+              TizenPortal.showToast('Invalid URL');
+            }
+            return;
+          }
+          script.url = newUrl;
+          renderPreferencesUI();
+          focusPreferencesRow(focusIndex);
+          savePreferencesAuto('userscript:url');
+          fetchUserscriptUrl(scriptIndex, focusIndex);
+        } else {
+          script.url = '';
+          script.cached = '';
+          script.lastFetched = 0;
+          renderPreferencesUI();
+          focusPreferencesRow(focusIndex);
+          savePreferencesAuto('userscript:url');
+        }
+      }
+    } else {
+      var newInline = prompt('Inline Script:', script.inline || '');
+      if (newInline !== null) {
+        script.inline = newInline;
+        renderPreferencesUI();
+        focusPreferencesRow(focusIndex);
+        savePreferencesAuto('userscript:inline');
+      }
+    }
+    return;
+  }
+
+  if (choice === '5') {
+    fetchUserscriptUrl(scriptIndex, focusIndex);
+    return;
+  }
+
+  if (choice === '6' && canRemove) {
+    scripts.splice(scriptIndex, 1);
+    renderPreferencesUI();
+    focusPreferencesRow(focusIndex);
+    savePreferencesAuto('userscript:remove');
   }
 }
 

@@ -181,6 +181,7 @@ function createDefaultUserscript(index) {
     id: 'us-' + Date.now() + '-' + Math.floor(Math.random() * 100000),
     name: 'Custom Script ' + index,
     enabled: false,
+    source: 'inline',
     url: '',
     inline: '',
     cached: '',
@@ -198,6 +199,7 @@ function normalizeUserscripts(list) {
       id: entry.id || ('us-' + Date.now() + '-' + Math.floor(Math.random() * 100000)),
       name: entry.name || 'Custom Script ' + (i + 1),
       enabled: entry.enabled === true,
+      source: entry.source === 'url' ? 'url' : 'inline',
       url: typeof entry.url === 'string' ? entry.url : '',
       inline: typeof entry.inline === 'string' ? entry.inline : '',
       cached: typeof entry.cached === 'string' ? entry.cached : '',
@@ -1144,45 +1146,21 @@ function renderUserscriptsField() {
   var html = '<div class="tp-field-section">';
 
   var scripts = state.card.userscripts || [];
-  var canRemove = scripts.length > 1;
 
   for (var i = 0; i < scripts.length; i++) {
     var s = scripts[i] || {};
     var indexLabel = (i + 1);
     var nameValue = s.name || ('Custom Script ' + indexLabel);
-    var urlValue = s.url || '';
-    var inlineValue = s.inline || '';
-    var hasCached = !!(s.cached && s.cached.length);
+    var source = s.source === 'url' ? 'URL' : 'Inline';
+    var hasData = s.source === 'url' ? !!(s.cached && s.cached.length) : !!(s.inline && s.inline.length);
+    var enabledLabel = s.enabled ? 'On' : 'Off';
+    var status = source + (hasData ? ' (saved)' : ' (empty)');
 
     html += '' +
-      '<div class="tp-field-row tp-userscript-row" data-userscript-id="' + s.id + '" data-userscript-field="name" tabindex="0">' +
-        '<div class="tp-field-label">Script ' + indexLabel + ' Name</div>' +
-        '<div class="tp-field-value">' + escapeHtml(nameValue) + '</div>' +
-      '</div>' +
-      '<div class="tp-field-row tp-userscript-row" data-userscript-id="' + s.id + '" data-userscript-field="enabled" tabindex="0">' +
-        '<div class="tp-field-label">Script ' + indexLabel + ' Enabled</div>' +
-        '<div class="tp-field-value">' + (s.enabled ? '✓ On' : '○ Off') + '</div>' +
-      '</div>' +
-      '<div class="tp-field-row tp-userscript-row" data-userscript-id="' + s.id + '" data-userscript-field="url" tabindex="0">' +
-        '<div class="tp-field-label">Script ' + indexLabel + ' URL</div>' +
-        '<div class="tp-field-value' + (!urlValue ? ' empty' : '') + '">' + escapeHtml(urlValue || '(not set)') + (hasCached ? ' (saved)' : '') + '</div>' +
-      '</div>' +
-      '<div class="tp-field-row tp-userscript-row" data-userscript-id="' + s.id + '" data-userscript-field="inline" tabindex="0">' +
-        '<div class="tp-field-label">Script ' + indexLabel + ' Inline</div>' +
-        '<div class="tp-field-value' + (!inlineValue ? ' empty' : '') + '">' + (inlineValue ? 'Inline Script (saved)' : '(not set)') + '</div>' +
-      '</div>' +
-      '<div class="tp-field-row tp-userscript-action" data-userscript-id="' + s.id + '" data-userscript-action="refresh" tabindex="0">' +
-        '<div class="tp-field-label">Refresh Script ' + indexLabel + ' URL</div>' +
-        '<div class="tp-field-value">↻</div>' +
+      '<div class="tp-field-row tp-userscript-row" data-userscript-id="' + s.id + '" data-userscript-field="menu" tabindex="0">' +
+        '<div class="tp-field-label">Script ' + indexLabel + '</div>' +
+        '<div class="tp-field-value">' + escapeHtml(nameValue) + ' • ' + enabledLabel + ' • ' + status + '</div>' +
       '</div>';
-
-    if (canRemove) {
-      html += '' +
-        '<div class="tp-field-row tp-userscript-action" data-userscript-id="' + s.id + '" data-userscript-action="remove" tabindex="0">' +
-          '<div class="tp-field-label">Remove Script ' + indexLabel + '</div>' +
-          '<div class="tp-field-value">🗑</div>' +
-        '</div>';
-    }
   }
 
   html += '' +
@@ -1420,6 +1398,11 @@ function activateUserscriptInput(row) {
   var script = getUserscriptById(scriptId);
   if (!script) return;
 
+  if (field === 'menu') {
+    showUserscriptActionMenu(scriptId);
+    return;
+  }
+
   if (field === 'enabled') {
     script.enabled = !script.enabled;
     renderFields();
@@ -1468,6 +1451,93 @@ function activateUserscriptInput(row) {
       renderFields();
       autoSaveCard('userscript:inline');
     }
+  }
+}
+
+function showUserscriptActionMenu(scriptId) {
+  var script = getUserscriptById(scriptId);
+  if (!script) return;
+
+  var canRemove = state.card.userscripts && state.card.userscripts.length > 1;
+  var options = [
+    '1) Rename',
+    '2) Toggle On/Off',
+    '3) Set Source (URL/Inline)',
+    '4) Edit Script Content',
+    '5) Refresh URL',
+    canRemove ? '6) Remove Script' : null
+  ];
+  var promptText = 'Script Action:\n' + options.filter(Boolean).join('\n') + '\n\nEnter a number:';
+  var choice = prompt(promptText, '');
+  if (choice === null) return;
+
+  if (choice === '1') {
+    var newName = prompt('Script Name:', script.name || '');
+    if (newName !== null) {
+      script.name = newName;
+      renderFields();
+      autoSaveCard('userscript:name');
+    }
+    return;
+  }
+
+  if (choice === '2') {
+    script.enabled = !script.enabled;
+    renderFields();
+    autoSaveCard('userscript:enabled');
+    return;
+  }
+
+  if (choice === '3') {
+    var newSource = prompt('Source (url/inline):', script.source || 'inline');
+    if (newSource !== null) {
+      script.source = (newSource && newSource.toLowerCase() === 'url') ? 'url' : 'inline';
+      renderFields();
+      autoSaveCard('userscript:source');
+    }
+    return;
+  }
+
+  if (choice === '4') {
+    if (script.source === 'url') {
+      var newUrl = prompt('Script URL:', script.url || '');
+      if (newUrl !== null) {
+        if (newUrl) {
+          newUrl = sanitizeUrl(newUrl);
+          if (!newUrl || !isValidHttpUrl(newUrl)) {
+            showEditorToast('Invalid URL');
+            return;
+          }
+          script.url = newUrl;
+          renderFields();
+          autoSaveCard('userscript:url');
+          fetchUserscriptUrl(scriptId);
+        } else {
+          script.url = '';
+          script.cached = '';
+          script.lastFetched = 0;
+          renderFields();
+          autoSaveCard('userscript:url');
+        }
+      }
+    } else {
+      var newInline = prompt('Inline Script:', script.inline || '');
+      if (newInline !== null) {
+        script.inline = newInline;
+        renderFields();
+        autoSaveCard('userscript:inline');
+      }
+    }
+    return;
+  }
+
+  if (choice === '5') {
+    fetchUserscriptUrl(scriptId);
+    return;
+  }
+
+  if (choice === '6' && canRemove) {
+    handleUserscriptAction({ dataset: { userscriptAction: 'remove', userscriptId: scriptId } });
   }
 }
 

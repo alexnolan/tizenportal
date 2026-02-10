@@ -76,6 +76,32 @@ function registerTvKey(keyName) {
   return false;
 }
 
+function unregisterTvKey(keyName) {
+  try {
+    if (!window.tizen || !tizen.tvinputdevice) return false;
+    if (tizen.tvinputdevice.getKey && !tizen.tvinputdevice.getKey(keyName)) {
+      return false;
+    }
+    tizen.tvinputdevice.unregisterKey(keyName);
+    log('Unregistered TV key: ' + keyName);
+    return true;
+  } catch (err) {
+    warn('Failed to unregister TV key ' + keyName + ': ' + err.message);
+  }
+  return false;
+}
+
+var exitKeyRegistered = false;
+
+function setExitKeyCapture(enabled) {
+  if (enabled && !exitKeyRegistered) {
+    exitKeyRegistered = registerTvKey('Exit');
+  } else if (!enabled && exitKeyRegistered) {
+    unregisterTvKey('Exit');
+    exitKeyRegistered = false;
+  }
+}
+
 /**
  * TizenPortal version - injected from package.json at build time
  */
@@ -614,10 +640,7 @@ async function init() {
     initPointer();
     log('Pointer mode initialized');
 
-    // Step 6: Register optional TV keys before input handler
-    registerTvKey('Exit');
-
-    // Step 7: Initialize input handler
+    // Step 6: Initialize input handler
     initInputHandler();
     log('Input handler initialized');
 
@@ -1957,6 +1980,7 @@ var TizenPortalAPI = {
     togglePointer: togglePointer,
     registerKeyHandler: registerKeyHandler,
     isIMEActive: isIMEActive,
+    setExitKeyCapture: setExitKeyCapture,
     // Text input wrapping for TV keyboard handling
     wrapTextInputs: wrapTextInputs,
     unwrapTextInputs: unwrapTextInputs,

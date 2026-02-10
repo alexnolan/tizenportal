@@ -241,6 +241,14 @@ export function activateInput(input) {
   }
 
   setIMEActive(true);
+
+  try {
+    if (window.TizenPortal && window.TizenPortal.input && window.TizenPortal.input.setExitKeyCapture) {
+      window.TizenPortal.input.setExitKeyCapture(true);
+    }
+  } catch (err) {
+    // Ignore
+  }
   
   // Call custom handler
   if (typeof opts.onActivate === 'function') {
@@ -283,6 +291,14 @@ export function deactivateInput(input) {
   }
 
   setIMEActive(false);
+
+  try {
+    if (window.TizenPortal && window.TizenPortal.input && window.TizenPortal.input.setExitKeyCapture) {
+      window.TizenPortal.input.setExitKeyCapture(false);
+    }
+  } catch (err) {
+    // Ignore
+  }
   
   console.log('TizenPortal [TextInput]: Input deactivated');
 }
@@ -308,6 +324,14 @@ export function unwrapInput(input) {
   
   wrappedInputs.delete(input);
   setIMEActive(false);
+
+  try {
+    if (window.TizenPortal && window.TizenPortal.input && window.TizenPortal.input.setExitKeyCapture) {
+      window.TizenPortal.input.setExitKeyCapture(false);
+    }
+  } catch (err) {
+    // Ignore
+  }
   console.log('TizenPortal [TextInput]: Input unwrapped');
 }
 

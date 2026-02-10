@@ -209,6 +209,7 @@ export function hasBundle(name: string): boolean;
 - `default` - Basic fallback bundle
 - `audiobookshelf` - Enhanced support for Audiobookshelf
 - `adblock` - Ad blocking for general sites
+- `userscript-sandbox` - Custom userscript support
 
 ### 4.3 Bundle Interface
 
@@ -446,7 +447,7 @@ const plugins = [
 
 Source files use placeholder:
 ```js
-const VERSION = '__VERSION__';  // Becomes "1000" at build time
+const VERSION = '__VERSION__';  // Becomes "1018" at build time
 ```
 
 ### 7.3 tizenportal.js Structure (IIFE)
@@ -455,7 +456,7 @@ const VERSION = '__VERSION__';  // Becomes "1000" at build time
 (function () {
   'use strict';
   
-  const VERSION = '1000';
+  const VERSION = '1018';
   
   // Polyfills (core-js, fetch, DOMRect, spatial-navigation)
   // Config (localStorage wrapper)

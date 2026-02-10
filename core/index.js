@@ -61,6 +61,21 @@ import {
   processCards, initCards, shutdownCards 
 } from './cards.js';
 
+function registerTvKey(keyName) {
+  try {
+    if (!window.tizen || !tizen.tvinputdevice) return false;
+    if (tizen.tvinputdevice.getKey && !tizen.tvinputdevice.getKey(keyName)) {
+      return false;
+    }
+    tizen.tvinputdevice.registerKey(keyName);
+    log('Registered TV key: ' + keyName);
+    return true;
+  } catch (err) {
+    warn('Failed to register TV key ' + keyName + ': ' + err.message);
+  }
+  return false;
+}
+
 /**
  * TizenPortal version - injected from package.json at build time
  */
@@ -599,7 +614,10 @@ async function init() {
     initPointer();
     log('Pointer mode initialized');
 
-    // Step 6: Initialize input handler
+    // Step 6: Register optional TV keys before input handler
+    registerTvKey('Exit');
+
+    // Step 7: Initialize input handler
     initInputHandler();
     log('Input handler initialized');
 

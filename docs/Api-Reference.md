@@ -65,7 +65,7 @@ if (parseInt(TizenPortal.version) >= 300) {
 ```typescript
 interface TizenPortal {
   // Metadata
-  version: string;           // "0447"
+  version: string;           // "1018"
   
   // Sub-APIs
   config: ConfigAPI;

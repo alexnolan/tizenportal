@@ -75,6 +75,15 @@ var UA_MODE_OPTIONS = [
 ];
 
 /**
+ * Navigation mode options
+ */
+var NAVIGATION_MODE_OPTIONS = [
+  { value: 'polyfill', label: 'TV Remote (Polyfill)' },
+  { value: 'geometric', label: 'Grid Navigation (Geometric)' },
+  { value: 'directional', label: 'Smart Navigation (Directional)' },
+];
+
+/**
  * Normalize stored theme value to valid option
  * @param {*} value
  * @returns {string}
@@ -149,6 +158,7 @@ var PREFERENCE_ROWS = [
   { id: 'backgroundImage', label: 'Backdrop Image URL', type: 'text', key: 'backgroundImage', config: 'portal', showIf: 'backdrop', section: 'appearance' },
   { id: 'hudPosition', label: 'Debug HUD', type: 'select', options: HUD_OPTIONS, key: 'hudPosition', config: 'portal', section: 'portal' },
   { id: 'hintsPosition', label: 'Color Hints', type: 'select', options: HINT_POSITION_OPTIONS, key: 'hintsPosition', config: 'portal', section: 'portal' },
+  { id: 'navigationMode', label: 'Navigation Mode', type: 'select', options: NAVIGATION_MODE_OPTIONS, key: 'navigationMode', config: 'features', section: 'features' },
   { id: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_OPTIONS, key: 'viewportMode', config: 'features', section: 'features' },
   { id: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS, key: 'focusOutlineMode', config: 'features', section: 'features' },
   { id: 'uaMode', label: 'User Agent Mode', type: 'select', options: UA_MODE_OPTIONS, key: 'uaMode', config: 'features', section: 'features' },

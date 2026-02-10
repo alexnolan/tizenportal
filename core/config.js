@@ -43,6 +43,12 @@ var DEFAULT_CONFIG = {
     wrapTextInputs: true,
     viewportMode: 'locked',
     uaMode: 'tizen',
+    
+    // Navigation mode: which navigation system to use
+    // 'polyfill' - Use existing spatial-navigation-polyfill.js (default, backward compatible)
+    // 'geometric' - Use new library in geometric mode (strict axis-aligned)
+    // 'directional' - Use new library in directional mode (cone-based, forgiving)
+    navigationMode: 'polyfill',
   },
 
   // Global user scripts

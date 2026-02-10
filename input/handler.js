@@ -68,6 +68,9 @@ var LONG_PRESS_MS = 500;
  */
 var keyDownTimes = {};
 
+// Track recent IME cancel/done events to suppress accidental EXIT
+var imeCancelAt = 0;
+
 
 /**
  * Custom key handlers registered by bundles
@@ -150,12 +153,21 @@ function handleKeyDown(event) {
     event.preventDefault();
     event.stopPropagation();
     setIMEActive(false);
+    imeCancelAt = Date.now();
     return;
   }
 
   // EXIT key (10182) - Tizen IME Cancel button may send this
   // If we're in an input context, just cancel the input, don't exit the app
   if (keyCode === KEYS.EXIT) {
+    var now = Date.now();
+    if (isIMEActive() || (imeCancelAt && now - imeCancelAt < 1500)) {
+      event.preventDefault();
+      event.stopPropagation();
+      setIMEActive(false);
+      console.log('TizenPortal: EXIT suppressed (IME cancel/done)');
+      return;
+    }
     // Check if we're in a text input or modal context
     var activeEl = document.activeElement;
     var isInputActive = activeEl && (

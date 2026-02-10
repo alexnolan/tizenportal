@@ -610,7 +610,7 @@ export function showEditSiteEditor(card, onComplete) {
   state.card = {
     id: card.id,
     name: card.name || '',
-    url: card.url || '',
+    url: stripTrailingSlash(card.url || ''),
     featureBundle: card.featureBundle || null,
     viewportMode: card.hasOwnProperty('viewportMode') ? card.viewportMode : null,
     focusOutlineMode: card.hasOwnProperty('focusOutlineMode') ? card.focusOutlineMode : null,
@@ -783,6 +783,7 @@ function autoSaveCard(reason) {
       console.log('TizenPortal: Auto-save skipped - invalid URL scheme');
       return;
     }
+    cardUrl = stripTrailingSlash(cardUrl);
     state.card.url = cardUrl;
   }
 
@@ -1099,9 +1100,27 @@ function getSectionSummary(sectionId) {
   return '';
 }
 
+function stripTrailingSlash(url) {
+  if (!url || typeof url !== 'string') return url;
+  var trimmed = url.trim();
+  if (!trimmed) return trimmed;
+  if (trimmed.charAt(trimmed.length - 1) !== '/') return trimmed;
+  var lower = trimmed.toLowerCase();
+  var minLength = 1;
+  if (lower.indexOf('https://') === 0) {
+    minLength = 8;
+  } else if (lower.indexOf('http://') === 0) {
+    minLength = 7;
+  }
+  if (trimmed.length > minLength) {
+    return trimmed.substring(0, trimmed.length - 1);
+  }
+  return trimmed;
+}
+
 function shortenUrl(url) {
   if (!url) return '';
-  var cleaned = url.replace(/^https?:\/\//i, '');
+  var cleaned = stripTrailingSlash(url).replace(/^https?:\/\//i, '');
   if (cleaned.length > 40) {
     cleaned = cleaned.substring(0, 37) + '...';
   }
@@ -2041,6 +2060,7 @@ function handleDetailAction(btn) {
           showEditorToast('Invalid URL');
           return;
         }
+        newUrl = stripTrailingSlash(newUrl);
       }
       state.card.url = newUrl;
       renderFields();
@@ -2397,7 +2417,8 @@ function updatePreview() {
   }
   
   if (urlEl) {
-    urlEl.textContent = state.card.url || 'https://...';
+    var displayUrl = state.card.url ? stripTrailingSlash(state.card.url) : 'https://...';
+    urlEl.textContent = displayUrl;
   }
   
   if (iconEl) {

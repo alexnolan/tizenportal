@@ -191,8 +191,8 @@ function wrapSingleInput(input, opts) {
   });
   
   input.addEventListener('keydown', function(e) {
-    // Escape or Back - deactivate and return to wrapper
-    if (e.keyCode === 27 || e.keyCode === KEYS.BACK) {
+    // Escape or Back or IME cancel - deactivate and return to wrapper
+    if (e.keyCode === 27 || e.keyCode === KEYS.BACK || e.keyCode === KEYS.IME_CANCEL) {
       e.preventDefault();
       deactivateInput(input);
       wrapper.focus();

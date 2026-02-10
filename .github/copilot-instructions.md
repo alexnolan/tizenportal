@@ -561,6 +561,8 @@ TizenPortal.input.isIMEActive();
    git push origin master --tags
    ```
 
+**Commit Log Requirement:** All deployment commits must include a minimum **1000-character** commit log with detailed change notes.
+
 > Tip: These git operations can be chained in a single command when appropriate.
 
 ### TizenBrew CDN Update

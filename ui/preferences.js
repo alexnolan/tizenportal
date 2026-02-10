@@ -649,7 +649,12 @@ function getPreferencesSectionSummary(sectionId) {
     var ua = getOptionLabel(UA_MODE_OPTIONS, prefsState.settings.featuresConfig.uaMode || 'tizen');
     var safeArea = prefsState.settings.featuresConfig.safeArea ? 'On' : 'Off';
     var scroll = prefsState.settings.featuresConfig.scrollIntoView ? 'On' : 'Off';
-    return 'Viewport: ' + viewport + ' • Focus: ' + focus + ' • UA: ' + ua + ' • Safe Area: ' + safeArea + ' • Scroll: ' + scroll;
+    var tabindex = prefsState.settings.featuresConfig.tabindexInjection ? 'On' : 'Off';
+    var gpu = prefsState.settings.featuresConfig.gpuHints ? 'On' : 'Off';
+    var cssReset = prefsState.settings.featuresConfig.cssReset ? 'On' : 'Off';
+    var hideScroll = prefsState.settings.featuresConfig.hideScrollbars ? 'On' : 'Off';
+    var wrapInputs = prefsState.settings.featuresConfig.wrapTextInputs ? 'On' : 'Off';
+    return 'Viewport: ' + viewport + ' • Focus: ' + focus + ' • UA: ' + ua + ' • Auto-focus: ' + tabindex + ' • Scroll: ' + scroll + ' • Safe Area: ' + safeArea + ' • GPU: ' + gpu + ' • CSS Reset: ' + cssReset + ' • Hide Scrollbars: ' + hideScroll + ' • TV Keyboard: ' + wrapInputs;
   }
 
   if (sectionId === 'userscripts') {

@@ -29,6 +29,7 @@ var wrappedInputs = new WeakMap();
  * Track IME active state
  */
 var imeActive = false;
+var imeDismissedAt = 0;
 
 /**
  * Default options
@@ -239,7 +240,7 @@ export function activateInput(input) {
     console.warn('TizenPortal [TextInput]: Focus error:', err.message);
   }
 
-  imeActive = true;
+  setIMEActive(true);
   
   // Call custom handler
   if (typeof opts.onActivate === 'function') {
@@ -281,7 +282,7 @@ export function deactivateInput(input) {
     opts.onDeactivate(input);
   }
 
-  imeActive = false;
+  setIMEActive(false);
   
   console.log('TizenPortal [TextInput]: Input deactivated');
 }
@@ -306,7 +307,7 @@ export function unwrapInput(input) {
   input.style.display = '';
   
   wrappedInputs.delete(input);
-  imeActive = false;
+  setIMEActive(false);
   console.log('TizenPortal [TextInput]: Input unwrapped');
 }
 
@@ -324,6 +325,17 @@ export function isIMEActive() {
  */
 export function setIMEActive(value) {
   imeActive = !!value;
+  if (!imeActive) {
+    imeDismissedAt = Date.now();
+  }
+}
+
+/**
+ * Get the last IME dismissal timestamp
+ * @returns {number}
+ */
+export function getImeDismissedAt() {
+  return imeDismissedAt || 0;
 }
 
 /**

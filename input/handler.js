@@ -13,7 +13,7 @@ import { showAddSiteEditor, showEditSiteEditor, isSiteEditorOpen, closeSiteEdito
 import { showPreferences, isPreferencesOpen } from '../ui/preferences.js';
 import { getFocusedCard } from '../ui/portal.js';
 import { isPointerActive, handlePointerKeyDown, handlePointerKeyUp, togglePointer } from './pointer.js';
-import { isIMEActive, setIMEActive } from './text-input.js';
+import { isIMEActive, setIMEActive, getImeDismissedAt } from './text-input.js';
 import {
   isSingleActionCard,
   isMultiActionCard,
@@ -70,6 +70,16 @@ var keyDownTimes = {};
 
 // Track recent IME cancel/done events to suppress accidental EXIT
 var imeCancelAt = 0;
+var EXIT_SUPPRESS_MS = 2000;
+
+function shouldSuppressExit() {
+  var now = Date.now();
+  if (isIMEActive()) return true;
+  if (imeCancelAt && now - imeCancelAt < EXIT_SUPPRESS_MS) return true;
+  var dismissedAt = getImeDismissedAt();
+  if (dismissedAt && now - dismissedAt < EXIT_SUPPRESS_MS) return true;
+  return false;
+}
 
 
 /**
@@ -160,8 +170,7 @@ function handleKeyDown(event) {
   // EXIT key (10182) - Tizen IME Cancel button may send this
   // If we're in an input context, just cancel the input, don't exit the app
   if (keyCode === KEYS.EXIT) {
-    var now = Date.now();
-    if (isIMEActive() || (imeCancelAt && now - imeCancelAt < 1500)) {
+    if (shouldSuppressExit()) {
       event.preventDefault();
       event.stopPropagation();
       setIMEActive(false);
@@ -310,6 +319,15 @@ function handleKeyUp(event) {
   var isLongPress = duration >= LONG_PRESS_MS;
 
   delete keyDownTimes[keyCode];
+
+  // Suppress EXIT on keyup if IME was just dismissed
+  if (keyCode === KEYS.EXIT && shouldSuppressExit()) {
+    event.preventDefault();
+    event.stopPropagation();
+    setIMEActive(false);
+    console.log('TizenPortal: EXIT suppressed on keyup (IME cancel/done)');
+    return;
+  }
 
   // Handle pointer mode keyup
   if (isPointerActive()) {

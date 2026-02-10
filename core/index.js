@@ -60,6 +60,20 @@ import {
   registerCards, unregisterCards, clearRegistrations, getRegistrations,
   processCards, initCards, shutdownCards 
 } from './cards.js';
+import {
+  navigate,
+  focusElement,
+  focusFirst,
+  focusLast,
+  getFocusableElements,
+  focusRelative,
+  focusNext,
+  focusPrevious,
+  getCurrentFocus,
+  scrollIntoViewIfNeeded,
+  setNavigationEnabled,
+  isNavigationEnabled,
+} from '../navigation/helpers.js';
 
 function registerTvKey(keyName) {
   try {
@@ -2027,6 +2041,22 @@ var TizenPortalAPI = {
     unlockViewport: unlockViewport,
     observeDOM: observeDOM,
     stopObservingDOM: stopObservingDOM,
+  },
+
+  // Navigation helpers - standard methods for bundles
+  navigation: {
+    navigate: navigate,
+    focusElement: focusElement,
+    focusFirst: focusFirst,
+    focusLast: focusLast,
+    getFocusableElements: getFocusableElements,
+    focusRelative: focusRelative,
+    focusNext: focusNext,
+    focusPrevious: focusPrevious,
+    getCurrentFocus: getCurrentFocus,
+    scrollIntoViewIfNeeded: scrollIntoViewIfNeeded,
+    setEnabled: setNavigationEnabled,
+    isEnabled: isNavigationEnabled,
   },
 
   // Card registration system - bundles register selectors, core handles the rest

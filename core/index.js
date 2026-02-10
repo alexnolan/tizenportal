@@ -974,6 +974,8 @@ function getCardFromHash() {
       wrapTextInputs: payload.hasOwnProperty('wrapTextInputs') ? payload.wrapTextInputs : null,
       bundleOptions: payload.bundleOptions || {},
       bundleOptionData: payload.bundleOptionData || {},
+      userscriptToggles: payload.userscriptToggles || {},
+      bundleUserscriptToggles: payload.bundleUserscriptToggles || {},
       userscripts: payload.userscripts || [],
       globalUserscripts: payload.globalUserscripts || [],
       // Store raw payload for CSS/JS injection
@@ -1045,6 +1047,14 @@ function normalizePayload(payload) {
     normalized.bundleOptionData = payload.bundleOptionData;
   }
 
+  if (payload.userscriptToggles && typeof payload.userscriptToggles === 'object' && !Array.isArray(payload.userscriptToggles)) {
+    normalized.userscriptToggles = payload.userscriptToggles;
+  }
+
+  if (payload.bundleUserscriptToggles && typeof payload.bundleUserscriptToggles === 'object' && !Array.isArray(payload.bundleUserscriptToggles)) {
+    normalized.bundleUserscriptToggles = payload.bundleUserscriptToggles;
+  }
+
   if (payload.userscripts && Array.isArray(payload.userscripts)) {
     normalized.userscripts = payload.userscripts;
   }
@@ -1096,6 +1106,8 @@ function getCardFromQuery() {
       wrapTextInputs: payload.hasOwnProperty('wrapTextInputs') ? payload.wrapTextInputs : null,
       bundleOptions: payload.bundleOptions || {},
       bundleOptionData: payload.bundleOptionData || {},
+      userscriptToggles: payload.userscriptToggles || {},
+      bundleUserscriptToggles: payload.bundleUserscriptToggles || {},
       userscripts: payload.userscripts || [],
       globalUserscripts: payload.globalUserscripts || [],
       _payload: payload
@@ -1844,6 +1856,8 @@ function loadSite(card) {
       focusOutlineMode: card.hasOwnProperty('focusOutlineMode') ? card.focusOutlineMode : null,
       bundleOptions: card.bundleOptions || {},
       bundleOptionData: card.bundleOptionData || {},
+      userscriptToggles: card.userscriptToggles || {},
+      bundleUserscriptToggles: card.bundleUserscriptToggles || {},
     };
     
     // NOTE: Do NOT embed bundle CSS in the URL payload.

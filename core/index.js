@@ -1439,6 +1439,8 @@ function injectOverlayStyles() {
     '  position: fixed;',
     '  bottom: 20px;',
     '  left: 60px;',
+    '  top: auto;',
+    '  right: auto;',
     '  display: -webkit-box;',
     '  display: -webkit-flex;',
     '  display: flex;',
@@ -1556,9 +1558,10 @@ function createSiteHints() {
     '<div class="tp-site-hint"><div class="tp-site-hint-key yellow"></div><div class="tp-site-hint-text"><span>Portal</span><span class="tp-site-hint-sub">Hold: Cycle</span></div></div>',
     '<div class="tp-site-hint"><div class="tp-site-hint-key blue"></div><div class="tp-site-hint-text"><span>Console</span><span class="tp-site-hint-sub">Hold: Safe Mode</span></div></div>',
   ].join('');
-  // Respect portal preference for color hints visibility
   var portalConfig = configGet('tp_portal') || {};
-  if (portalConfig.showHints === false) {
+  var hintPosition = resolveHintsPosition(portalConfig);
+  applyHintsPosition(hints, hintPosition);
+  if (hintPosition === 'off') {
     hints.style.display = 'none';
   }
   document.body.appendChild(hints);
@@ -1683,6 +1686,46 @@ function updatePortalHints() {
   updateYellowHint();
 }
 
+function resolveHintsPosition(portalConfig) {
+  if (portalConfig && portalConfig.hintsPosition) {
+    return portalConfig.hintsPosition;
+  }
+  if (portalConfig && portalConfig.showHints === false) {
+    return 'off';
+  }
+  return 'bottom-left';
+}
+
+function applyHintsPosition(element, position) {
+  if (!element) return;
+  element.style.top = 'auto';
+  element.style.bottom = 'auto';
+  element.style.left = 'auto';
+  element.style.right = 'auto';
+
+  if (position === 'top-left') {
+    element.style.top = '20px';
+    element.style.left = '60px';
+  } else if (position === 'top-right') {
+    element.style.top = '20px';
+    element.style.right = '60px';
+  } else if (position === 'bottom-right') {
+    element.style.bottom = '20px';
+    element.style.right = '60px';
+  } else {
+    element.style.bottom = '20px';
+    element.style.left = '60px';
+  }
+}
+
+function setPortalHintsPosition(position) {
+  var hints = document.getElementById('tp-hints');
+  if (!hints) return;
+  var pos = position || 'bottom-left';
+  applyHintsPosition(hints, pos);
+  hints.style.display = pos === 'off' ? 'none' : 'flex';
+}
+
 /**
  * Show/hide the portal color hints
  * @param {boolean} visible
@@ -1691,9 +1734,12 @@ function setPortalHintsVisible(visible) {
   var hints = document.getElementById('tp-hints');
   if (!hints) return;
   var portalConfig = configGet('tp_portal') || {};
-  var enabled = portalConfig.showHints !== false;
-  var shouldShow = visible && enabled;
-  hints.style.display = shouldShow ? 'flex' : 'none';
+  var position = resolveHintsPosition(portalConfig);
+  if (!visible) {
+    hints.style.display = 'none';
+    return;
+  }
+  setPortalHintsPosition(position);
 }
 
 /**
@@ -1933,6 +1979,7 @@ var TizenPortalAPI = {
   closeSite: closeSite,
   returnToPortal: returnToPortal,
   setPortalHintsVisible: setPortalHintsVisible,
+  setPortalHintsPosition: setPortalHintsPosition,
   updatePortalHints: updatePortalHints,
   getCurrentCard: function() {
     return state.currentCard;

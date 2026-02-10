@@ -75,16 +75,15 @@ var FEATURE_TOGGLE_OPTIONS = [
 ];
 
 var SECTION_DEFS = [
-  { id: 'details', label: 'Site Details', defaultCollapsed: false },
   { id: 'bundle', label: 'Bundle', defaultCollapsed: true },
-  { id: 'options', label: 'Site Options', defaultCollapsed: true },
   { id: 'bundleOptions', label: 'Bundle Options', defaultCollapsed: true },
+  { id: 'options', label: 'Site Options', defaultCollapsed: true },
   { id: 'userscripts', label: 'User Scripts', defaultCollapsed: true },
 ];
 
 var sectionCollapsed = {
-  details: false,
   bundle: true,
+  bundleOptions: true,
   options: true,
 };
 
@@ -161,10 +160,11 @@ function getBundleUserscriptId(bundleName, script, index) {
 }
 
 var FIELDS = [
-  { name: '__section_details', label: 'Site Details', type: 'section', sectionId: 'details' },
-  { name: '__details', label: 'Site Details', type: 'details', section: 'details' },
+  { name: '__details', label: 'Site Details', type: 'details' },
   { name: '__section_bundle', label: 'Bundle', type: 'section', sectionId: 'bundle' },
   { name: 'featureBundle', label: 'Site-specific Bundle', type: 'bundle', required: false, section: 'bundle' },
+  { name: '__section_bundleOptions', label: 'Bundle Options', type: 'section', sectionId: 'bundleOptions' },
+  { name: '__bundleOptions', label: 'Bundle Options', type: 'bundleOptions', section: 'bundleOptions' },
   { name: '__section_options', label: 'Site Options', type: 'section', sectionId: 'options' },
   { name: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_MODE_OPTIONS, section: 'options' },
   { name: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS, section: 'options' },
@@ -1026,6 +1026,8 @@ function renderFields() {
       html += renderSelectField(field, rawValue);
     } else if (field.type === 'userscripts') {
       html += renderUserscriptsField();
+    } else if (field.type === 'bundleOptions') {
+      html += renderBundleOptionsField();
     } else if (field.type === 'details') {
       html += renderDetailsField();
     } else {
@@ -1068,13 +1070,6 @@ function renderSectionRow(field) {
 function getSectionSummary(sectionId) {
   if (!state.card) return '';
 
-  if (sectionId === 'details') {
-    var name = state.card.name || '(no name)';
-    var url = shortenUrl(state.card.url || '(no url)');
-    var icon = state.card.icon ? 'Icon: set' : 'Icon: none';
-    return name + ' • ' + url + ' • ' + icon;
-  }
-
   if (sectionId === 'bundle') {
     var bundleName = state.card.featureBundle || null;
     if (!bundleName) return 'Bundle: None';
@@ -1084,8 +1079,12 @@ function getSectionSummary(sectionId) {
   }
 
   if (sectionId === 'options') {
-    var overrides = countOptionOverrides();
-    return overrides ? ('Overrides: ' + overrides) : 'All global';
+    var viewport = getOptionLabel(VIEWPORT_MODE_OPTIONS, state.card.viewportMode);
+    var focus = getOptionLabel(FOCUS_OUTLINE_OPTIONS, state.card.focusOutlineMode);
+    var ua = getOptionLabel(UA_MODE_OPTIONS, state.card.userAgent);
+    var safeArea = getOptionLabel(FEATURE_TOGGLE_OPTIONS, state.card.safeArea);
+    var scroll = getOptionLabel(FEATURE_TOGGLE_OPTIONS, state.card.scrollIntoView);
+    return 'Viewport: ' + viewport + ' • Focus: ' + focus + ' • UA: ' + ua + ' • Safe Area: ' + safeArea + ' • Scroll: ' + scroll;
   }
 
   if (sectionId === 'bundleOptions') {
@@ -1109,6 +1108,15 @@ function shortenUrl(url) {
   return cleaned;
 }
 
+function getOptionLabel(options, value) {
+  for (var i = 0; i < options.length; i++) {
+    if (options[i].value === value) {
+      return options[i].label;
+    }
+  }
+  return options.length ? options[0].label : '';
+}
+
 function countOptionOverrides() {
   var count = 0;
   for (var i = 0; i < FIELDS.length; i++) {
@@ -1127,17 +1135,32 @@ function getBundleOptionsSummary() {
   var bundle = getBundle(bundleName);
   if (!bundle || !bundle.options || !bundle.options.length) return '';
 
-  var changed = 0;
+  var parts = [];
   for (var i = 0; i < bundle.options.length; i++) {
     var opt = bundle.options[i];
     if (!opt || !opt.key) continue;
     var current = getBundleOptionValue(opt.key, opt);
-    var def = opt.hasOwnProperty('default') ? opt.default : null;
-    if (current !== def) {
-      changed++;
+    var display = formatBundleOptionSummaryValue(opt, current);
+    parts.push((opt.label || opt.key) + ': ' + display);
+    if (parts.length >= 2) break;
+  }
+
+  return parts.join(' • ');
+}
+
+function formatBundleOptionSummaryValue(option, value) {
+  var type = option.type || 'text';
+  if (type === 'toggle') {
+    return value ? 'On' : 'Off';
+  }
+  if (type === 'select' && option.options) {
+    for (var i = 0; i < option.options.length; i++) {
+      if (option.options[i].value === value) {
+        return option.options[i].label;
+      }
     }
   }
-  return changed ? ('Overrides: ' + changed) : ('Options: ' + bundle.options.length);
+  return value === null || value === undefined || value === '' ? '(not set)' : String(value);
 }
 
 function getUserscriptsSummary() {
@@ -1299,14 +1322,23 @@ function renderBundleField(field, value) {
   
   html += '</div>';
 
-  // Render bundle options if available
-  if (value) {
-    html += renderBundleOptions(value);
-  }
-
   html += '</div>';
   
   return html;
+}
+
+function renderBundleOptionsField() {
+  var bundleName = state.card ? state.card.featureBundle : null;
+  var bundle = bundleName ? getBundle(bundleName) : null;
+  if (!bundleName || !bundle || !bundle.options || !bundle.options.length) {
+    return '' +
+      '<div class="tp-field-row" tabindex="-1">' +
+        '<div class="tp-field-label">Bundle Options</div>' +
+        '<div class="tp-field-value">Select a bundle to configure options</div>' +
+      '</div>';
+  }
+
+  return renderBundleOptions(bundleName);
 }
 
 /**
@@ -1326,12 +1358,6 @@ function renderBundleOptions(bundleName) {
   }
 
   var html = '<div class="tp-field-section">';
-  html += renderBundleOptionsHeader();
-
-  if (sectionCollapsed.bundleOptions) {
-    html += '</div>';
-    return html;
-  }
 
   for (var i = 0; i < bundle.options.length; i++) {
     var opt = bundle.options[i];
@@ -1343,20 +1369,6 @@ function renderBundleOptions(bundleName) {
 
   html += '</div>';
   return html;
-}
-
-function renderBundleOptionsHeader() {
-  var collapsed = !!sectionCollapsed.bundleOptions;
-  var indicator = collapsed ? '▶' : '▼';
-  var summary = getSectionSummary('bundleOptions');
-  return '' +
-    '<div class="tp-field-row tp-field-section-row" data-type="section" data-section="bundleOptions" tabindex="0">' +
-      '<div class="tp-field-label">Bundle Options</div>' +
-      '<div class="tp-field-value">' +
-        '<span class="tp-section-summary">' + escapeHtml(summary) + '</span>' +
-        '<span class="tp-section-indicator">' + indicator + '</span>' +
-      '</div>' +
-    '</div>';
 }
 
 function renderUserscriptsField() {
@@ -1377,7 +1389,7 @@ function renderUserscriptsField() {
       if (bundleToggles && bundleToggles.hasOwnProperty(bId)) {
         bEnabled = bundleToggles[bId] === true;
       }
-      var bStatus = bSource + (b.enabled !== false ? '' : ' (off)');
+      var bStatus = bSource;
 
       html += '' +
         '<div class="tp-userscript-line tp-userscript-row" data-userscript-scope="bundle" data-userscript-id="' + escapeHtml(bId) + '" data-userscript-index="' + i + '" tabindex="0">' +
@@ -2138,7 +2150,7 @@ function setBundleOptionData(key, value) {
 function cycleBundleOptionSelect(optionKey, optionDef) {
   var options = optionDef.options || [];
   var currentValue = getBundleOptionValue(optionKey, optionDef);
-  var currentIndex = 0;
+  var currentIndex = -1;
 
   for (var i = 0; i < options.length; i++) {
     if (options[i].value === currentValue) {
@@ -2147,7 +2159,10 @@ function cycleBundleOptionSelect(optionKey, optionDef) {
     }
   }
 
-  var nextIndex = (currentIndex + 1) % options.length;
+  var nextIndex = 0;
+  if (currentIndex !== -1) {
+    nextIndex = (currentIndex + 1) % options.length;
+  }
   setBundleOptionValue(optionKey, options[nextIndex].value);
   renderFields();
   autoSaveCard('option:' + optionKey);
@@ -2284,7 +2299,7 @@ function getFieldDef(name) {
 function cycleSelectOption(fieldName, field) {
   var currentValue = state.card[fieldName];
   var options = field.options;
-  var currentIndex = 0;
+  var currentIndex = -1;
   
   for (var i = 0; i < options.length; i++) {
     if (options[i].value === currentValue) {
@@ -2293,8 +2308,10 @@ function cycleSelectOption(fieldName, field) {
     }
   }
   
-  // Move to next option
-  var nextIndex = (currentIndex + 1) % options.length;
+  var nextIndex = 0;
+  if (currentIndex !== -1) {
+    nextIndex = (currentIndex + 1) % options.length;
+  }
   state.card[fieldName] = options[nextIndex].value;
   
   // Re-render fields

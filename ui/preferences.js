@@ -39,6 +39,14 @@ var HUD_OPTIONS = [
   { value: 'bottom-left', label: 'Bottom Left' },
 ];
 
+var HINT_POSITION_OPTIONS = [
+  { value: 'off', label: 'Off' },
+  { value: 'top-right', label: 'Top Right' },
+  { value: 'top-left', label: 'Top Left' },
+  { value: 'bottom-right', label: 'Bottom Right' },
+  { value: 'bottom-left', label: 'Bottom Left' },
+];
+
 /**
  * Viewport mode options
  */
@@ -113,6 +121,23 @@ function normalizeHudPosition(value) {
   return 'off';
 }
 
+function normalizeHintsPosition(value) {
+  if (typeof value === 'number') {
+    var idx = value % HINT_POSITION_OPTIONS.length;
+    return HINT_POSITION_OPTIONS[idx].value;
+  }
+
+  if (typeof value === 'string') {
+    for (var i = 0; i < HINT_POSITION_OPTIONS.length; i++) {
+      if (HINT_POSITION_OPTIONS[i].value === value) {
+        return value;
+      }
+    }
+  }
+
+  return 'bottom-left';
+}
+
 /**
  * Preference rows definition
  * Note: customColor1/customColor2 are conditional rows shown only when theme='custom'
@@ -123,7 +148,7 @@ var PREFERENCE_ROWS = [
   { id: 'customColor2', label: 'Gradient Color 2', type: 'color', key: 'customColor2', config: 'portal', showIf: 'custom', section: 'appearance' },
   { id: 'backgroundImage', label: 'Backdrop Image URL', type: 'text', key: 'backgroundImage', config: 'portal', showIf: 'backdrop', section: 'appearance' },
   { id: 'hudPosition', label: 'Debug HUD', type: 'select', options: HUD_OPTIONS, key: 'hudPosition', config: 'portal', section: 'portal' },
-  { id: 'showHints', label: 'Color Hints', type: 'toggle', key: 'showHints', config: 'portal', section: 'portal' },
+  { id: 'hintsPosition', label: 'Color Hints', type: 'select', options: HINT_POSITION_OPTIONS, key: 'hintsPosition', config: 'portal', section: 'portal' },
   { id: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_OPTIONS, key: 'viewportMode', config: 'features', section: 'features' },
   { id: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS, key: 'focusOutlineMode', config: 'features', section: 'features' },
   { id: 'uaMode', label: 'User Agent Mode', type: 'select', options: UA_MODE_OPTIONS, key: 'uaMode', config: 'features', section: 'features' },
@@ -137,8 +162,8 @@ var PREFERENCE_ROWS = [
 ];
 
 var SECTION_DEFS = [
-  { id: 'appearance', label: 'Appearance', defaultCollapsed: false },
-  { id: 'portal', label: 'Portal', defaultCollapsed: false },
+  { id: 'appearance', label: 'Appearance', defaultCollapsed: true },
+  { id: 'portal', label: 'Portal', defaultCollapsed: true },
   { id: 'features', label: 'Site Features', defaultCollapsed: true },
   { id: 'userscripts', label: 'User Scripts', defaultCollapsed: true },
 ];
@@ -291,6 +316,14 @@ export function showPreferences() {
       prefsState.settings.portalConfig.hudPosition = hudNormalized;
       TizenPortal.config.set('tp_portal', prefsState.settings.portalConfig);
     }
+    if (!prefsState.settings.portalConfig.hintsPosition && prefsState.settings.portalConfig.showHints === false) {
+      prefsState.settings.portalConfig.hintsPosition = 'off';
+    }
+    var hintsNormalized = normalizeHintsPosition(prefsState.settings.portalConfig.hintsPosition);
+    if (prefsState.settings.portalConfig.hintsPosition !== hintsNormalized) {
+      prefsState.settings.portalConfig.hintsPosition = hintsNormalized;
+      TizenPortal.config.set('tp_portal', prefsState.settings.portalConfig);
+    }
   }
   
   prefsState.currentRow = 0;
@@ -325,6 +358,7 @@ function getDefaultPortalConfig() {
     customColor2: '#161b22',
     backgroundImage: '',
     hudPosition: 'off',
+    hintsPosition: 'bottom-left',
     showHints: true,
   };
 }
@@ -533,6 +567,12 @@ function renderPreferencesUI() {
         '</div>';
     } else if (row.type && row.type === 'userscript') {
       html += renderUserscriptRow(row, i);
+    } else if (row.type && row.type === 'userscript-add') {
+      html += '' +
+        '<div class="tp-prefs-row" data-index="' + i + '" data-id="' + row.id + '" tabindex="0">' +
+          '<div class="tp-prefs-label">' + row.label + '</div>' +
+          '<div class="tp-prefs-value">＋</div>' +
+        '</div>';
     } else {
       var value = getValue(row);
       var displayValue = formatDisplayValue(row, value);
@@ -586,35 +626,30 @@ function getPreferencesSectionSummary(sectionId) {
     if (theme === 'custom') {
       var c1 = prefsState.settings.portalConfig.customColor1 || '#0d1117';
       var c2 = prefsState.settings.portalConfig.customColor2 || '#161b22';
-      return themeLabel + ' • ' + c1 + ' → ' + c2;
+      return 'Theme: ' + themeLabel + ' • Gradient 1: ' + c1 + ' • Gradient 2: ' + c2;
     }
     if (theme === 'backdrop') {
       var bg = prefsState.settings.portalConfig.backgroundImage || 'none';
-      return themeLabel + ' • ' + shortenUrl(bg);
+      return 'Theme: ' + themeLabel + ' • Backdrop: ' + shortenUrl(bg);
     }
-    return themeLabel;
+    return 'Theme: ' + themeLabel;
   }
 
   if (sectionId === 'portal') {
     var hud = normalizeHudPosition(prefsState.settings.portalConfig.hudPosition || 'off');
     var hudLabel = getOptionLabel(HUD_OPTIONS, hud) || hud;
-    var hints = prefsState.settings.portalConfig.showHints ? 'Hints: On' : 'Hints: Off';
-    return hudLabel + ' • ' + hints;
+    var hintsPosition = normalizeHintsPosition(prefsState.settings.portalConfig.hintsPosition || 'bottom-left');
+    var hintsLabel = getOptionLabel(HINT_POSITION_OPTIONS, hintsPosition) || hintsPosition;
+    return 'Debug HUD: ' + hudLabel + ' • Hints: ' + hintsLabel;
   }
 
   if (sectionId === 'features') {
-    var enabled = 0;
-    var total = 0;
-    for (var i = 0; i < PREFERENCE_ROWS.length; i++) {
-      var row = PREFERENCE_ROWS[i];
-      if (row.section !== 'features') continue;
-      total++;
-      var value = getValue(row);
-      if (row.type === 'toggle') {
-        if (value) enabled++;
-      }
-    }
-    return 'Toggles: ' + enabled + '/' + total;
+    var viewport = getOptionLabel(VIEWPORT_OPTIONS, prefsState.settings.featuresConfig.viewportMode || 'locked');
+    var focus = getOptionLabel(FOCUS_OUTLINE_OPTIONS, prefsState.settings.featuresConfig.focusOutlineMode || 'on');
+    var ua = getOptionLabel(UA_MODE_OPTIONS, prefsState.settings.featuresConfig.uaMode || 'tizen');
+    var safeArea = prefsState.settings.featuresConfig.safeArea ? 'On' : 'Off';
+    var scroll = prefsState.settings.featuresConfig.scrollIntoView ? 'On' : 'Off';
+    return 'Viewport: ' + viewport + ' • Focus: ' + focus + ' • UA: ' + ua + ' • Safe Area: ' + safeArea + ' • Scroll: ' + scroll;
   }
 
   if (sectionId === 'userscripts') {
@@ -879,10 +914,10 @@ function cycleSelectOption(row, index) {
       break;
     }
   }
-  if (currentIndex === -1) currentIndex = 0;
-  
-  // Move to next option
-  var nextIndex = (currentIndex + 1) % options.length;
+  var nextIndex = 0;
+  if (currentIndex !== -1) {
+    nextIndex = (currentIndex + 1) % options.length;
+  }
   var nextValue = options[nextIndex].value;
   
   setValue(row, nextValue);
@@ -1144,6 +1179,14 @@ function restoreFocusToPortal() {
 function savePreferencesAuto(reason) {
   console.log('TizenPortal: Auto-saving preferences', reason || '');
 
+  if (prefsState.settings.portalConfig) {
+    prefsState.settings.portalConfig.theme = normalizeThemeValue(prefsState.settings.portalConfig.theme || 'dark');
+    prefsState.settings.portalConfig.hudPosition = normalizeHudPosition(prefsState.settings.portalConfig.hudPosition || 'off');
+    var hintPos = normalizeHintsPosition(prefsState.settings.portalConfig.hintsPosition || 'bottom-left');
+    prefsState.settings.portalConfig.hintsPosition = hintPos;
+    prefsState.settings.portalConfig.showHints = hintPos !== 'off';
+  }
+
   // Save portal config
   TizenPortal.config.set('tp_portal', prefsState.settings.portalConfig);
 
@@ -1173,6 +1216,10 @@ export function applyPortalPreferences(config) {
   
   if (!config) {
     config = getDefaultPortalConfig();
+  }
+
+  if (!config.hintsPosition && config.showHints === false) {
+    config.hintsPosition = 'off';
   }
   
   var theme = normalizeThemeValue(config.theme || 'dark');
@@ -1217,8 +1264,11 @@ export function applyPortalPreferences(config) {
     }
   }
 
-  // Apply color hints visibility
-  if (window.TizenPortal && window.TizenPortal.setPortalHintsVisible) {
+  // Apply color hints position
+  if (window.TizenPortal && window.TizenPortal.setPortalHintsPosition) {
+    var hintsPosition = normalizeHintsPosition(config.hintsPosition || 'bottom-left');
+    window.TizenPortal.setPortalHintsPosition(hintsPosition);
+  } else if (window.TizenPortal && window.TizenPortal.setPortalHintsVisible) {
     window.TizenPortal.setPortalHintsVisible(true);
   }
 

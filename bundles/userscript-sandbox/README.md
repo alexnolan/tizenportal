@@ -2,9 +2,9 @@
 
 A collection of high-quality userscripts designed for TV browsing with Samsung remote controls.
 
-## Version 2.0.0
+## Version 2.1.0
 
-This bundle provides 10 carefully crafted userscripts that demonstrate both inline and external script loading capabilities.
+This bundle provides 18 carefully crafted userscripts that demonstrate both inline and external script loading capabilities.
 
 ---
 
@@ -185,6 +185,198 @@ This bundle provides 10 carefully crafted userscripts that demonstrate both inli
 
 ---
 
+### 11. **Cookie Consent Auto-Closer**
+
+**Purpose:** Automatically dismiss cookie consent banners
+
+**Features:**
+- Detects cookie/GDPR/consent banners using multiple selectors
+- Attempts to click "Accept" buttons first
+- Falls back to hiding banner if no button found
+- Monitors for new banners via MutationObserver
+- Checks every 1.5 seconds as fallback
+- Tracks dismissed banners to avoid re-processing
+- Logs actions for visibility
+
+**Use Case:** Any website with cookie consent popups (news sites, blogs, commercial sites)
+
+**Patterns Detected:**
+- Class/ID containing: cookie, consent, gdpr, notice
+- ARIA labels with cookie/consent
+- Buttons with: accept, agree, "got it", OK
+
+---
+
+### 12. **Subtitle Size Enhancer**
+
+**Purpose:** Increases subtitle/caption size for TV viewing
+
+**Features:**
+- Doubles subtitle font size (200%)
+- Enhanced line height (1.4) for readability
+- Strong background (85% black) for contrast
+- Adds padding and border radius for clean appearance
+- Text shadow for better visibility
+- Repositions captions to 10% from bottom
+- Works with YouTube and generic video players
+- MutationObserver monitors for dynamic caption updates
+- Fully reversible
+
+**Use Case:** Watching videos with subtitles on TV (YouTube, streaming sites, video platforms)
+
+**Technical Notes:**
+- Targets YouTube caption classes and generic ::cue pseudo-element
+- Uses both CSS injection and DOM manipulation for reliability
+- Monitors style attribute changes to override player defaults
+
+---
+
+### 13. **Focus Trap Escape**
+
+**Purpose:** Break out of stuck focus loops
+
+**Features:**
+- **ESC key:** Blur current element and return focus to body
+- **Auto-detection:** Detects when arrow keys don't change focus
+- After 5+ failed navigation attempts, jumps to random focusable element
+- Prevents getting stuck in broken navigation implementations
+- Logs escape actions for debugging
+- Fully reversible
+
+**Use Case:** Sites with broken spatial navigation, modal dialogs that trap focus, infinite loops
+
+**How It Works:**
+- Tracks last focused element
+- Counts consecutive arrow key presses on same element
+- After threshold, selects random element from first 10 focusable items
+- ESC provides immediate manual escape
+
+---
+
+### 14. **Page Simplifier**
+
+**Purpose:** Remove clutter for focused reading
+
+**Features:**
+- Hides sidebars, ads, social sharing buttons, comments
+- Centers main content with max-width (1400px)
+- Adds padding for comfortable reading
+- Preserves article/main content and navigation
+- Dark background (#181818) for eye comfort
+- Fully reversible
+- No JavaScript overhead (pure CSS)
+
+**Use Case:** News articles, blogs, documentation sites with cluttered layouts
+
+**Elements Hidden:**
+- Sidebars (aside, .sidebar, [class*="sidebar"])
+- Advertisements (.ad, [class*="advertisement"])
+- Social sharing ([class*="social-share"])
+- Comments sections
+- Related content widgets (except in main content)
+
+---
+
+### 15. **Video Speed Controller**
+
+**Purpose:** Fine-tune video playback speed with keyboard
+
+**Features:**
+- **Shift+Up:** Increase speed (0.25x increments, max 2.0x)
+- **Shift+Down:** Decrease speed (0.25x increments, min 0.25x)
+- **Shift+Left/Right:** Reset to 1.0x
+- Speed presets: 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0
+- Real-time feedback via log
+- Applies to all videos on page
+- MutationObserver ensures new videos inherit speed
+- Fully reversible
+
+**Use Case:** Educational videos, tutorials, podcasts, lectures, slow-motion review
+
+**Why Useful on TV:**
+- Native speed controls often hidden or difficult to access
+- Keyboard shortcuts easier than navigating UI
+- Useful for content consumption optimization
+
+---
+
+### 16. **Keyboard Shortcuts Overlay**
+
+**Purpose:** Display available TV remote shortcuts
+
+**Features:**
+- **Info key (457) or ? key:** Toggle overlay
+- **Back/Enter:** Close overlay
+- Displays all TizenPortal shortcuts:
+  - Navigation keys
+  - Color button mappings
+  - Media controls
+  - Overlay controls
+- Dark semi-transparent background (95% opacity)
+- Centered modal with readable typography
+- Color-coded sections (blue headers, purple subheadings)
+- No external dependencies
+- Fully reversible
+
+**Use Case:** New users learning shortcuts, quick reference, accessibility
+
+**Shortcut Categories:**
+- Navigation (arrows, enter, back)
+- Color Buttons (red, green, yellow, blue)
+- Media (play, pause, stop, FF, rewind)
+- Help (info key)
+
+---
+
+### 17. **Link Target Controller**
+
+**Purpose:** Prevent links from opening in new tabs/windows
+
+**Features:**
+- Removes `target="_blank"` and `target="_new"` from all links
+- Forces links to open in same context
+- MutationObserver monitors for dynamically added links
+- Processes links every 100ms after DOM changes
+- Logs number of links modified
+- Fully reversible
+
+**Use Case:** TV browsing where new tabs/windows are problematic
+
+**Why Important on TV:**
+- New windows can cause navigation confusion
+- TizenBrew may not handle multiple windows well
+- Keeps browsing linear and predictable
+- Prevents losing portal context
+
+---
+
+### 18. **Video Auto-Pause on Blur**
+
+**Purpose:** Pause videos when app loses focus
+
+**Features:**
+- Pauses all videos when window loses focus (blur event)
+- Pauses videos when document becomes hidden (visibility API)
+- Resumes videos when focus/visibility restored
+- Tracks which videos were paused by script
+- Only resumes videos that script paused (respects user intent)
+- Logs pause/resume actions
+- Fully reversible
+
+**Use Case:** Multitasking, switching between apps, background video prevention
+
+**Events Monitored:**
+- `window.blur` - Window loses focus
+- `window.focus` - Window regains focus
+- `document.visibilitychange` - Tab/app visibility changes
+
+**Smart Resume:**
+- Remembers which videos it paused
+- Doesn't resume videos user manually paused
+- Clears tracking list on focus restore
+
+---
+
 ## 🎯 Script Quality Improvements
 
 ### What Changed from v1.0.0
@@ -204,7 +396,7 @@ This bundle provides 10 carefully crafted userscripts that demonstrate both inli
 - **New:** Comprehensive typography improvements, max-width, better spacing
 - **Impact:** Professional-grade text layout for TV viewing
 
-**4. All New Scripts**
+**4. New Scripts in v2.0.0**
 - YouTube TV enhancements
 - Ad skip automation
 - Image zoom viewer
@@ -212,6 +404,16 @@ This bundle provides 10 carefully crafted userscripts that demonstrate both inli
 - Sticky header removal
 - External script example (grayscale)
 - CSS template for user customization
+
+**5. Additional Scripts in v2.1.0**
+- Cookie consent auto-closer
+- Subtitle size enhancer
+- Focus trap escape
+- Page simplifier
+- Video speed controller
+- Keyboard shortcuts overlay
+- Link target controller
+- Video auto-pause on blur
 
 ---
 

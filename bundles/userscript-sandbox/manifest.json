@@ -1,8 +1,8 @@
 {
   "name": "userscript-sandbox",
   "displayName": "Userscript Sandbox",
-  "version": "2.0.0",
-  "description": "Collection of high-quality userscripts for TV browsing: dark mode, readability, auto-scroll, YouTube enhancements, ad skipping, image zoom, and more.",
+  "version": "2.1.0",
+  "description": "Comprehensive collection of 18 userscripts for TV browsing: dark mode, readability, navigation, video control, ad blocking, cookie dismissal, focus management, and more.",
   "author": "TizenPortal",
   "navigationMode": "geometric",
   "provides": ["userscript-examples"]

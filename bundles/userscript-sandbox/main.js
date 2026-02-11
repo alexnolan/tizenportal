@@ -72,6 +72,54 @@ export default {
       enabled: false,
       inline: "(function(){var customCSS='body { /* Add your CSS here */ }';var s=document.createElement('style');s.id='tp-custom-css';s.textContent=customCSS;document.head.appendChild(s);if(window.TizenPortal&&TizenPortal.log)TizenPortal.log('Custom CSS applied');userscript.cleanup=function(){var el=document.getElementById('tp-custom-css');if(el)el.remove();}})();",
     },
+    {
+      id: 'sandbox-cookie-consent',
+      name: 'Cookie Consent Auto-Closer',
+      enabled: false,
+      inline: "(function(){var log=function(msg){if(window.TizenPortal&&TizenPortal.log)TizenPortal.log(msg);};var dismissed=[];var cookieSelectors=['.cookie-banner','#cookie-banner','[class*=\"cookie-consent\"]','[id*=\"cookie-consent\"]','[class*=\"gdpr\"]','[id*=\"gdpr\"]','[class*=\"cookie-notice\"]','[id*=\"cookie-notice\"]','[aria-label*=\"cookie\" i]','[aria-label*=\"consent\" i]'];var buttonSelectors=['button[class*=\"accept\"]','button[id*=\"accept\"]','a[class*=\"accept\"]','button:contains(\"Accept\")','button:contains(\"Agree\")','button:contains(\"OK\")','button:contains(\"Got it\")'];function dismissBanner(){var found=false;for(var i=0;i<cookieSelectors.length;i++){try{var banners=document.querySelectorAll(cookieSelectors[i]);for(var j=0;j<banners.length;j++){var banner=banners[j];if(banner.offsetParent&&!dismissed.includes(banner)){var acceptBtn=banner.querySelector('button,a');if(acceptBtn){acceptBtn.click();dismissed.push(banner);log('Dismissed cookie banner');found=true;}else{banner.style.display='none';dismissed.push(banner);log('Hidden cookie banner');found=true;}}}}catch(err){}}var allButtons=document.querySelectorAll('button,a');for(var k=0;k<allButtons.length;k++){var btn=allButtons[k];var text=(btn.textContent||'').toLowerCase();if(btn.offsetParent&&!dismissed.includes(btn)&&(text.indexOf('accept')!==-1||text.indexOf('agree')!==-1||text.indexOf('got it')!==-1)){var parent=btn.closest('[class*=\"cookie\"],[id*=\"cookie\"],[class*=\"consent\"],[id*=\"consent\"]');if(parent&&!dismissed.includes(parent)){btn.click();dismissed.push(parent);dismissed.push(btn);log('Clicked consent button');found=true;break;}}}return found;}var checkInterval=setInterval(dismissBanner,1500);var observer=new MutationObserver(function(){setTimeout(dismissBanner,200);});observer.observe(document.body,{childList:true,subtree:true});dismissBanner();userscript.cleanup=function(){if(checkInterval)clearInterval(checkInterval);if(observer)observer.disconnect();}})();",
+    },
+    {
+      id: 'sandbox-subtitle-enhancer',
+      name: 'Subtitle Size Enhancer',
+      enabled: false,
+      inline: "(function(){var s=document.createElement('style');s.id='tp-subtitle-enhance';s.textContent='.ytp-caption-segment,.caption-window,.captions-text,::cue,video::cue{font-size:200%!important;line-height:1.4!important;background-color:rgba(0,0,0,0.85)!important;padding:8px 12px!important;border-radius:4px!important;text-shadow:2px 2px 4px rgba(0,0,0,0.9)!important}.caption-window{bottom:10%!important}';document.head.appendChild(s);var observer=new MutationObserver(function(){var captions=document.querySelectorAll('.ytp-caption-segment,.caption-window,.captions-text');for(var i=0;i<captions.length;i++){captions[i].style.fontSize='200%';captions[i].style.lineHeight='1.4';}});observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['style']});userscript.cleanup=function(){var el=document.getElementById('tp-subtitle-enhance');if(el)el.remove();if(observer)observer.disconnect();}})();",
+    },
+    {
+      id: 'sandbox-focus-escape',
+      name: 'Focus Trap Escape',
+      enabled: false,
+      inline: "(function(){var log=function(msg){if(window.TizenPortal&&TizenPortal.log)TizenPortal.log(msg);};var escapeAttempts=0;var lastFocused=null;var keyHandler=function(e){if(e.keyCode===27||e.keyCode===10182){var current=document.activeElement;if(current&&current!==document.body){current.blur();document.body.focus();log('Focus trap escaped - blur current element');e.preventDefault();}}else if(e.keyCode===37||e.keyCode===38||e.keyCode===39||e.keyCode===40){var current=document.activeElement;if(current===lastFocused){escapeAttempts++;if(escapeAttempts>5){var focusable=document.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex=\"-1\"])');if(focusable.length>0){var randomIdx=Math.floor(Math.random()*Math.min(focusable.length,10));focusable[randomIdx].focus();log('Broke focus loop - jumped to random element');escapeAttempts=0;e.preventDefault();}}lastFocused=current;}else{lastFocused=current;escapeAttempts=0;}}};document.addEventListener('keydown',keyHandler,true);userscript.cleanup=function(){document.removeEventListener('keydown',keyHandler,true);}})();",
+    },
+    {
+      id: 'sandbox-page-simplifier',
+      name: 'Page Simplifier',
+      enabled: false,
+      inline: "(function(){var s=document.createElement('style');s.id='tp-simplify';s.textContent='aside,nav:not([role=\"navigation\"]):not(.ytp-chrome-bottom),.sidebar,[class*=\"sidebar\"],[id*=\"sidebar\"],.ad,[class*=\"advertisement\"],[id*=\"advertisement\"],[class*=\"social-share\"],[id*=\"social\"]:not(article):not(main),.comments,[id*=\"comment\"]:not(article):not(main),.related,[class*=\"related\"]:not(main){display:none!important}article,main,[role=\"main\"]{max-width:1400px!important;margin:0 auto!important;padding:20px!important}body{background:#181818!important}';document.head.appendChild(s);userscript.cleanup=function(){var el=document.getElementById('tp-simplify');if(el)el.remove();}})();",
+    },
+    {
+      id: 'sandbox-video-speed',
+      name: 'Video Speed Controller',
+      enabled: false,
+      inline: "(function(){var log=function(msg){if(window.TizenPortal&&TizenPortal.log)TizenPortal.log(msg);};var currentSpeed=1.0;var speeds=[0.25,0.5,0.75,1.0,1.25,1.5,1.75,2.0];var speedIndex=3;function setSpeed(speed){var vids=document.querySelectorAll('video');for(var i=0;i<vids.length;i++){vids[i].playbackRate=speed;}currentSpeed=speed;log('Video speed: '+speed+'x');}var keyHandler=function(e){if(e.shiftKey&&e.keyCode===38){speedIndex=Math.min(speeds.length-1,speedIndex+1);setSpeed(speeds[speedIndex]);e.preventDefault();}else if(e.shiftKey&&e.keyCode===40){speedIndex=Math.max(0,speedIndex-1);setSpeed(speeds[speedIndex]);e.preventDefault();}else if(e.shiftKey&&(e.keyCode===37||e.keyCode===39)){speedIndex=3;setSpeed(1.0);e.preventDefault();}};document.addEventListener('keydown',keyHandler);var observer=new MutationObserver(function(){var vids=document.querySelectorAll('video');for(var i=0;i<vids.length;i++){if(Math.abs(vids[i].playbackRate-currentSpeed)>0.01){vids[i].playbackRate=currentSpeed;}}});observer.observe(document.body,{childList:true,subtree:true});log('Video speed control active (Shift+Up/Down: adjust, Shift+Left/Right: reset)');userscript.cleanup=function(){document.removeEventListener('keydown',keyHandler);if(observer)observer.disconnect();}})();",
+    },
+    {
+      id: 'sandbox-keyboard-help',
+      name: 'Keyboard Shortcuts Overlay',
+      enabled: false,
+      inline: "(function(){var overlay=null;var visible=false;function createOverlay(){var div=document.createElement('div');div.id='tp-kbd-help';div.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.95);color:#e8e6e3;padding:30px;border-radius:8px;z-index:999998;display:none;max-width:600px;font-family:sans-serif;box-shadow:0 4px 20px rgba(0,0,0,0.5);';div.innerHTML='<h2 style=\"margin:0 0 20px 0;color:#8ab4f8;font-size:24px;\">TV Remote Shortcuts</h2><div style=\"line-height:2;\"><strong style=\"color:#c58af9;\">Navigation:</strong><br>↑ ↓ ← → : Move focus<br>Enter : Select<br>Back : Go back<br><br><strong style=\"color:#c58af9;\">Color Buttons:</strong><br>Red : Address bar<br>Green : Mouse mode<br>Yellow : Return to portal<br>Blue : Diagnostics<br><br><strong style=\"color:#c58af9;\">Media:</strong><br>Play/Pause : Toggle playback<br>Stop : Stop media<br>FF/Rewind : Seek<br><br><strong style=\"color:#c58af9;\">This Overlay:</strong><br>Info / ? : Toggle help</div>';document.body.appendChild(div);return div;}function toggleOverlay(){if(!overlay)overlay=createOverlay();visible=!visible;overlay.style.display=visible?'block':'none';}var keyHandler=function(e){if(e.keyCode===457||e.keyCode===63||e.keyCode===191){toggleOverlay();e.preventDefault();e.stopPropagation();}else if(visible&&(e.keyCode===10009||e.keyCode===13)){toggleOverlay();e.preventDefault();e.stopPropagation();}};document.addEventListener('keydown',keyHandler,true);userscript.cleanup=function(){document.removeEventListener('keydown',keyHandler,true);if(overlay)overlay.remove();}})();",
+    },
+    {
+      id: 'sandbox-link-control',
+      name: 'Link Target Controller',
+      enabled: false,
+      inline: "(function(){var log=function(msg){if(window.TizenPortal&&TizenPortal.log)TizenPortal.log(msg);};var processed=0;function processLinks(){var links=document.querySelectorAll('a[target=\"_blank\"],a[target=\"_new\"]');for(var i=0;i<links.length;i++){links[i].removeAttribute('target');processed++;}if(processed>0){log('Removed target from '+processed+' links');processed=0;}}var observer=new MutationObserver(function(){setTimeout(processLinks,100);});observer.observe(document.body,{childList:true,subtree:true});processLinks();userscript.cleanup=function(){if(observer)observer.disconnect();}})();",
+    },
+    {
+      id: 'sandbox-video-autopause',
+      name: 'Video Auto-Pause on Blur',
+      enabled: false,
+      inline: "(function(){var log=function(msg){if(window.TizenPortal&&TizenPortal.log)TizenPortal.log(msg);};var pausedByScript=[];function pauseAll(){var vids=document.querySelectorAll('video');for(var i=0;i<vids.length;i++){if(!vids[i].paused){vids[i].pause();if(!pausedByScript.includes(vids[i])){pausedByScript.push(vids[i]);log('Paused video (visibility lost)');}}}}function resumeAll(){for(var i=0;i<pausedByScript.length;i++){try{pausedByScript[i].play();log('Resumed video (visibility restored)');}catch(e){}}pausedByScript=[];}var blurHandler=function(){pauseAll();};var focusHandler=function(){resumeAll();};var visibilityHandler=function(){if(document.hidden){pauseAll();}else{resumeAll();}};window.addEventListener('blur',blurHandler);window.addEventListener('focus',focusHandler);document.addEventListener('visibilitychange',visibilityHandler);userscript.cleanup=function(){window.removeEventListener('blur',blurHandler);window.removeEventListener('focus',focusHandler);document.removeEventListener('visibilitychange',visibilityHandler);}})();",
+    },
   ],
 
   onActivate: function(win, card) {

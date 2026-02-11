@@ -2239,6 +2239,9 @@ var TizenPortalAPI = {
     state: state,
     init: init,
   },
+  
+  // Feature loader (for internal use by handlers)
+  _featureLoader: featureLoader,
 };
 
 // Expose on window

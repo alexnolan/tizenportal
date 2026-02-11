@@ -195,12 +195,12 @@ Bundles can declare **options** in `manifest.json` that appear in the Site Edito
 Supported option types:
 
 - `toggle` — boolean on/off
-- `text` — text input
-- `url` — URL input with validation
+- `text` — text input field
+- `url` — URL input with validation; contents can be fetched
 - `number` — numeric input
-- `select` — fixed list of options
-- `text` — free text
-- `url` — URL input; contents are fetched and stored
+- `select` — dropdown with fixed list of options
+- `color` — color picker
+- `textarea` — multi-line text input
 
 Example:
 

@@ -229,8 +229,8 @@ export function applyNavigationMode(card, bundle) {
   // Get site override
   var siteMode = card && card.navigationMode ? card.navigationMode : null;
   
-  // Get global default
-  var globalMode = 'polyfill';
+  // Get global default (null lets getEffectiveMode apply the default)
+  var globalMode = null;
   if (window.TizenPortal && window.TizenPortal.config) {
     var features = window.TizenPortal.config.get('tp_features');
     if (features && features.navigationMode) {
@@ -262,7 +262,8 @@ export function applyNavigationMode(card, bundle) {
  * Initialize navigation with global defaults (for portal page)
  */
 export function initializeGlobalNavigation() {
-  var globalMode = 'polyfill';
+  // Default to 'directional' mode, overridden by global preferences if set
+  var globalMode = 'directional';
   
   if (window.TizenPortal && window.TizenPortal.config) {
     var features = window.TizenPortal.config.get('tp_features');

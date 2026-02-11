@@ -99,6 +99,16 @@ function loadConfig() {
           configCache[key] = DEFAULT_CONFIG[key];
         }
       }
+      
+      // Deep merge for tp_features to ensure new nested keys appear for existing users
+      if (configCache.tp_features && DEFAULT_CONFIG.tp_features) {
+        for (var featureKey in DEFAULT_CONFIG.tp_features) {
+          if (DEFAULT_CONFIG.tp_features.hasOwnProperty(featureKey) && 
+              !configCache.tp_features.hasOwnProperty(featureKey)) {
+            configCache.tp_features[featureKey] = DEFAULT_CONFIG.tp_features[featureKey];
+          }
+        }
+      }
     } else {
       configCache = Object.assign({}, DEFAULT_CONFIG);
     }

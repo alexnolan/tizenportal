@@ -806,6 +806,7 @@ function autoSaveCard(reason) {
     name: cardName,
     url: cardUrl,
     featureBundle: state.card.featureBundle || null,
+    navigationMode: state.card.hasOwnProperty('navigationMode') ? state.card.navigationMode : null,
     viewportMode: state.card.hasOwnProperty('viewportMode') ? state.card.viewportMode : null,
     focusOutlineMode: state.card.hasOwnProperty('focusOutlineMode') ? state.card.focusOutlineMode : null,
     userAgent: state.card.hasOwnProperty('userAgent') ? state.card.userAgent : null,

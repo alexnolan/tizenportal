@@ -1307,6 +1307,24 @@ async function applyBundleToPage(card) {
   tpHud('Applying: ' + bundle.name);
   state.currentBundle = bundle.name;
   
+  // Log manifest info if available
+  if (bundle.manifest) {
+    log('Bundle manifest loaded: v' + bundle.manifest.version);
+    if (bundle.manifest.navigationMode) {
+      log('Bundle navigation mode: ' + (typeof bundle.manifest.navigationMode === 'object' 
+        ? bundle.manifest.navigationMode.mode 
+        : bundle.manifest.navigationMode));
+    }
+    if (bundle.manifest.viewportLock !== undefined) {
+      log('Bundle viewportLock: ' + bundle.manifest.viewportLock);
+    }
+    if (bundle.manifest.options && bundle.manifest.options.length > 0) {
+      log('Bundle has ' + bundle.manifest.options.length + ' configurable options');
+    }
+  } else {
+    warn('Bundle has no manifest (legacy bundle)');
+  }
+  
   // Track active bundle for state management
   setActiveBundle(bundle, card);
   
@@ -2118,6 +2136,11 @@ var TizenPortalAPI = {
     list: getBundleNames,
     getActive: getActiveBundle,
     getActiveName: getActiveBundleName,
+    get: getBundle,
+    getManifest: function(bundleName) {
+      var bundle = getBundle(bundleName);
+      return bundle ? bundle.manifest : null;
+    },
   },
 
   // Userscript engine

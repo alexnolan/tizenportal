@@ -438,7 +438,7 @@ export function executeColorAction(action) {
             }
           } catch (err) {
             // Cross-origin iframe, can't access document
-            console.log('TizenPortal: Cannot reapply focus styling to cross-origin iframe');
+            console.warn('TizenPortal: Cannot reapply focus styling to cross-origin iframe:', err.message);
           }
         }
         

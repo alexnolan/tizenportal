@@ -2240,7 +2240,8 @@ var TizenPortalAPI = {
     init: init,
   },
   
-  // Feature loader (for internal use by handlers)
+  // Feature loader (internal use only - for color button handlers)
+  // NOT for bundle use - bundles should use bundle.features
   _featureLoader: featureLoader,
 };
 

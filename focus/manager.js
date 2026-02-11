@@ -1,7 +1,7 @@
 /**
  * TizenPortal Focus Manager
  * 
- * Track focus across shell and iframe.
+ * Track focus state across the application.
  * Provides TV-friendly focus utilities:
  * - Scroll-into-view with margins
  * - Initial focus on page load
@@ -13,11 +13,6 @@
  * Currently focused element
  */
 var focusedElement = null;
-
-/**
- * Whether focus is in iframe
- */
-var focusInIframe = false;
 
 /**
  * Saved focus state for restoration
@@ -64,7 +59,6 @@ export function initFocusManager() {
   // Track focus changes in document
   document.addEventListener('focusin', function(event) {
     focusedElement = event.target;
-    focusInIframe = isElementInIframe(event.target);
     notifyListeners('focusin', event.target);
   }, true);
 
@@ -73,19 +67,6 @@ export function initFocusManager() {
   }, true);
 
   console.log('TizenPortal: Focus manager initialized');
-}
-
-/**
- * Check if element is inside an iframe
- * @param {Element} element
- * @returns {boolean}
- */
-function isElementInIframe(element) {
-  try {
-    return element.ownerDocument !== document;
-  } catch (err) {
-    return false;
-  }
 }
 
 /**
@@ -111,14 +92,6 @@ function notifyListeners(type, element) {
  */
 export function getFocusedElement() {
   return focusedElement || document.activeElement;
-}
-
-/**
- * Check if focus is in iframe
- * @returns {boolean}
- */
-export function isFocusInIframe() {
-  return focusInIframe;
 }
 
 /**
@@ -150,7 +123,6 @@ export function setFocusToShell() {
 export function saveFocusState() {
   savedFocus = {
     element: focusedElement,
-    inIframe: focusInIframe,
   };
 }
 

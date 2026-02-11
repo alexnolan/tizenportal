@@ -44,7 +44,7 @@ export default {
   },
   
   /**
-   * Apply feature to iframe document
+   * Apply feature to document
    * @param {Document} doc
    */
   apply: function(doc) {
@@ -62,7 +62,7 @@ export default {
   },
   
   /**
-   * Remove feature from iframe document
+   * Remove feature from document
    * @param {Document} doc
    */
   remove: function(doc) {

@@ -237,8 +237,7 @@ tizenportal/
 │   ├── addressbar.js         # Browser chrome
 │   ├── diagnostics.js        # Debug panel
 │   ├── modal.js              # Modal system
-│   ├── cards.js              # Card UI rendering
-│   └── iframe.js             # Iframe management
+│   └── cards.js              # Card UI rendering
 │
 ├── input/                    # Input handling
 │   ├── keys.js               # Key constants
@@ -398,11 +397,11 @@ processValue(a ?? b);
 ```js
 // ✅ Always wrap in try-catch
 try {
-  const doc = iframe.contentDocument;
-  if (!doc) throw new Error('No contentDocument');
-  processDocument(doc);
+  var element = document.getElementById('some-id');
+  if (!element) throw new Error('Element not found');
+  processElement(element);
 } catch (err) {
-  TizenPortal.log('Failed to process iframe:', err.message);
+  TizenPortal.log('Failed to process element:', err.message);
 }
 ```
 

@@ -1393,7 +1393,7 @@ async function applyBundleToPage(card) {
     warn('No CSS to inject for bundle: ' + bundle.name);
   }
   
-  // Call lifecycle hooks with window instead of iframe
+  // Call lifecycle hooks
   try {
     if (bundle.onBeforeLoad) {
       bundle.onBeforeLoad(window, card);

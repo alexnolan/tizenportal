@@ -401,25 +401,31 @@ Runtime should validate manifests on load:
 
 ## Migration Path
 
-### Phase 1: Add Manifest Loading (v1.1)
-- Update rollup.config.js to read manifest.json
-- Attach manifest to bundle objects at build time
-- No breaking changes (manifests optional)
+**Status: ✅ All phases complete!**
 
-### Phase 2: Move Metadata (v1.2)
-- Move `displayName`, `description`, `author` from main.js to manifest.json
-- Update existing bundles
-- Deprecation warnings for main.js metadata
+### Phase 1: Add Manifest Loading ✅ Complete
+- ✅ Update rollup.config.js to read manifest.json
+- ✅ Attach manifest to bundle objects at build time
+- ✅ No breaking changes (manifests optional)
 
-### Phase 3: Move Configuration (v1.3)
-- Move `navigationMode`, `viewportLock`, `options` from main.js to manifest.json
-- Update all bundles
-- Remove deprecated main.js properties
+### Phase 2: Move Metadata ✅ Complete
+- ✅ Move `displayName`, `description`, `author` from main.js to manifest.json
+- ✅ Update existing bundles
+- ✅ Remove all metadata from main.js exports
 
-### Phase 4: Add Features (v1.4)
-- Implement `features` overrides
-- Implement `requires`/`provides` dependency system
-- Full manifest validation
+### Phase 3: Move Configuration ✅ Complete
+- ✅ Move `navigationMode`, `viewportLock`, `options` from main.js to manifest.json
+- ✅ Update all bundles
+- ✅ Remove deprecated main.js properties
+- ✅ Update all code to read from bundle.manifest
+
+### Phase 4: Add Features ✅ Complete
+- ✅ Implement `features` overrides with priority system
+- ✅ Implement `requires`/`provides` dependency system
+- ✅ Full manifest validation
+- ✅ Runtime dependency checking and warnings
+
+**manifest.json is now the single source of truth for all bundle configuration.**
 
 ---
 

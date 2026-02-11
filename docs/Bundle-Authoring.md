@@ -161,12 +161,21 @@ export default {
 };
 ```
 
-**Deprecated (DO NOT add these to main.js, use manifest.json instead):**
-- ~~`name`~~ → Use `manifest.json`
-- ~~`displayName`~~ → Use `manifest.json`
-- ~~`description`~~ → Use `manifest.json`
-- ~~`options`~~ → Use `manifest.json`
-- ~~`viewportLock`~~ → Use `manifest.json`
+**⚠️ IMPORTANT: Do NOT add these to main.js (they belong in manifest.json):**
+- ❌ `name` - Use `manifest.json`
+- ❌ `displayName` - Use `manifest.json`
+- ❌ `description` - Use `manifest.json`
+- ❌ `options` - Use `manifest.json`
+- ❌ `viewportLock` - Use `manifest.json`
+- ❌ `navigationMode` - Use `manifest.json`
+- ❌ `features` - Use `manifest.json`
+- ❌ `requires` - Use `manifest.json`
+- ❌ `provides` - Use `manifest.json`
+
+All bundle configuration must be in `manifest.json`. The only properties in `main.js` should be:
+- ✅ `style` - CSS import
+- ✅ Lifecycle hooks (`onBeforeLoad`, `onAfterLoad`, `onActivate`, `onDeactivate`, `onNavigate`, `onKeyDown`)
+- ✅ `userscripts` - Pre-configured userscripts (optional, userscript-sandbox bundle only)
 
 ### style.css
 

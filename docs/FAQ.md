@@ -8,7 +8,7 @@ Common questions about TizenPortal.
 
 ### What is TizenPortal?
 
-TizenPortal is a browser shell for Samsung Tizen Smart TVs. It provides a launcher interface to manage self-hosted web apps (like Audiobookshelf, Jellyfin, etc.) and injects site-specific fixes to make them work better with TV remote controls.
+TizenPortal is a browser shell for Samsung Tizen Smart TVs. It provides a launcher interface to manage self-hosted web apps (like Audiobookshelf, etc.) and injects site-specific fixes to make them work better with TV remote controls.
 
 ### What TVs are supported?
 
@@ -38,7 +38,7 @@ No, TizenPortal runs through TizenBrew, which handles any necessary permissions.
 ### How do I install TizenPortal?
 
 1. Install [TizenBrew](https://github.com/reisxd/TizenBrew) on your TV
-2. Add the module: `alexnolan/tizenportal@1018`
+2. Add the module: `alexnolan/tizenportal@latest` (see [CHANGELOG](CHANGELOG.md) for specific versions)
 3. Launch TizenPortal from TizenBrew
 
 See the [Getting Started](Getting-Started.md) guide for detailed instructions.

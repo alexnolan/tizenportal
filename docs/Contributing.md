@@ -193,7 +193,7 @@ function example(name) {
 ### Branch Naming
 
 ```
-feature/add-jellyfin-bundle
+feature/add-new-bundle
 fix/navigation-scroll-issue
 docs/update-user-guide
 ```
@@ -201,7 +201,7 @@ docs/update-user-guide
 ### Commit Messages
 
 ```
-Add Jellyfin bundle with navigation support
+Add new bundle with navigation support
 
 - Implement keyboard navigation for library grid
 - Add media key handlers for playback
@@ -363,7 +363,7 @@ What actually happens
 ## Environment
 - TV Model: [e.g., Samsung UN55TU8000]
 - TV Year: [e.g., 2020]
-- TizenPortal Version: [e.g., 1018]
+- TizenPortal Version: [Check package.json or see CHANGELOG.md]
 - Site URL: [if applicable]
 
 ## Screenshots/Logs

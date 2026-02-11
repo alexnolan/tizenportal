@@ -10,7 +10,7 @@
  * 4. MutationObserver to catch dynamically inserted ads
  * 
  * Note: This is a best-effort generic blocker. Site-specific bundles
- * (like Audiobookshelf, Jellyfin) typically don't have ads, so this
+ * (like Audiobookshelf) typically don't have ads, so this
  * is mainly for general web browsing.
  */
 

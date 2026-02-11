@@ -1,7 +1,7 @@
 # Copilot Instructions for TizenPortal
 
 > **Last Updated:** February 11, 2026  
-> **Current Version:** 0463  
+> **Current Version:** 1018  
 > **Architecture:** Universal Runtime
 
 ---

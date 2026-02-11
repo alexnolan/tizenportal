@@ -106,8 +106,6 @@ The legacy spatial-navigation-polyfill.js (third-party script):
 - New library modes are not working for some reason
 - Debugging navigation issues
 - **Not recommended for general use**
-}
-```
 
 ---
 

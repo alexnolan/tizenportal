@@ -4,6 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Spatial Navigation Demo</title>
+  
+  <!--
+    ⚠️ BROWSER COMPATIBILITY NOTICE ⚠️
+    
+    This demo uses modern JavaScript and CSS features including:
+    - ES6+ syntax (const/let, arrow functions, template literals)
+    - CSS backdrop-filter (Chrome 76+, not supported in Chrome 47-69)
+    - CSS Grid with gap property (not supported in Chrome 47-69)
+    
+    REQUIREMENTS:
+    - Modern desktop browser (Chrome 76+, Firefox 70+, Safari 13+, Edge 79+)
+    - NOT compatible with Tizen Chrome 47-69 without significant modifications
+    
+    For on-device demos on Tizen TVs, this file would need to be:
+    1. Transpiled with Babel to ES5
+    2. Rewritten to use flexbox instead of CSS Grid
+    3. backdrop-filter removed or replaced with solid backgrounds
+    
+    This is intentional to keep demo code maintainable. The spatial-navigation.js
+    library itself IS compatible with Chrome 47+ and is properly transpiled
+    during the build process.
+  -->
+  
   <style>
     * {
       margin: 0;

@@ -528,12 +528,12 @@ function initializeNavigationMode(mode, options) {
 
 ### For Users
 
-**No action required** - System defaults to polyfill mode for backward compatibility.
+**No action required** - System defaults to directional mode (recommended for most cases).
 
 **Optional:**
-- Try directional mode for Audiobookshelf
-- Try geometric mode for grid-based sites
-- Experiment to find preferred modes
+- Try geometric mode for perfect grid layouts
+- Experiment with different modes to find what works best
+- Configure per-site overrides as needed
 
 ### For Bundle Developers
 

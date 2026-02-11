@@ -121,7 +121,7 @@ export function focusLast(container) {
   if (!container) return false;
 
   var focusables = container.querySelectorAll(
-    'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
   );
 
   if (focusables.length > 0) {

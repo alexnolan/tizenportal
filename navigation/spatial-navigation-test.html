@@ -4,6 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Spatial Navigation Test Suite</title>
+  
+  <!--
+    ⚠️ BROWSER COMPATIBILITY NOTICE ⚠️
+    
+    This test suite uses modern JavaScript (ES6+) features including:
+    - const/let declarations
+    - Arrow functions
+    - Template literals
+    - Modern array methods
+    
+    REQUIREMENTS:
+    - Modern desktop browser (Chrome 60+, Firefox 55+, Safari 11+, Edge 79+)
+    - NOT compatible with Tizen Chrome 47-69 without transpilation
+    
+    For on-device testing on Tizen TVs, this file would need to be:
+    1. Transpiled with Babel to ES5
+    2. Bundled through the project's build system
+    
+    This is intentional to keep test code maintainable. The spatial-navigation.js
+    library itself IS compatible with Chrome 47+ and is properly transpiled
+    during the build process.
+  -->
+  
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;

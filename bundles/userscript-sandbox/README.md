@@ -2,9 +2,9 @@
 
 A collection of high-quality userscripts designed for TV browsing with Samsung remote controls.
 
-## Version 2.1.0
+## Version 2.2.0
 
-This bundle provides 18 carefully crafted userscripts that demonstrate both inline and external script loading capabilities.
+This bundle provides 20 carefully crafted userscripts that demonstrate both inline and external script loading capabilities.
 
 ---
 
@@ -277,7 +277,70 @@ This bundle provides 18 carefully crafted userscripts that demonstrate both inli
 
 ---
 
-### 15. **Video Speed Controller**
+### 15. **Dark Reading Mode**
+
+**Purpose:** Optimized dark-themed reading experience for TV viewing
+
+**Features:**
+- Combines clutter removal with professional dark theme
+- Warm dark background (#1a1a1a) with content card (#242424)
+- Warm off-white text (#e8e6e3) to reduce eye strain
+- Optimized for TV viewing distance: 18-28px responsive font sizing
+- Generous line height (1.9) for comfortable reading
+- Narrow max-width (900px) for optimal line length
+- Enhanced heading visibility (#f0f0f0)
+- High-contrast links (blue #8ab4f8, visited purple #c58af9)
+- Rounded content card with subtle shadow
+- Code blocks with syntax-friendly colors (#a8dadc on #2d2d2d)
+- Styled blockquotes with blue accent border
+- Semi-transparent images (95% opacity) for consistency
+- Fully reversible (pure CSS)
+
+**Use Case:** Long-form reading on TV (articles, documentation, blog posts) in low-light environments
+
+**Typography Optimizations:**
+- Line height: 1.9 for body text, 1.4 for headings
+- Font scaling: clamp(18px, 2.2vw, 28px)
+- Generous margins: 1.5em top, 0.8em bottom for headings
+- Enhanced spacing throughout
+
+---
+
+### 16. **Light Reading Mode**
+
+**Purpose:** Optimized light-themed reading experience for TV viewing
+
+**Features:**
+- Combines clutter removal with clean light theme
+- Warm beige background (#faf8f5) with pure white content card
+- High-contrast dark text (#2c2c2c) for excellent readability
+- Optimized for TV viewing distance: 18-28px responsive font sizing
+- Generous line height (1.9) for comfortable reading
+- Narrow max-width (900px) for optimal line length
+- Deep black headings (#1a1a1a) for hierarchy
+- Standard web colors (blue #0066cc, visited purple #551a8b)
+- Rounded content card with subtle shadow
+- Code blocks with pink accent (#d63384 on #f5f5f5)
+- Styled blockquotes with blue border and italic text
+- Maintains full image brightness
+- Fully reversible (pure CSS)
+
+**Use Case:** Long-form reading on TV (articles, documentation, blog posts) in well-lit environments
+
+**Typography Optimizations:**
+- Line height: 1.9 for body text, 1.4 for headings
+- Font scaling: clamp(18px, 2.2vw, 28px)
+- Generous margins: 1.5em top, 0.8em bottom for headings
+- Enhanced spacing throughout
+
+**Comparison with Dark Reading Mode:**
+- Light: Better for daytime/bright rooms, traditional reading feel
+- Dark: Better for nighttime/dark rooms, reduces eye strain in low light
+- Both: Remove clutter, optimize typography, enhance readability
+
+---
+
+### 17. **Video Speed Controller**
 
 **Purpose:** Fine-tune video playback speed with keyboard
 
@@ -300,7 +363,7 @@ This bundle provides 18 carefully crafted userscripts that demonstrate both inli
 
 ---
 
-### 16. **Keyboard Shortcuts Overlay**
+### 18. **Keyboard Shortcuts Overlay**
 
 **Purpose:** Display available TV remote shortcuts
 
@@ -328,7 +391,7 @@ This bundle provides 18 carefully crafted userscripts that demonstrate both inli
 
 ---
 
-### 17. **Link Target Controller**
+### 19. **Link Target Controller**
 
 **Purpose:** Prevent links from opening in new tabs/windows
 
@@ -350,7 +413,7 @@ This bundle provides 18 carefully crafted userscripts that demonstrate both inli
 
 ---
 
-### 18. **Video Auto-Pause on Blur**
+### 20. **Video Auto-Pause on Blur**
 
 **Purpose:** Pause videos when app loses focus
 

@@ -28,6 +28,18 @@ import '../polyfills/domrect-polyfill.js';
 // Import spatial navigation polyfill (local copy with fixes, sets up window.navigate)
 import '../navigation/spatial-navigation-polyfill.js';
 
+// Import the new dual-mode spatial navigation library
+import '../navigation/spatial-navigation.js';
+
+// Import navigation initialization system
+import { 
+  initializeNavigationMode, 
+  applyNavigationMode, 
+  initializeGlobalNavigation,
+  getCurrentMode,
+  getEffectiveMode,
+} from '../navigation/init.js';
+
 // ============================================================================
 // APPLICATION MODULES
 // ============================================================================
@@ -715,6 +727,14 @@ async function initPortalPage() {
   // Initialize color button hints (make clickable)
   initColorHints();
   log('Color hints initialized');
+  
+  // Initialize navigation mode for portal
+  try {
+    log('Initializing navigation mode for portal...');
+    initializeGlobalNavigation();
+  } catch (e) {
+    error('Failed to initialize navigation mode: ' + e.message);
+  }
 }
 
 /**
@@ -1351,6 +1371,14 @@ async function applyBundleToPage(card) {
   } catch (e) {
     error('onActivate error: ' + e.message);
     tpHud('onActivate ERROR: ' + e.message);
+  }
+
+  // Apply navigation mode based on bundle preferences, site override, and global config
+  try {
+    log('Initializing navigation mode for site...');
+    applyNavigationMode(card, bundle);
+  } catch (e) {
+    error('Navigation mode initialization error: ' + e.message);
   }
 
   try {

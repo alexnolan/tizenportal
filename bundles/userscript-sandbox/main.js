@@ -19,7 +19,7 @@ export default {
       id: 'sandbox-autoscroll',
       name: 'Smart Auto-Scroll',
       enabled: false,
-      inline: "(function(){var speed=1;var interval=null;var scrolling=true;function startScroll(){if(interval)clearInterval(interval);interval=setInterval(function(){if(scrolling)window.scrollBy(0,speed);},30);}function stopScroll(){if(interval){clearInterval(interval);interval=null;}}function toggleScroll(){scrolling=!scrolling;TizenPortal.log('Auto-scroll '+(scrolling?'resumed':'paused'));}var keyHandler=function(e){if(e.keyCode===38){speed=Math.max(0.5,speed-0.5);TizenPortal.log('Scroll speed: '+speed+'px');e.preventDefault();}else if(e.keyCode===40){speed=Math.min(5,speed+0.5);TizenPortal.log('Scroll speed: '+speed+'px');e.preventDefault();}else if(e.keyCode===19||e.keyCode===415||e.keyCode===13){toggleScroll();e.preventDefault();}else if(e.keyCode===413||e.keyCode===10009){stopScroll();document.removeEventListener('keydown',keyHandler);TizenPortal.log('Auto-scroll stopped');e.preventDefault();}};document.addEventListener('keydown',keyHandler);startScroll();TizenPortal.log('Auto-scroll started (Up/Down: speed, Enter/Pause: toggle, Stop/Back: exit)');userscript.cleanup=function(){stopScroll();document.removeEventListener('keydown',keyHandler);}})();",
+      inline: "(function(){var speed=1;var interval=null;var scrolling=true;var log=function(msg){if(window.TizenPortal&&TizenPortal.log)TizenPortal.log(msg);};function startScroll(){if(interval)clearInterval(interval);interval=setInterval(function(){if(scrolling)window.scrollBy(0,speed);},30);}function stopScroll(){if(interval){clearInterval(interval);interval=null;}}function toggleScroll(){scrolling=!scrolling;log('Auto-scroll '+(scrolling?'resumed':'paused'));}var keyHandler=function(e){if(e.keyCode===38){speed=Math.max(0.5,speed-0.5);log('Scroll speed: '+speed+'px');e.preventDefault();}else if(e.keyCode===40){speed=Math.min(5,speed+0.5);log('Scroll speed: '+speed+'px');e.preventDefault();}else if(e.keyCode===19||e.keyCode===415||e.keyCode===13){toggleScroll();e.preventDefault();}else if(e.keyCode===413||e.keyCode===10009){stopScroll();document.removeEventListener('keydown',keyHandler);log('Auto-scroll stopped');e.preventDefault();}};document.addEventListener('keydown',keyHandler);startScroll();log('Auto-scroll started (Up/Down: speed, Enter/Pause: toggle, Stop/Back: exit)');userscript.cleanup=function(){stopScroll();document.removeEventListener('keydown',keyHandler);}})();",
     },
     {
       id: 'sandbox-smart-dark',
@@ -37,7 +37,7 @@ export default {
       id: 'sandbox-ad-skipper',
       name: 'Video Ad Skip Helper',
       enabled: false,
-      inline: "(function(){var observer=null;var skipButtons=['button[class*=\"skip\"]','button[class*=\"Skip\"]','button[id*=\"skip\"]','button[aria-label*=\"Skip\"]','.ytp-ad-skip-button','.ytp-skip-ad-button','button:contains(\"Skip\")'];function clickSkip(){for(var i=0;i<skipButtons.length;i++){var btns=document.querySelectorAll(skipButtons[i]);for(var j=0;j<btns.length;j++){if(btns[j].offsetParent!==null){btns[j].click();TizenPortal.log('Clicked skip button');return true;}}}return false;}var checkInterval=setInterval(clickSkip,2000);observer=new MutationObserver(function(){setTimeout(clickSkip,100);});observer.observe(document.body,{childList:true,subtree:true});userscript.cleanup=function(){if(checkInterval)clearInterval(checkInterval);if(observer)observer.disconnect();}})();",
+      inline: "(function(){var observer=null;var log=function(msg){if(window.TizenPortal&&TizenPortal.log)TizenPortal.log(msg);};var skipButtons=['button[class*=\"skip\"]','button[class*=\"Skip\"]','button[id*=\"skip\"]','button[aria-label*=\"Skip\"]','.ytp-ad-skip-button','.ytp-skip-ad-button'];function clickSkip(){for(var i=0;i<skipButtons.length;i++){try{var btns=document.querySelectorAll(skipButtons[i]);for(var j=0;j<btns.length;j++){if(btns[j].offsetParent!==null){btns[j].click();log('Clicked skip button');return true;}}}catch(err){}}var allButtons=document.querySelectorAll('button');for(var k=0;k<allButtons.length;k++){var btn=allButtons[k];if(btn.offsetParent!==null&&btn.textContent&&btn.textContent.toLowerCase().indexOf('skip')!==-1){btn.click();log('Clicked skip button');return true;}}return false;}var checkInterval=setInterval(clickSkip,2000);observer=new MutationObserver(function(){setTimeout(clickSkip,100);});observer.observe(document.body,{childList:true,subtree:true});userscript.cleanup=function(){if(checkInterval)clearInterval(checkInterval);if(observer)observer.disconnect();}})();",
     },
     {
       id: 'sandbox-focus-zoom',
@@ -49,7 +49,7 @@ export default {
       id: 'sandbox-autoplay-blocker',
       name: 'Auto-Play Video Blocker',
       enabled: false,
-      inline: "(function(){var pausedVideos=[];function pauseVideo(vid){if(!vid.paused&&!pausedVideos.includes(vid)){vid.pause();pausedVideos.push(vid);TizenPortal.log('Auto-paused video');}}function checkVideos(){var vids=document.querySelectorAll('video');for(var i=0;i<vids.length;i++){if(!vids[i].paused&&vids[i].currentTime>0){pauseVideo(vids[i]);}}}var observer=new MutationObserver(checkVideos);observer.observe(document.body,{childList:true,subtree:true});checkVideos();var interval=setInterval(checkVideos,1000);userscript.cleanup=function(){if(observer)observer.disconnect();if(interval)clearInterval(interval);}})();",
+      inline: "(function(){var pausedVideos=[];var log=function(msg){if(window.TizenPortal&&TizenPortal.log)TizenPortal.log(msg);};function pauseVideo(vid){if(!vid.paused&&!pausedVideos.includes(vid)){vid.pause();pausedVideos.push(vid);log('Auto-paused video');}}function checkVideos(){var vids=document.querySelectorAll('video');for(var i=0;i<vids.length;i++){if(!vids[i].paused&&vids[i].currentTime>0){pauseVideo(vids[i]);}}}var observer=new MutationObserver(checkVideos);observer.observe(document.body,{childList:true,subtree:true});checkVideos();var interval=setInterval(checkVideos,1000);userscript.cleanup=function(){if(observer)observer.disconnect();if(interval)clearInterval(interval);}})();",
     },
     {
       id: 'sandbox-remove-sticky',
@@ -70,7 +70,7 @@ export default {
       id: 'sandbox-custom-css',
       name: 'Custom CSS Template',
       enabled: false,
-      inline: "(function(){var customCSS='body { /* Add your CSS here */ }';var s=document.createElement('style');s.id='tp-custom-css';s.textContent=customCSS;document.head.appendChild(s);TizenPortal.log('Custom CSS applied');userscript.cleanup=function(){var el=document.getElementById('tp-custom-css');if(el)el.remove();}})();",
+      inline: "(function(){var customCSS='body { /* Add your CSS here */ }';var s=document.createElement('style');s.id='tp-custom-css';s.textContent=customCSS;document.head.appendChild(s);if(window.TizenPortal&&TizenPortal.log)TizenPortal.log('Custom CSS applied');userscript.cleanup=function(){var el=document.getElementById('tp-custom-css');if(el)el.remove();}})();",
     },
   ],
 

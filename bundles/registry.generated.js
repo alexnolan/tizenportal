@@ -19,7 +19,7 @@ export var bundleMeta = {
   'adblock': { jsBytes: 28555, cssBytes: 7584 },
   'audiobookshelf': { jsBytes: 60587, cssBytes: 78282 },
   'default': { jsBytes: 1949, cssBytes: 116 },
-  'userscript-sandbox': { jsBytes: 19522, cssBytes: 45 }
+  'userscript-sandbox': { jsBytes: 19289, cssBytes: 45 }
 };
 
 export var bundleManifests = {

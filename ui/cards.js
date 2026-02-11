@@ -262,7 +262,9 @@ function loadCards() {
         }
         
         if (!scriptsMatch) {
-          card.userscripts = correctScripts;
+          // Use a normalized copy so card.userscripts is a working copy,
+          // not a shared reference to userscriptsByBundle[bundleKey]
+          card.userscripts = normalizeUserscripts(correctScripts || []);
           needsSave = true;
           console.log('TizenPortal: Migrated userscripts for card "' + card.name + '" to bundle: ' + bundleKey);
         }

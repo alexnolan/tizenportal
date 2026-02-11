@@ -133,8 +133,7 @@ tizenportal/
 │   ├── addressbar.js         # Browser chrome
 │   ├── diagnostics.js        # Debug panel
 │   ├── modal.js              # Modal system
-│   ├── cards.js              # Card UI rendering
-│   └── iframe.js             # Iframe management
+│   └── cards.js              # Card UI rendering
 │
 ├── bundles/                  # Site-specific bundles
 │   ├── registry.js           # Bundle registration

@@ -122,10 +122,21 @@ TizenPortal uses a **Universal Runtime** architecture:
 
 ## 🆕 Recent Updates
 
-- **Preferences Overhaul** — Theme modes, custom colours, backdrop, and HUD position
+- **Manifest System** — Bundle metadata now defined in manifest.json with validation
 - **Bundle Options** — Bundles can declare per-site options (with URL fetch support)
+- **Preferences Overhaul** — Theme modes, custom colours, backdrop, and HUD position
 - **Adblock Enhancements** — Strict mode, allowlist, cookie/inline heuristics
 - **Text Input Protection** — Prevents OSK auto-popup (toggle in Preferences)
+
+---
+
+## 📚 Documentation
+
+- **[User Guide](docs/User-Guide.md)** — Complete feature walkthrough
+- **[Bundle Authoring](docs/Bundle-Authoring.md)** — How to create site-specific bundles
+- **[Manifest Schema](docs/Manifest-Schema.md)** — Bundle manifest.json reference
+- **[API Reference](docs/Api-Reference.md)** — TizenPortal JavaScript API
+- **[Architecture](docs/Architecture.md)** — System design and structure
 
 ---
 

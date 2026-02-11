@@ -64,7 +64,7 @@ import { initAddressBar, showAddressBar, hideAddressBar, toggleAddressBar, isAdd
 import { initDiagnostics, log, warn, error } from '../diagnostics/console.js';
 import { initDiagnosticsPanel, showDiagnosticsPanel, hideDiagnosticsPanel, toggleDiagnosticsPanel } from '../ui/diagnostics.js';
 import { loadBundle, unloadBundle, getActiveBundle, getActiveBundleName, handleBundleKeyDown, setActiveBundle } from './loader.js';
-import { getBundleNames, getBundle } from '../bundles/registry.js';
+import { getBundleNames, getBundle, logDependencyWarnings } from '../bundles/registry.js';
 import { isValidHttpUrl, sanitizeCss } from './utils.js';
 import featureLoader from '../features/index.js';
 import userscriptEngine from '../features/userscripts.js';
@@ -204,9 +204,16 @@ var textInputInterval = null;
  */
 var TEXT_INPUT_SELECTOR = 'input, textarea';
 
-function resolveFocusOutlineMode(card) {
+function resolveFocusOutlineMode(card, bundle) {
   var features = configGet('tp_features') || {};
   var mode = features.focusOutlineMode || (features.focusStyling ? 'on' : 'off');
+  
+  // Apply bundle manifest default if no card override
+  if (bundle && bundle.manifest && bundle.manifest.features && bundle.manifest.features.focusOutlineMode && !card.focusOutlineMode) {
+    mode = bundle.manifest.features.focusOutlineMode;
+  }
+  
+  // Card override takes highest priority
   if (card && card.focusOutlineMode) {
     mode = card.focusOutlineMode;
   } else if (features.focusStyling === false) {
@@ -216,7 +223,9 @@ function resolveFocusOutlineMode(card) {
 }
 
 function resolveViewportMode(card, bundle) {
-  if (bundle && (bundle.viewportLock === 'force' || bundle.viewportLock === true)) {
+  var manifest = bundle && bundle.manifest;
+  // Only force lock when explicitly set to 'force'
+  if (manifest && manifest.viewportLock === 'force') {
     return 'locked';
   }
 
@@ -225,6 +234,12 @@ function resolveViewportMode(card, bundle) {
   if (card && card.viewportMode) {
     mode = card.viewportMode;
   }
+  
+  // If bundle has viewportLock: true (but not 'force'), use as default but allow override
+  if (manifest && manifest.viewportLock === true && !card.viewportMode) {
+    return 'locked';
+  }
+  
   return mode || 'locked';
 }
 
@@ -360,9 +375,26 @@ function applyViewportMode(mode) {
 }
 
 function applyGlobalFeaturesForCard(card, bundle) {
-  var focusMode = resolveFocusOutlineMode(card);
+  var focusMode = resolveFocusOutlineMode(card, bundle);
   var viewportMode = resolveViewportMode(card, bundle);
   var overrides = buildFeatureOverrides(card);
+  // Only set focusOutlineMode in overrides after bundle features are merged
+  
+  // Apply bundle manifest feature overrides
+  // Priority: card overrides > bundle defaults > global config
+  if (bundle && bundle.manifest && bundle.manifest.features) {
+    var bundleFeatures = bundle.manifest.features;
+    for (var key in bundleFeatures) {
+      if (bundleFeatures.hasOwnProperty(key)) {
+        // Only apply if card hasn't already overridden it
+        if (!overrides.hasOwnProperty(key)) {
+          overrides[key] = bundleFeatures[key];
+        }
+      }
+    }
+  }
+  
+  // Set focusOutlineMode after bundle features (already resolved with priority)
   overrides.focusOutlineMode = focusMode;
 
   try {
@@ -1307,6 +1339,33 @@ async function applyBundleToPage(card) {
   tpHud('Applying: ' + bundle.name);
   state.currentBundle = bundle.name;
   
+  // Log manifest info if available
+  if (bundle.manifest) {
+    log('Bundle manifest loaded: v' + bundle.manifest.version);
+    if (bundle.manifest.navigationMode) {
+      log('Bundle navigation mode: ' + (typeof bundle.manifest.navigationMode === 'object' 
+        ? bundle.manifest.navigationMode.mode 
+        : bundle.manifest.navigationMode));
+    }
+    if (bundle.manifest.viewportLock !== undefined) {
+      log('Bundle viewportLock: ' + bundle.manifest.viewportLock);
+    }
+    if (bundle.manifest.options && bundle.manifest.options.length > 0) {
+      log('Bundle has ' + bundle.manifest.options.length + ' configurable options');
+    }
+    if (bundle.manifest.features) {
+      log('Bundle has feature overrides: ' + Object.keys(bundle.manifest.features).join(', '));
+    }
+    if (bundle.manifest.provides && bundle.manifest.provides.length > 0) {
+      log('Bundle provides: ' + bundle.manifest.provides.join(', '));
+    }
+    
+    // Check and log dependencies
+    logDependencyWarnings(bundle.name);
+  } else {
+    warn('Bundle has no manifest (legacy bundle)');
+  }
+  
   // Track active bundle for state management
   setActiveBundle(bundle, card);
   
@@ -2118,6 +2177,11 @@ var TizenPortalAPI = {
     list: getBundleNames,
     getActive: getActiveBundle,
     getActiveName: getActiveBundleName,
+    get: getBundle,
+    getManifest: function(bundleName) {
+      var bundle = getBundle(bundleName);
+      return bundle ? bundle.manifest : null;
+    },
   },
 
   // Userscript engine

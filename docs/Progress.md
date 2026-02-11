@@ -125,7 +125,6 @@ TizenPortal uses a single unified runtime (`tizenportal.js`) on all pages:
 ### Priority 2: Bundle Enhancements
 
 - [ ] Audiobookshelf playback controls
-- [ ] Jellyfin media key integration
 - [ ] Bundle settings persistence
 
 ### Priority 3: UX Improvements

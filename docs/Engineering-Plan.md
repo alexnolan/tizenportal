@@ -231,7 +231,6 @@ Encoded as: `#tp=eyJidW5kbGVOYW1lIjoiLi4uIn0=`
 ### Priority 1: Bundle Refinement
 
 - [ ] Audiobookshelf playback controls
-- [ ] Jellyfin media key integration
 - [ ] Bundle auto-detection by URL pattern
 - [ ] Bundle settings persistence
 

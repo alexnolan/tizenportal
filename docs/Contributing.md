@@ -193,7 +193,7 @@ function example(name) {
 ### Branch Naming
 
 ```
-feature/add-jellyfin-bundle
+feature/add-new-bundle
 fix/navigation-scroll-issue
 docs/update-user-guide
 ```
@@ -201,7 +201,7 @@ docs/update-user-guide
 ### Commit Messages
 
 ```
-Add Jellyfin bundle with navigation support
+Add new bundle with navigation support
 
 - Implement keyboard navigation for library grid
 - Add media key handlers for playback

@@ -292,7 +292,7 @@ export function isCardShell(el) {
   // Explicit marker
   if (el.hasAttribute('data-tp-card')) return true;
   
-  // Common card patterns (portal, audiobookshelf, jellyfin, etc.)
+  // Common card patterns (portal, audiobookshelf, etc.)
   if (el.id && el.id.match(/^(book-card-|series-card-|media-card-|item-card-)/)) return true;
   if (el.classList.contains('tp-card')) return true;
   if (el.classList.contains('card')) return true;

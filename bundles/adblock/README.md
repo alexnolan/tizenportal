@@ -8,7 +8,7 @@
 
 The Adblock bundle provides multi-layered ad blocking for general web browsing on Tizen TVs. It's designed as a best-effort generic blocker, primarily for news sites, blogs, and other ad-heavy content.
 
-**Note:** Site-specific bundles (Audiobookshelf, Jellyfin, etc.) typically don't need ad blocking as they serve content from your own servers.
+**Note:** Site-specific bundles (Audiobookshelf, etc.) typically don't need ad blocking as they serve content from your own servers.
 
 ## Features
 

@@ -7,7 +7,7 @@
 
 The Default bundle is automatically applied to sites that don't have a specific bundle configured. It provides essential functionality for TV remote navigation without any site-specific customizations.
 
-**Note:** This bundle is a fallback. For better experiences, use site-specific bundles (Audiobookshelf, Jellyfin, etc.) or create custom bundles for your sites.
+**Note:** This bundle is a fallback. For better experiences, use site-specific bundles (Audiobookshelf, etc.) or create custom bundles for your sites.
 
 ## Features
 
@@ -56,7 +56,7 @@ The default bundle is appropriate for:
 
 Create a custom bundle instead for:
 - **Single Page Applications (SPAs)** - React, Vue, Angular apps
-- **Media servers** - Jellyfin, Plex, Audiobookshelf, etc.
+- **Media servers** - Plex, Audiobookshelf, etc.
 - **Complex web apps** - Admin panels, dashboards, interactive tools
 - **Sites with specific navigation patterns** - Modals, dropdowns, custom controls
 

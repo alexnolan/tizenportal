@@ -8,7 +8,7 @@ Common questions about TizenPortal.
 
 ### What is TizenPortal?
 
-TizenPortal is a browser shell for Samsung Tizen Smart TVs. It provides a launcher interface to manage self-hosted web apps (like Audiobookshelf, Jellyfin, etc.) and injects site-specific fixes to make them work better with TV remote controls.
+TizenPortal is a browser shell for Samsung Tizen Smart TVs. It provides a launcher interface to manage self-hosted web apps (like Audiobookshelf, etc.) and injects site-specific fixes to make them work better with TV remote controls.
 
 ### What TVs are supported?
 

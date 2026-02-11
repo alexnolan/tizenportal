@@ -492,7 +492,7 @@ directions.forEach(dir => {
 
 ## Next Steps
 
-1. **Review the [Full Documentation](SPATIAL-NAVIGATION-README.md)**
+1. **Review the [Full Documentation](README.md)**
    - Complete API reference
    - All configuration options
    - More examples
@@ -514,8 +514,8 @@ directions.forEach(dir => {
 
 ## Need Help?
 
-- Read the [Architecture section](SPATIAL-NAVIGATION-README.md#architecture) to understand how it works
-- Check the [Examples](SPATIAL-NAVIGATION-README.md#examples) for common patterns
+- Read the [Architecture section](README.md#architecture) to understand how it works
+- Check the [Examples](README.md#examples) for common patterns
 - Open an issue if you find bugs or have questions
 
 ---

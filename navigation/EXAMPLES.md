@@ -681,4 +681,4 @@ See the [test suite](spatial-navigation-test.html) for edge case examples.
 
 ---
 
-**Need more examples? Check the [full documentation](SPATIAL-NAVIGATION-README.md) or open an issue!**
+**Need more examples? Check the [full documentation](README.md) or open an issue!**

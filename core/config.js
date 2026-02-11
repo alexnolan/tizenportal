@@ -34,6 +34,9 @@ var DEFAULT_CONFIG = {
   tp_features: {
     focusStyling: true,
     focusOutlineMode: 'on',
+    focusTransitions: true,
+    focusTransitionMode: 'slide',
+    focusTransitionSpeed: 'medium',
     tabindexInjection: true,
     scrollIntoView: true,
     safeArea: false,

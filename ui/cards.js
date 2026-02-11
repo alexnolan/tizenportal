@@ -293,17 +293,13 @@ function loadCards() {
 function saveCards() {
   if (cardCache === null) return;
 
-  try {
-    var result = safeLocalStorageSet(STORAGE_KEY, JSON.stringify(cardCache));
-    if (!result.success) {
-      if (result.error === 'quota') {
-        console.error('TizenPortal: ' + result.message);
-      } else {
-        console.error('TizenPortal: Failed to save cards: ' + result.message);
-      }
+  var result = safeLocalStorageSet(STORAGE_KEY, JSON.stringify(cardCache));
+  if (!result.success) {
+    if (result.error === 'quota') {
+      console.error('TizenPortal: ' + result.message);
+    } else {
+      console.error('TizenPortal: Failed to save cards: ' + result.message);
     }
-  } catch (err) {
-    console.error('TizenPortal: Failed to save cards:', err);
   }
 }
 

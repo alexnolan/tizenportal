@@ -128,17 +128,13 @@ function loadConfig() {
 function saveConfig() {
   if (configCache === null) return;
 
-  try {
-    var result = safeLocalStorageSet(STORAGE_KEY, JSON.stringify(configCache));
-    if (!result.success) {
-      if (result.error === 'quota') {
-        console.error('TizenPortal: ' + result.message);
-      } else {
-        console.error('TizenPortal: Failed to save config: ' + result.message);
-      }
+  var result = safeLocalStorageSet(STORAGE_KEY, JSON.stringify(configCache));
+  if (!result.success) {
+    if (result.error === 'quota') {
+      console.error('TizenPortal: ' + result.message);
+    } else {
+      console.error('TizenPortal: Failed to save config: ' + result.message);
     }
-  } catch (err) {
-    console.error('TizenPortal: Failed to save config:', err);
   }
 }
 

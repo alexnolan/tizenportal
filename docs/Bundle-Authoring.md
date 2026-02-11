@@ -124,7 +124,8 @@ With options and configuration:
 **Key Points:**
 - Manifest is loaded at build time and attached to bundle
 - Accessed via `bundle.manifest` or `this.manifest` in lifecycle hooks
-- Properties automatically merged into bundle object for backward compatibility
+- Only `manifest.name` is mirrored to `bundle.name` for backward compatibility; all other manifest fields remain under `bundle.manifest`
+- Fields like `displayName`, `description`, `options`, etc. must be read from `bundle.manifest` (for example, `bundle.manifest.displayName`)
 - See [Manifest Schema](Manifest-Schema.md) for all available fields
 
 ### main.js
@@ -351,7 +352,6 @@ export default {
     
     // Access manifest
     console.log('Bundle:', this.manifest.displayName);
-  },
   },
   
   /**

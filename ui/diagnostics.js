@@ -255,7 +255,14 @@ function updateInfo() {
       }
       if (bundle) {
         var manifest = bundle.manifest || {};
-        var viewportLock = manifest.viewportLock === 'force' || manifest.viewportLock === true ? 'force' : 'inherit';
+        var viewportLock;
+        if (manifest.viewportLock === 'force') {
+          viewportLock = 'force';
+        } else if (manifest.viewportLock === true) {
+          viewportLock = 'locked';
+        } else {
+          viewportLock = 'inherit';
+        }
         info.push('Bundle: ' + (bundle.name || 'unknown') + ' (Viewport=' + viewportLock + ')');
       }
     }

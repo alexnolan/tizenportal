@@ -15,25 +15,39 @@ var bundles = Object.assign({}, generatedBundles || {});
 /**
  * Attach manifests to bundles and validate
  */
-if (generatedManifests) {
-  Object.keys(generatedManifests).forEach(function(key) {
-    if (bundles[key]) {
-      var manifest = generatedManifests[key];
-      
-      // Validate manifest
-      var validation = validateManifest(manifest, key);
-      if (!validation.valid) {
-        logValidationErrors(key, validation.errors);
-      }
-      
-      // Attach manifest to bundle
-      bundles[key].manifest = manifest;
-      
-      // Add name property from manifest for convenience
-      bundles[key].name = manifest.name;
+var manifests = generatedManifests || {};
+Object.keys(manifests).forEach(function(key) {
+  if (bundles[key]) {
+    var manifest = manifests[key];
+    
+    // Ensure manifest name matches registry key (if provided)
+    var manifestName = manifest && manifest.name;
+    if (manifestName && manifestName !== key) {
+      console.error(
+        'TizenPortal: Manifest name mismatch for bundle "' + key +
+        '": manifest.name="' + manifestName + '"'
+      );
+      // Do not attach mismatched manifest or override bundle name
+      return;
     }
-  });
-}
+    
+    // Validate manifest
+    var validation = validateManifest(manifest, key);
+    if (!validation.valid) {
+      logValidationErrors(key, validation.errors);
+      // Do not attach invalid manifest or override bundle name
+      return;
+    }
+    
+    // Attach manifest to bundle
+    bundles[key].manifest = manifest;
+    
+    // Add name property from manifest for convenience (when it matches key)
+    if (manifestName === key) {
+      bundles[key].name = manifestName;
+    }
+  }
+});
 
 /**
  * Register a bundle

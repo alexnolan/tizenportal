@@ -204,9 +204,16 @@ var textInputInterval = null;
  */
 var TEXT_INPUT_SELECTOR = 'input, textarea';
 
-function resolveFocusOutlineMode(card) {
+function resolveFocusOutlineMode(card, bundle) {
   var features = configGet('tp_features') || {};
   var mode = features.focusOutlineMode || (features.focusStyling ? 'on' : 'off');
+  
+  // Apply bundle manifest default if no card override
+  if (bundle && bundle.manifest && bundle.manifest.features && bundle.manifest.features.focusOutlineMode && !card.focusOutlineMode) {
+    mode = bundle.manifest.features.focusOutlineMode;
+  }
+  
+  // Card override takes highest priority
   if (card && card.focusOutlineMode) {
     mode = card.focusOutlineMode;
   } else if (features.focusStyling === false) {
@@ -217,7 +224,8 @@ function resolveFocusOutlineMode(card) {
 
 function resolveViewportMode(card, bundle) {
   var manifest = bundle && bundle.manifest;
-  if (manifest && (manifest.viewportLock === 'force' || manifest.viewportLock === true)) {
+  // Only force lock when explicitly set to 'force'
+  if (manifest && manifest.viewportLock === 'force') {
     return 'locked';
   }
 
@@ -226,6 +234,12 @@ function resolveViewportMode(card, bundle) {
   if (card && card.viewportMode) {
     mode = card.viewportMode;
   }
+  
+  // If bundle has viewportLock: true (but not 'force'), use as default but allow override
+  if (manifest && manifest.viewportLock === true && !card.viewportMode) {
+    return 'locked';
+  }
+  
   return mode || 'locked';
 }
 
@@ -361,10 +375,10 @@ function applyViewportMode(mode) {
 }
 
 function applyGlobalFeaturesForCard(card, bundle) {
-  var focusMode = resolveFocusOutlineMode(card);
+  var focusMode = resolveFocusOutlineMode(card, bundle);
   var viewportMode = resolveViewportMode(card, bundle);
   var overrides = buildFeatureOverrides(card);
-  overrides.focusOutlineMode = focusMode;
+  // Only set focusOutlineMode in overrides after bundle features are merged
   
   // Apply bundle manifest feature overrides
   // Priority: card overrides > bundle defaults > global config
@@ -379,6 +393,9 @@ function applyGlobalFeaturesForCard(card, bundle) {
       }
     }
   }
+  
+  // Set focusOutlineMode after bundle features (already resolved with priority)
+  overrides.focusOutlineMode = focusMode;
 
   try {
     featureLoader.applyFeatures(document, overrides);

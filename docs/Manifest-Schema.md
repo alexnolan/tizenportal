@@ -2,7 +2,8 @@
 
 > **Version:** 1.0  
 > **Date:** February 11, 2026  
-> **Status:** Design Document
+> **Status:** Implemented Schema  
+> **Runtime Support:** This schema is enforced by the TizenPortal bundle manifest validator; the current supported schema version is 1.0.
 
 ---
 
@@ -77,16 +78,17 @@ This document defines the complete schema for bundle `manifest.json` files. The 
 ### Capabilities
 
 #### `requires` (array of strings, optional)
-- **Description:** Features this bundle requires to function
+- **Description:** Features this bundle requires to function properly
 - **Format:** Array of feature identifiers
 - **Example:** `["focus-styling", "tabindex-injection"]`
-- **Used for:** Dependency checking, feature enablement
+- **Used for:** Dependency checking with runtime warnings (non-blocking)
+- **Note:** Missing dependencies generate console warnings but do not prevent bundle activation
 
 #### `provides` (array of strings, optional)
 - **Description:** Features this bundle provides
 - **Format:** Array of feature identifiers
 - **Example:** `["focus-styling", "focusable-elements", "media-controls"]`
-- **Used for:** Feature discovery, bundle selection
+- **Used for:** Feature discovery, bundle selection, dependency resolution
 
 ---
 

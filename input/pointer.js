@@ -30,6 +30,12 @@ var MOVE_SPEED = 20;
 var FAST_SPEED = 40;
 
 /**
+ * Timestamp for throttling scroll error logs
+ */
+var lastScrollErrorLog = 0;
+var SCROLL_ERROR_LOG_THROTTLE = 5000; // Log at most once per 5 seconds
+
+/**
  * Scroll amount when pointer reaches edge
  */
 var SCROLL_AMOUNT = 100;
@@ -327,7 +333,12 @@ function scrollPage(amount) {
             amount: amount
           }, targetOrigin);
         } else {
-          console.log('TizenPortal: Cannot scroll iframe (unknown origin)');
+          // Throttle this log to avoid spam during pointer scrolling
+          var now = Date.now();
+          if (now - lastScrollErrorLog > SCROLL_ERROR_LOG_THROTTLE) {
+            console.log('TizenPortal: Cannot scroll iframe (unknown origin)');
+            lastScrollErrorLog = now;
+          }
         }
       } catch (e) {
         console.log('TizenPortal: Cannot scroll iframe (cross-origin)');

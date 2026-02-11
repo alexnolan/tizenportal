@@ -4,7 +4,7 @@
  * Card data model and localStorage persistence.
  */
 
-import { escapeHtml, sanitizeUrl, isValidHttpUrl, safeLocalStorageSet } from '../core/utils.js';
+import { escapeHtml, sanitizeUrl, safeLocalStorageSet } from '../core/utils.js';
 
 /**
  * Storage key for cards

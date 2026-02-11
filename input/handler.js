@@ -447,7 +447,7 @@ export function executeColorAction(action) {
           targetDoc = document;
         }
 
-        if (targetDoc && window.TizenPortal._featureLoader && typeof window.TizenPortal._featureLoader.applyFeatures === 'function') {
+        if (window.TizenPortal._featureLoader && typeof window.TizenPortal._featureLoader.applyFeatures === 'function') {
           window.TizenPortal._featureLoader.applyFeatures(targetDoc);
         }
         

@@ -23,8 +23,8 @@ import { KEYS } from './keys.js';
 /**
  * Constants
  */
-var IME_DISMISSAL_DELAY_MS = 100;  // Delay before refocusing after IME dismissal
-var WRAPPED_INPUT_CLASS = 'tp-wrapped';  // Class added to wrapped input elements
+const IME_DISMISSAL_DELAY_MS = 100;  // Delay before refocusing after IME dismissal
+const WRAPPED_INPUT_CLASS = 'tp-wrapped';  // Class added to wrapped input elements
 
 /**
  * Track wrapped inputs to avoid re-wrapping

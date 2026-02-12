@@ -30,7 +30,7 @@ import {
 /**
  * Constants
  */
-var WRAPPED_INPUT_CLASS = 'tp-wrapped';  // Class added to wrapped input elements
+const WRAPPED_INPUT_CLASS = 'tp-wrapped';  // Class added to wrapped input elements
 
 /**
  * Simulate a full click event sequence (mousedown -> mouseup -> click)

@@ -63,6 +63,19 @@ function getConfig() {
   if (!stored) {
     stored = getDefaults();
     TizenPortal.config.set('tp_features', stored);
+  } else {
+    // Merge defaults into stored config to pick up new features
+    var defaults = getDefaults();
+    var needsUpdate = false;
+    for (var key in defaults) {
+      if (!(key in stored)) {
+        stored[key] = defaults[key];
+        needsUpdate = true;
+      }
+    }
+    if (needsUpdate) {
+      TizenPortal.config.set('tp_features', stored);
+    }
   }
   
   return stored;
@@ -133,8 +146,12 @@ function applyFeatures(doc, overrides) {
       features.tabindexInjection.apply(doc);
     }
     
-    if (effectiveConfig.navigationFix && features.navigationFix) {
-      features.navigationFix.apply(doc);
+    if (features.navigationFix) {
+      if (effectiveConfig.navigationFix) {
+        features.navigationFix.apply(doc);
+      } else if (effectiveConfig.navigationFix === false) {
+        features.navigationFix.remove(doc);
+      }
     }
     
     if (window.TizenPortal) {

@@ -31,6 +31,49 @@ function getDefaultConfig() {
 }
 
 /**
+ * Migrate old tp_userscripts config to new tp_userscripts_v2 format
+ * Returns migrated config or null if no migration needed
+ */
+function migrateOldConfig() {
+  var oldCfg = configGet('tp_userscripts');
+  if (!oldCfg || typeof oldCfg !== 'object') {
+    return null;
+  }
+
+  var newCfg = {
+    enabled: {},
+    urlCache: {},
+  };
+
+  // Migrate scripts array to enabled map and urlCache
+  if (Array.isArray(oldCfg.scripts)) {
+    for (var i = 0; i < oldCfg.scripts.length; i++) {
+      var script = oldCfg.scripts[i];
+      if (!script || !script.id) continue;
+
+      // Migrate enabled state
+      if (script.enabled === true) {
+        newCfg.enabled[script.id] = true;
+      }
+
+      // Migrate URL cache for external scripts
+      if (script.source === 'url' && script.cached) {
+        newCfg.urlCache[script.id] = {
+          cached: script.cached,
+          lastFetched: script.lastFetched || 0,
+        };
+      }
+    }
+  }
+
+  if (window.TizenPortal && window.TizenPortal.log) {
+    window.TizenPortal.log('[Userscripts] Migrated ' + Object.keys(newCfg.enabled).length + ' scripts from old config');
+  }
+
+  return newCfg;
+}
+
+/**
  * Get userscripts config from localStorage
  * Returns {enabled: {}, urlCache: {}}
  */
@@ -38,9 +81,19 @@ function getUserscriptsConfig() {
   var cfg = configGet('tp_userscripts_v2');  // New key to avoid conflicts
   var changed = false;
 
+  // First check: if no v2 config exists, try migration
   if (!cfg || typeof cfg !== 'object') {
-    cfg = getDefaultConfig();
-    changed = true;
+    var migrated = migrateOldConfig();
+    if (migrated) {
+      cfg = migrated;
+      changed = true;
+      if (window.TizenPortal && window.TizenPortal.log) {
+        window.TizenPortal.log('[Userscripts] Migration complete - using migrated config');
+      }
+    } else {
+      cfg = getDefaultConfig();
+      changed = true;
+    }
   }
 
   if (!cfg.enabled || typeof cfg.enabled !== 'object') {

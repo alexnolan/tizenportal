@@ -526,7 +526,7 @@ export function showAddSiteEditor(onComplete) {
     icon: '',
     bundleOptions: {},
     bundleOptionData: {},
-    userscripts: normalizeUserscripts([]),
+    userscriptToggles: {},
   };
   state.onComplete = onComplete;
   
@@ -566,7 +566,7 @@ export function showEditSiteEditor(card, onComplete) {
     icon: card.icon || '',
     bundleOptions: card.bundleOptions || {},
     bundleOptionData: card.bundleOptionData || {},
-    userscripts: normalizeUserscripts(card.userscripts || []),
+    userscriptToggles: card.userscriptToggles || {},
   };
   state.onComplete = onComplete;
   
@@ -751,10 +751,7 @@ function autoSaveCard(reason) {
     icon: state.card.icon || null,
     bundleOptions: state.card.bundleOptions || {},
     bundleOptionData: state.card.bundleOptionData || {},
-    userscripts: state.card.userscripts || [],
-    userscriptsByBundle: state.card.userscriptsByBundle || {},
     userscriptToggles: state.card.userscriptToggles || {},
-    bundleUserscriptToggles: state.card.bundleUserscriptToggles || {},
   };
 
   // Use DOM mode - this is bulletproof

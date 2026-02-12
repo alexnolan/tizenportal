@@ -486,7 +486,23 @@ function ensureUserscriptsConfig() {
     prefsState.settings.userscriptsConfig.scripts = [];
   }
 
-  prefsState.settings.userscriptsConfig.scripts = normalizeUserscripts(prefsState.settings.userscriptsConfig.scripts);
+  // Filter out any bundle-scoped userscripts that shouldn't be in global config
+  // Bundle userscripts have IDs like "sandbox-readability", "sandbox-smart-dark", etc.
+  var filtered = [];
+  var originalScripts = prefsState.settings.userscriptsConfig.scripts || [];
+  for (var i = 0; i < originalScripts.length; i++) {
+    var script = originalScripts[i];
+    if (script && script.id) {
+      // Skip bundle-scoped userscripts (they start with bundle-specific prefixes)
+      if (script.id.indexOf('sandbox-') === 0) {
+        console.warn('TizenPortal: Filtered out bundle userscript from global config: ' + script.id);
+        continue;
+      }
+    }
+    filtered.push(script);
+  }
+  
+  prefsState.settings.userscriptsConfig.scripts = normalizeUserscripts(filtered);
 }
 
 /**

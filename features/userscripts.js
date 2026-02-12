@@ -81,6 +81,20 @@ function getUserscriptsConfig() {
     changed = true;
   }
 
+  // Filter out any bundle-scoped userscripts from global config
+  // These should never be in global config, only in bundle definitions
+  var filtered = [];
+  for (var i = 0; i < cfg.scripts.length; i++) {
+    var script = cfg.scripts[i];
+    if (script && script.id && script.id.indexOf('sandbox-') === 0) {
+      // Skip bundle userscripts that accidentally got into global config
+      changed = true;
+      continue;
+    }
+    filtered.push(script);
+  }
+  cfg.scripts = filtered;
+
   var normalized = normalizeScriptsArray(cfg.scripts);
   if (normalized.length !== cfg.scripts.length) {
     changed = true;

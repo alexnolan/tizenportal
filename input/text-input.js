@@ -18,7 +18,7 @@
  *   });
  */
 
-import { KEYS } from './keys.js';
+import { KEYS, INPUT_CONSTANTS } from './keys.js';
 
 /**
  * Track wrapped inputs to avoid re-wrapping
@@ -59,7 +59,7 @@ export function wrapTextInputs(selector, options) {
     var input = inputs[i];
     
     // Skip if already wrapped
-    if (wrappedInputs.has(input) || input.classList.contains('tp-wrapped')) {
+    if (wrappedInputs.has(input) || input.classList.contains(INPUT_CONSTANTS.WRAPPED_INPUT_CLASS)) {
       continue;
     }
 
@@ -152,7 +152,7 @@ function wrapSingleInput(input, opts) {
   wrapper.appendChild(input);
   
   // Mark input as wrapped
-  input.classList.add('tp-wrapped');
+  input.classList.add(INPUT_CONSTANTS.WRAPPED_INPUT_CLASS);
   input.setAttribute('tabindex', '-1');
   // Remove autofocus and hide input by default to prevent OSK popup
   if (input.hasAttribute('autofocus')) {
@@ -196,12 +196,19 @@ function wrapSingleInput(input, opts) {
     if (e.keyCode === 27 || e.keyCode === KEYS.BACK || e.keyCode === KEYS.IME_CANCEL) {
       e.preventDefault();
       deactivateInput(input);
-      wrapper.focus();
+      // Focus wrapper after a small delay to ensure IME is fully dismissed
+      setTimeout(function() {
+        try {
+          wrapper.focus();
+        } catch (err) {
+          // Ignore focus errors
+        }
+      }, INPUT_CONSTANTS.IME_DISMISSAL_DELAY_MS);
     } else if (e.keyCode === KEYS.ENTER) {
       // Enter - submit and deactivate
       setTimeout(function() {
         deactivateInput(input);
-      }, 100);
+      }, INPUT_CONSTANTS.IME_DISMISSAL_DELAY_MS);
     }
   });
   
@@ -272,6 +279,18 @@ export function deactivateInput(input) {
   
   if (!wrapper.classList.contains(opts.activeClass)) return;
   
+  // IMPORTANT: Blur the input first to dismiss Tizen IME modal
+  // Without this, the system modal with OK/Cancel remains open
+  // and pressing Cancel will send EXIT key, exiting the app.
+  // See: https://github.com/SamsungDForum/SampleWebApps-IME
+  try {
+    if (document.activeElement === input) {
+      input.blur();
+    }
+  } catch (err) {
+    console.warn('TizenPortal [TextInput]: Blur error:', err.message);
+  }
+  
   wrapper.classList.remove(opts.activeClass);
   var placeholder = input.getAttribute('placeholder') || opts.defaultPlaceholder;
   display.textContent = input.value || placeholder;
@@ -318,7 +337,7 @@ export function unwrapInput(input) {
   wrapper.parentNode.removeChild(wrapper);
   
   // Restore input state
-  input.classList.remove('tp-wrapped');
+  input.classList.remove(INPUT_CONSTANTS.WRAPPED_INPUT_CLASS);
   input.removeAttribute('tabindex');
   input.style.display = '';
   

@@ -132,7 +132,6 @@
     window.addEventListener('keydown', (e) => {
       // TizenPortal: Skip spatial navigation if pointer mode is active
       if (window.TizenPortal && window.TizenPortal.input && window.TizenPortal.input.isPointerMode && window.TizenPortal.input.isPointerMode()) {
-        console.log('TizenPortal [Spatial Nav]: Skipping - pointer mode active');
         return;
       }
       

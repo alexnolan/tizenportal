@@ -28,6 +28,11 @@ import {
 } from '../navigation/card-interaction.js';
 
 /**
+ * Constants
+ */
+var WRAPPED_INPUT_CLASS = 'tp-wrapped';  // Class added to wrapped input elements
+
+/**
  * Simulate a full click event sequence (mousedown -> mouseup -> click)
  * This is needed for Vue components that use @mousedown.prevent @mouseup.prevent @click.stop
  * A simple .click() won't work because Vue intercepts at mousedown/mouseup level
@@ -168,7 +173,7 @@ function handleKeyDown(event) {
     var activeEl = document.activeElement;
     if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
       // If it's a wrapped input, use deactivateInput to properly clean up
-      if (activeEl.classList.contains('tp-wrapped')) {
+      if (activeEl.classList.contains(WRAPPED_INPUT_CLASS)) {
         deactivateInput(activeEl);
       } else {
         // For non-wrapped inputs, just blur

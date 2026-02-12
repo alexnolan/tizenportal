@@ -21,6 +21,12 @@
 import { KEYS } from './keys.js';
 
 /**
+ * Constants
+ */
+var IME_DISMISSAL_DELAY_MS = 100;  // Delay before refocusing after IME dismissal
+var WRAPPED_INPUT_CLASS = 'tp-wrapped';  // Class added to wrapped input elements
+
+/**
  * Track wrapped inputs to avoid re-wrapping
  */
 var wrappedInputs = new WeakMap();
@@ -59,7 +65,7 @@ export function wrapTextInputs(selector, options) {
     var input = inputs[i];
     
     // Skip if already wrapped
-    if (wrappedInputs.has(input) || input.classList.contains('tp-wrapped')) {
+    if (wrappedInputs.has(input) || input.classList.contains(WRAPPED_INPUT_CLASS)) {
       continue;
     }
 
@@ -152,7 +158,7 @@ function wrapSingleInput(input, opts) {
   wrapper.appendChild(input);
   
   // Mark input as wrapped
-  input.classList.add('tp-wrapped');
+  input.classList.add(WRAPPED_INPUT_CLASS);
   input.setAttribute('tabindex', '-1');
   // Remove autofocus and hide input by default to prevent OSK popup
   if (input.hasAttribute('autofocus')) {
@@ -203,12 +209,12 @@ function wrapSingleInput(input, opts) {
         } catch (err) {
           // Ignore focus errors
         }
-      }, 100);
+      }, IME_DISMISSAL_DELAY_MS);
     } else if (e.keyCode === KEYS.ENTER) {
       // Enter - submit and deactivate
       setTimeout(function() {
         deactivateInput(input);
-      }, 100);
+      }, IME_DISMISSAL_DELAY_MS);
     }
   });
   
@@ -337,7 +343,7 @@ export function unwrapInput(input) {
   wrapper.parentNode.removeChild(wrapper);
   
   // Restore input state
-  input.classList.remove('tp-wrapped');
+  input.classList.remove(WRAPPED_INPUT_CLASS);
   input.removeAttribute('tabindex');
   input.style.display = '';
   

@@ -6,6 +6,7 @@
  */
 
 import { configGet, configSet } from '../core/config.js';
+import { isBundleUserscript } from '../core/utils.js';
 
 var activeCleanups = [];
 var activeScripts = [];
@@ -86,7 +87,7 @@ function getUserscriptsConfig() {
   var filtered = [];
   for (var i = 0; i < cfg.scripts.length; i++) {
     var script = cfg.scripts[i];
-    if (script && script.id && script.id.indexOf('sandbox-') === 0) {
+    if (script && script.id && isBundleUserscript(script.id)) {
       // Skip bundle userscripts that accidentally got into global config
       changed = true;
       continue;

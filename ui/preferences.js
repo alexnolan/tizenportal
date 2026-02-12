@@ -492,12 +492,9 @@ function ensureUserscriptsConfig() {
   var originalScripts = prefsState.settings.userscriptsConfig.scripts || [];
   for (var i = 0; i < originalScripts.length; i++) {
     var script = originalScripts[i];
-    if (script && script.id) {
-      // Skip bundle-scoped userscripts (they start with bundle-specific prefixes)
-      if (script.id.indexOf('sandbox-') === 0) {
-        console.warn('TizenPortal: Filtered out bundle userscript from global config: ' + script.id);
-        continue;
-      }
+    if (script && script.id && isBundleUserscript(script.id)) {
+      console.warn('TizenPortal: Filtered out bundle userscript from global config: ' + script.id);
+      continue;
     }
     filtered.push(script);
   }

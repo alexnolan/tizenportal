@@ -172,7 +172,19 @@ export function togglePointer() {
  * @returns {boolean}
  */
 export function isPointerActive() {
-  return isActive;
+  // Check both the isActive flag and the actual element state
+  // This provides redundancy in case of initialization issues
+  if (isActive) return true;
+  
+  // Fallback: check if pointer element exists and is visible
+  if (pointerElement && pointerElement.classList.contains('visible')) {
+    // Element is visible but isActive is false - resync state
+    console.warn('TizenPortal [Pointer]: State mismatch detected, resyncing isActive');
+    isActive = true;
+    return true;
+  }
+  
+  return false;
 }
 
 /**
@@ -192,6 +204,9 @@ export function handlePointerKeyDown(event) {
   if (!isActive) return false;
   
   var keyCode = event.keyCode;
+  
+  // Debug logging
+  console.log('TizenPortal [Pointer]: handlePointerKeyDown called, keyCode:', keyCode, 'isActive:', isActive);
   
   // Track key hold start time for acceleration
   if (!event.repeat && !keyHoldStart[keyCode]) {
@@ -214,11 +229,13 @@ export function handlePointerKeyDown(event) {
     case KEYS.LEFT:
       posX = Math.max(0, posX - speed);
       handled = true;
+      console.log('TizenPortal [Pointer]: Moving left, new posX:', posX);
       break;
       
     case KEYS.RIGHT:
       posX = Math.min(screen.width - 1, posX + speed);
       handled = true;
+      console.log('TizenPortal [Pointer]: Moving right, new posX:', posX);
       break;
       
     case KEYS.UP:
@@ -231,6 +248,7 @@ export function handlePointerKeyDown(event) {
         posY = newY;
       }
       handled = true;
+      console.log('TizenPortal [Pointer]: Moving up, new posY:', posY);
       break;
       
     case KEYS.DOWN:
@@ -243,6 +261,7 @@ export function handlePointerKeyDown(event) {
         posY = newYDown;
       }
       handled = true;
+      console.log('TizenPortal [Pointer]: Moving down, new posY:', posY);
       break;
       
     case KEYS.ENTER:
@@ -253,6 +272,7 @@ export function handlePointerKeyDown(event) {
   }
   
   if (handled) {
+    console.log('TizenPortal [Pointer]: Updating position, pointerElement:', !!pointerElement);
     updatePointerPosition();
     
     // Handle scrolling if needed
@@ -266,6 +286,7 @@ export function handlePointerKeyDown(event) {
     }
   }
   
+  console.log('TizenPortal [Pointer]: Returning handled:', handled);
   return handled;
 }
 

@@ -5,7 +5,7 @@
  * Mirrors the site editor's keyboard interaction model.
  */
 
-import { isValidHexColor, isValidHttpUrl, escapeHtml } from '../core/utils.js';
+import { isValidHexColor, isValidHttpUrl, escapeHtml, isBundleUserscript } from '../core/utils.js';
 
 /**
  * Preferences state

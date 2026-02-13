@@ -2057,6 +2057,24 @@ function loadSite(card) {
   // will be stripped. Saving here ensures loadLastCard() can recover it.
   saveLastCard(card);
   
+  // Merge global feature settings into card if not explicitly set
+  // This ensures that portal preferences (textScale, etc.) carry through to the site
+  var globalFeatures = configGet('tp_features') || {};
+  var featuresToMerge = [
+    'textScale', 'navigationFix', 'focusStyling', 'focusTransitions',
+    'focusTransitionMode', 'focusTransitionSpeed', 'focusOutlineMode'
+  ];
+  for (var fi = 0; fi < featuresToMerge.length; fi++) {
+    var featureKey = featuresToMerge[fi];
+    // Only use global setting if card doesn't explicitly override it (null means use global)
+    if (card[featureKey] === null || card[featureKey] === undefined) {
+      if (globalFeatures.hasOwnProperty(featureKey)) {
+        card[featureKey] = globalFeatures[featureKey];
+        log('loadSite() - applying global ' + featureKey + ': ' + card[featureKey]);
+      }
+    }
+  }
+  
   // Get the bundle for this card
   var bundle = getBundle(bundleName);
   var resolvedUa = resolveUserAgentMode(card);

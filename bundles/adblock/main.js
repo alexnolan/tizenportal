@@ -627,31 +627,35 @@ export default {
     // Store window reference for cleanup
     state.targetWindow = win;
     
+    var xhrIntercepted = false;
+    var fetchIntercepted = false;
+    
     // Intercept XMLHttpRequest
     try {
-      if (!win.XMLHttpRequest || !win.XMLHttpRequest.prototype) {
+      if (win.XMLHttpRequest && win.XMLHttpRequest.prototype) {
+        state.originalXHROpen = win.XMLHttpRequest.prototype.open;
+        state.originalXHRSend = win.XMLHttpRequest.prototype.send;
+        
+        win.XMLHttpRequest.prototype.open = function(method, url) {
+          if (self.isAdURL(url)) {
+            console.log('TizenPortal [AdBlock]: Blocked XHR:', url.substring(0, 60));
+            state.blocked++;
+            // Return a dummy that does nothing
+            this._blocked = true;
+            return;
+          }
+          return state.originalXHROpen.apply(this, arguments);
+        };
+        
+        win.XMLHttpRequest.prototype.send = function() {
+          if (this._blocked) return;
+          return state.originalXHRSend.apply(this, arguments);
+        };
+        
+        xhrIntercepted = true;
+      } else {
         console.warn('TizenPortal [AdBlock]: XMLHttpRequest not available');
-        return;
       }
-      
-      state.originalXHROpen = win.XMLHttpRequest.prototype.open;
-      state.originalXHRSend = win.XMLHttpRequest.prototype.send;
-      
-      win.XMLHttpRequest.prototype.open = function(method, url) {
-        if (self.isAdURL(url)) {
-          console.log('TizenPortal [AdBlock]: Blocked XHR:', url.substring(0, 60));
-          state.blocked++;
-          // Return a dummy that does nothing
-          this._blocked = true;
-          return;
-        }
-        return state.originalXHROpen.apply(this, arguments);
-      };
-      
-      win.XMLHttpRequest.prototype.send = function() {
-        if (this._blocked) return;
-        return state.originalXHRSend.apply(this, arguments);
-      };
     } catch (err) {
       console.warn('TizenPortal [AdBlock]: Could not intercept XHR:', err.message);
     }
@@ -670,12 +674,19 @@ export default {
           }
           return state.originalFetch.apply(this, arguments);
         };
+        fetchIntercepted = true;
       } catch (err) {
         console.warn('TizenPortal [AdBlock]: Could not intercept fetch:', err.message);
       }
     }
     
-    state.requestIntercepted = true;
+    // Only mark as intercepted if at least one method was successfully intercepted
+    if (xhrIntercepted || fetchIntercepted) {
+      state.requestIntercepted = true;
+      console.log('TizenPortal [AdBlock]: Request interception active (XHR:', xhrIntercepted, ', fetch:', fetchIntercepted, ')');
+    } else {
+      console.warn('TizenPortal [AdBlock]: No request interception methods available');
+    }
   },
 
   /**

@@ -1095,20 +1095,25 @@ export default {
 
     if (state.requestIntercepted) {
       try {
-        var win = state.targetWindow || window;
-        // Restore original XMLHttpRequest methods
-        if (state.originalXHROpen && win.XMLHttpRequest) {
-          win.XMLHttpRequest.prototype.open = state.originalXHROpen;
-          state.originalXHROpen = null;
-        }
-        if (state.originalXHRSend && win.XMLHttpRequest) {
-          win.XMLHttpRequest.prototype.send = state.originalXHRSend;
-          state.originalXHRSend = null;
-        }
-        // Restore original fetch
-        if (state.originalFetch && win.fetch) {
-          win.fetch = state.originalFetch;
-          state.originalFetch = null;
+        var win = state.targetWindow;
+        
+        if (!win) {
+          console.error('TizenPortal [AdBlock]: targetWindow not available during cleanup, cannot restore interceptors');
+        } else {
+          // Restore original XMLHttpRequest methods
+          if (state.originalXHROpen && win.XMLHttpRequest && win.XMLHttpRequest.prototype) {
+            win.XMLHttpRequest.prototype.open = state.originalXHROpen;
+            state.originalXHROpen = null;
+          }
+          if (state.originalXHRSend && win.XMLHttpRequest && win.XMLHttpRequest.prototype) {
+            win.XMLHttpRequest.prototype.send = state.originalXHRSend;
+            state.originalXHRSend = null;
+          }
+          // Restore original fetch (validate it's a function like during interception)
+          if (state.originalFetch && win.fetch && typeof win.fetch === 'function') {
+            win.fetch = state.originalFetch;
+            state.originalFetch = null;
+          }
         }
       } catch (err) {
         console.warn('TizenPortal [AdBlock]: cleanup request intercept error:', err.message);

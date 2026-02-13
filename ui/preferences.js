@@ -788,7 +788,14 @@ function shortenUrl(url) {
  */
 function getValue(row) {
   var config = row.config === 'portal' ? prefsState.settings.portalConfig : prefsState.settings.featuresConfig;
-  return config[row.key];
+  var value = config[row.key];
+  
+  // DIAGNOSTIC: Log textScale reads specifically
+  if (row.key === 'textScale') {
+    console.log('getValue(textScale): value=' + value + ', full config:', config);
+  }
+  
+  return value;
 }
 
 /**
@@ -1255,6 +1262,13 @@ function savePreferencesAuto(reason) {
 
   // Save portal config
   TizenPortal.config.set('tp_portal', prefsState.settings.portalConfig);
+
+  // DIAGNOSTIC: Log what we're saving for features
+  console.log('Saving features config:', {
+    textScale: prefsState.settings.featuresConfig.textScale,
+    focusOutlineMode: prefsState.settings.featuresConfig.focusOutlineMode,
+    full: prefsState.settings.featuresConfig
+  });
 
   // Save features config
   TizenPortal.config.set('tp_features', prefsState.settings.featuresConfig);

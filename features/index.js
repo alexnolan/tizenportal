@@ -81,6 +81,13 @@ function getConfig() {
     }
   }
   
+  // DIAGNOSTIC: Log what we're returning, especially textScale
+  console.log('getConfig() returning:', {
+    textScale: stored.textScale,
+    focusOutlineMode: stored.focusOutlineMode,
+    full: stored
+  });
+  
   return stored;
 }
 

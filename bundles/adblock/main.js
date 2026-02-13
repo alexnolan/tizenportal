@@ -225,6 +225,7 @@ var state = {
   originalXHROpen: null,
   originalXHRSend: null,
   originalFetch: null,
+  targetWindow: null,
   strictStyleEl: null,
   cookieStyleEl: null,
   hideCookieBanners: false,
@@ -622,6 +623,9 @@ export default {
       console.log('TizenPortal [AdBlock]: Request interception already active, skipping');
       return;
     }
+    
+    // Store window reference for cleanup
+    state.targetWindow = win;
     
     // Intercept XMLHttpRequest
     try {
@@ -1075,24 +1079,26 @@ export default {
 
     if (state.requestIntercepted) {
       try {
+        var win = state.targetWindow || window;
         // Restore original XMLHttpRequest methods
-        if (state.originalXHROpen) {
-          XMLHttpRequest.prototype.open = state.originalXHROpen;
+        if (state.originalXHROpen && win.XMLHttpRequest) {
+          win.XMLHttpRequest.prototype.open = state.originalXHROpen;
           state.originalXHROpen = null;
         }
-        if (state.originalXHRSend) {
-          XMLHttpRequest.prototype.send = state.originalXHRSend;
+        if (state.originalXHRSend && win.XMLHttpRequest) {
+          win.XMLHttpRequest.prototype.send = state.originalXHRSend;
           state.originalXHRSend = null;
         }
         // Restore original fetch
-        if (state.originalFetch && window.fetch) {
-          window.fetch = state.originalFetch;
+        if (state.originalFetch && win.fetch) {
+          win.fetch = state.originalFetch;
           state.originalFetch = null;
         }
       } catch (err) {
         console.warn('TizenPortal [AdBlock]: cleanup request intercept error:', err.message);
       }
       state.requestIntercepted = false;
+      state.targetWindow = null;
     }
 
     try {

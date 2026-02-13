@@ -280,42 +280,8 @@ function ensureUserscriptsInitialized() {
   loadUserscriptsForBundle();
 }
 
-function hasCustomUserscripts(scripts) {
-  if (!Array.isArray(scripts)) return false;
-  if (scripts.length > 1) return true;
-  for (var i = 0; i < scripts.length; i++) {
-    var s = scripts[i] || {};
-    if ((s.url && s.url.trim()) || (s.inline && s.inline.trim())) return true;
-  }
-  return false;
-}
-
-function maybeSeedSandboxUserscripts(bundleName) {
-  if (!state.card || bundleName !== 'userscript-sandbox') return;
-  if (!Array.isArray(state.card.userscripts)) {
-    state.card.userscripts = normalizeUserscripts([]);
-  }
-
-  if (hasCustomUserscripts(state.card.userscripts)) return;
-
-  var seeded = [];
-  for (var i = 0; i < SANDBOX_SAMPLE_SCRIPTS.length; i++) {
-    var sample = SANDBOX_SAMPLE_SCRIPTS[i];
-    seeded.push({
-      id: 'us-' + Date.now() + '-' + Math.floor(Math.random() * 100000),
-      name: sample.name || ('Sample Script ' + (i + 1)),
-      enabled: sample.enabled === true,
-      url: sample.url || '',
-      inline: sample.inline || '',
-      cached: sample.cached || '',
-      lastFetched: 0,
-    });
-  }
-
-  if (seeded.length) {
-    state.card.userscripts = seeded;
-  }
-}
+// Legacy userscript-sandbox functions removed - bundle no longer exists
+// Userscripts are now managed globally via the registry system
 
 /**
  * Initialize the site editor

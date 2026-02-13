@@ -54,7 +54,6 @@ TizenPortal includes built-in support for:
 | [Audiobookshelf](https://www.audiobookshelf.org/) | `audiobookshelf` | ✅ Full Support |
 | Any Website | `default` | ✅ Basic Support |
 | Ad-heavy Sites | `adblock` | ✅ Ad Blocking |
-| Custom Userscripts | `userscript-sandbox` | ✅ Userscript Support |
 
 ### Requirements
 

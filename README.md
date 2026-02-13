@@ -35,7 +35,7 @@ Runs as a TizenBrew module to inject fixes into any site.
 This project is designed to be loaded via **TizenBrew** on your Samsung TV.
 
 1. **Open TizenBrew** on your Samsung TV
-2. **Add Module:** `alexnolan/tizenportal@latest` (or specify a version tag from [CHANGELOG](docs/CHANGELOG.md))
+2. **Add Module:** `alexnolan/tizenportal@<version-tag>` (e.g., `alexnolan/tizenportal@1026`) - see [CHANGELOG](docs/CHANGELOG.md) for available versions
 3. **Launch** TizenPortal from your TizenBrew dashboard
 
 TizenBrew will open the portal and inject the runtime into all navigated pages.
@@ -169,7 +169,7 @@ TizenPortal is designed with security as a priority:
 | **Target OS** | Samsung Tizen 3.0 - 6.5 |
 | **Browser Engine** | Chrome 47 - 69 (Tizen's Chromium) |
 | **Tested Apps** | ✅ Audiobookshelf |
-| **Built-in Bundles** | default, audiobookshelf, adblock, userscript-sandbox |
+| **Built-in Bundles** | default, audiobookshelf, adblock |
 
 ---
 

@@ -276,7 +276,7 @@ The build includes:
 5. **Input Handling** (keys, pointer, text-input)
 6. **Focus Management**
 7. **Diagnostics** (console capture)
-8. **Bundles** (default, audiobookshelf, adblock, userscript-sandbox)
+8. **Bundles** (default, audiobookshelf, adblock)
 
 ---
 

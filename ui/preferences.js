@@ -92,10 +92,12 @@ var FOCUS_TRANSITION_SPEED_OPTIONS = [
  * Text scale options
  */
 var TEXT_SCALE_OPTIONS = [
-  { value: 'off', label: 'Off (Original Size)' },
-  { value: 'small', label: 'Small (+10%)' },
-  { value: 'medium', label: 'Medium (+25%)' },
-  { value: 'large', label: 'Large (+50%)' },
+  { value: 'extra-small', label: 'Extra Small (75%)' },
+  { value: 'small', label: 'Small (90%)' },
+  { value: 'off', label: 'Normal (100%)' },
+  { value: 'medium', label: 'Medium (115%)' },
+  { value: 'large', label: 'Large (135%)' },
+  { value: 'extra-large', label: 'Extra Large (160%)' },
 ];
 
 /**
@@ -471,7 +473,7 @@ function getDefaultFeaturesConfig() {
     viewportMode: 'locked',
     uaMode: 'tizen',
     navigationFix: true,
-    textScale: 'off',
+    textScale: 'medium',
   };
 }
 

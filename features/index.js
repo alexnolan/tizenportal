@@ -49,7 +49,7 @@ function getDefaults() {
     viewportMode: 'locked',
     uaMode: 'tizen',
     navigationFix: true,
-    textScale: 'off',
+    textScale: 'medium',
   };
 }
 

@@ -9,12 +9,15 @@
 /**
  * Scale presets
  * Uses transform-based scaling to preserve relative sizing
+ * Values < 1.0 shrink text, values > 1.0 enlarge text
  */
 var SCALE_PRESETS = {
-  off: 1.0,      // No scaling (100%)
-  small: 1.1,    // Small boost (110%)
-  medium: 1.25,  // Medium boost (125%)
-  large: 1.5,    // Large boost (150%)
+  'extra-small': 0.75,  // Extra small (-25%)
+  small: 0.9,           // Small (-10%)
+  off: 1.0,             // No scaling (100%)
+  medium: 1.15,         // Medium (+15%)
+  large: 1.35,          // Large (+35%)
+  'extra-large': 1.6,   // Extra large (+60%)
 };
 
 export default {

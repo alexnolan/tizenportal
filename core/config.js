@@ -47,7 +47,7 @@ var DEFAULT_CONFIG = {
     wrapTextInputs: true,
     viewportMode: 'locked',
     uaMode: 'tizen',
-    textScale: 'off',
+    textScale: 'medium',
     navigationFix: true,
     
     // Navigation mode: which navigation system to use

@@ -629,6 +629,11 @@ export default {
     
     // Intercept XMLHttpRequest
     try {
+      if (!win.XMLHttpRequest || !win.XMLHttpRequest.prototype) {
+        console.warn('TizenPortal [AdBlock]: XMLHttpRequest not available');
+        return;
+      }
+      
       state.originalXHROpen = win.XMLHttpRequest.prototype.open;
       state.originalXHRSend = win.XMLHttpRequest.prototype.send;
       
@@ -652,7 +657,7 @@ export default {
     }
     
     // Intercept fetch (if available)
-    if (win.fetch) {
+    if (win.fetch && typeof win.fetch === 'function') {
       try {
         state.originalFetch = win.fetch;
         win.fetch = function(url, options) {

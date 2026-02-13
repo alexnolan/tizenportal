@@ -47,6 +47,8 @@ var DEFAULT_CONFIG = {
     wrapTextInputs: true,
     viewportMode: 'locked',
     uaMode: 'tizen',
+    textScale: 'off',
+    navigationFix: true,
     
     // Navigation mode: which navigation system to use
     // 'directional' - Use new library in directional mode (cone-based, forgiving) - PREFERRED
@@ -280,16 +282,30 @@ export function configGet(key) {
   // If value is object and default is object, merge
   if (value && typeof value === 'object' && DEFAULT_CONFIG.hasOwnProperty(key) && typeof DEFAULT_CONFIG[key] === 'object') {
     var merged = {};
-    for (var k in DEFAULT_CONFIG[key]) {
-      if (DEFAULT_CONFIG[key].hasOwnProperty(k)) {
-        merged[k] = value.hasOwnProperty(k) ? value[k] : DEFAULT_CONFIG[key][k];
+    var defaults = DEFAULT_CONFIG[key];
+    
+    // First, add all keys from defaults
+    for (var k in defaults) {
+      if (defaults.hasOwnProperty(k)) {
+        merged[k] = value.hasOwnProperty(k) ? value[k] : defaults[k];
       }
     }
+    
+    // Then, add any keys from stored that are NOT in defaults (e.g., textScale, navigationfix)
+    for (var k in value) {
+      if (value.hasOwnProperty(k) && !defaults.hasOwnProperty(k)) {
+        merged[k] = value[k];
+      }
+    }
+    
     if (key === 'tp_features') {
       console.log('configGet(tp_features) - merging stored with defaults:', {
         storedTextScale: value.textScale,
-        defaultTextScale: DEFAULT_CONFIG[key].textScale,
+        defaultTextScale: defaults.textScale,
         mergedTextScale: merged.textScale,
+        storedNavFix: value.navigationFix,
+        defaultNavFix: defaults.navigationFix,
+        mergedNavFix: merged.navigationFix,
         stored: value,
         merged: merged
       });

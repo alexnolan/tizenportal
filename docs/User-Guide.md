@@ -74,8 +74,12 @@ The portal is your home screen — a grid of site cards you can navigate with yo
 
 In the editor, open **Site Options** to override global preferences for this site:
 
+- **Navigation Mode**
 - **Viewport Lock Mode**
+- **Text Scale**
 - **Focus Outline**
+- **Focus Transition Style**
+- **Focus Transition Speed**
 - **User Agent Mode**
 - **Auto-focusable Elements**
 - **Scroll-into-view on Focus**
@@ -253,32 +257,51 @@ Long-press **🔴 Red** to reload the current page without opening the address b
 
 Open Preferences with **🟡 Yellow** on the portal.
 
-### Appearance
+### Global Preferences
+Global defaults that can be overridden per-site in the editor.
+
+**Appearance**
+- **Text Scale**: Off / Small (+10%) / Medium (+25%) / Large (+50%)
+  - Scales all text for improved TV legibility while maintaining relative sizing
+
+**Navigation**
+- **Focus Outline**: On (Blue) / High Contrast (Yellow) / Off
+- **Focus Transition Style**: Slide / Scale / Glow / Off
+- **Focus Transition Speed**: Fast / Medium / Slow
+
+### Portal Preferences
+
+**Appearance**
 - **Theme Mode**: Light, Dark, Automatic (Sunset), Custom Backdrop, Custom Colours
 - **Custom Colours**: Two gradient colors (Custom Colours theme)
 - **Backdrop**: Custom background image URL (Custom Backdrop theme)
 
-### Portal
+**HUD & Hints**
 - **Debug HUD**: Off or position in any corner
 - **Color Hints**: Show/hide the on-screen color button labels
 
-### Site Features
+### Site Preferences
+
+**Navigation**
 - **Navigation Mode**: Smart Navigation (Directional) / Grid Navigation (Geometric) / Legacy Polyfill
 - **Viewport Lock Mode**: Auto / Locked (1920) / Unlocked
-- **Text Scale**: Off / Small (+10%) / Medium (+25%) / Large (+50%)
-	- Scales all text for improved TV legibility while maintaining relative sizing
-- **Focus Outline**: On (Blue) / High Contrast (Yellow) / Off
-- **Focus Transition Style**: Slide / Scale / Glow / Off
-- **Focus Transition Speed**: Fast / Medium / Slow
+
+**Compatibility**
 - **User Agent Mode**: Tizen TV / Desktop / Mobile
-	- Note: UA spoofing is JS-only (not network-layer), so some sites may still detect Tizen
+  - Note: UA spoofing is JS-only (not network-layer), so some sites may still detect Tizen
+
+**Input**
 - **Auto-focusable Elements**: Adds tabindex to make items focusable
 - **Scroll-into-view on Focus**: Scrolls when focus moves
+- **Protect Text Inputs (TV Keyboard)**: prevents the on-screen keyboard from opening until you press Enter
+
+**Layout**
 - **TV Safe Area (5% inset)**: Adds padding for TV overscan
-- **GPU Acceleration Hints**: Applies GPU hint styles
 - **CSS Normalization**: Applies a reset tuned for TV browsing
 - **Hide Scrollbars**: Visually hides scrollbars
-- **Protect Text Inputs (TV Keyboard)**: prevents the on-screen keyboard from opening until you press Enter
+
+**Performance**
+- **GPU Acceleration Hints**: Applies GPU hint styles
 
 ---
 

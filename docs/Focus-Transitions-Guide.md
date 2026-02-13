@@ -110,7 +110,7 @@ The **glow** mode creates a pulsing shadow effect around the focused element.
 Focus transitions can be configured globally via the Preferences UI:
 
 1. Open Preferences (Yellow button on portal)
-2. Navigate to **Site Features** section
+2. Navigate to **Global Preferences → Navigation**
 3. Find **Focus Transition Style** dropdown
    - Options: Slide (Directional), Scale (Grow), Glow (Pulse), Off
 4. Find **Focus Transition Speed** dropdown

@@ -169,7 +169,7 @@ Bundle: directional (required)
 
 1. Open TizenPortal
 2. Press **Yellow** button (Preferences)
-3. Navigate to **Site Features** section
+3. Navigate to **Site Preferences → Navigation**
 4. Select **Navigation Mode**
 5. Choose: 
    - **Smart Navigation (Directional) - Preferred** (default, recommended)

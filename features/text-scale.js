@@ -38,6 +38,9 @@ export default {
     // Also increases line-height and letter-spacing proportionally
     var css = [
       '/* TizenPortal Text Scale (' + level + ') */',
+      'html {',
+      '  font-size: ' + (scale * 100) + '% !important;',
+      '}',
       'body, p, span, div, li, td, th, a, h1, h2, h3, h4, h5, h6, label {',
       '  font-size: ' + (scale * 100) + '% !important;',
       '}',
@@ -52,22 +55,9 @@ export default {
       '  letter-spacing: ' + ((scale - 1) * 0.02) + 'em !important;',
       '}',
       '',
-      '/* Ensure interactive elements are touch-friendly */',
+      '/* Keep form controls readable */',
       'button, input, select, textarea {',
-      '  min-height: ' + Math.round(44 * scale) + 'px !important;',
       '  font-size: ' + (scale * 100) + '% !important;',
-      '  padding: ' + Math.round(8 * scale) + 'px ' + Math.round(12 * scale) + 'px !important;',
-      '}',
-      '',
-      '/* Constrain long text for readability */',
-      'p, li, td, th {',
-      '  max-width: 1200px !important;',
-      '}',
-      '',
-      '/* Enhance link visibility */',
-      'a {',
-      '  text-decoration: underline !important;',
-      '  padding: ' + Math.round(2 * scale) + 'px !important;',
       '}',
     ];
     

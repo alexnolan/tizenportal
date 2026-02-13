@@ -186,42 +186,58 @@ function normalizeHintsPosition(value) {
  * Note: customColor1/customColor2 are conditional rows shown only when theme='custom'
  */
 var PREFERENCE_ROWS = [
-  { id: 'theme', label: 'Theme Mode', type: 'select', options: THEME_OPTIONS, key: 'theme', config: 'portal', section: 'appearance' },
-  { id: 'customColor1', label: 'Gradient Color 1', type: 'color', key: 'customColor1', config: 'portal', showIf: 'custom', section: 'appearance' },
-  { id: 'customColor2', label: 'Gradient Color 2', type: 'color', key: 'customColor2', config: 'portal', showIf: 'custom', section: 'appearance' },
-  { id: 'backgroundImage', label: 'Backdrop Image URL', type: 'text', key: 'backgroundImage', config: 'portal', showIf: 'backdrop', section: 'appearance' },
-  { id: 'hudPosition', label: 'Debug HUD', type: 'select', options: HUD_OPTIONS, key: 'hudPosition', config: 'portal', section: 'portal' },
-  { id: 'hintsPosition', label: 'Color Hints', type: 'select', options: HINT_POSITION_OPTIONS, key: 'hintsPosition', config: 'portal', section: 'portal' },
-  { id: 'navigationMode', label: 'Navigation Mode', type: 'select', options: NAVIGATION_MODE_OPTIONS, key: 'navigationMode', config: 'features', section: 'features' },
-  { id: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_OPTIONS, key: 'viewportMode', config: 'features', section: 'features' },
-  { id: 'textScale', label: 'Text Scale', type: 'select', options: TEXT_SCALE_OPTIONS, key: 'textScale', config: 'features', section: 'features',
+  { id: 'theme', label: 'Theme Mode', type: 'select', options: THEME_OPTIONS, key: 'theme', config: 'portal', section: 'portal', category: 'appearance' },
+  { id: 'customColor1', label: 'Gradient Color 1', type: 'color', key: 'customColor1', config: 'portal', showIf: 'custom', section: 'portal', category: 'appearance' },
+  { id: 'customColor2', label: 'Gradient Color 2', type: 'color', key: 'customColor2', config: 'portal', showIf: 'custom', section: 'portal', category: 'appearance' },
+  { id: 'backgroundImage', label: 'Backdrop Image URL', type: 'text', key: 'backgroundImage', config: 'portal', showIf: 'backdrop', section: 'portal', category: 'appearance' },
+  { id: 'hudPosition', label: 'Debug HUD', type: 'select', options: HUD_OPTIONS, key: 'hudPosition', config: 'portal', section: 'portal', category: 'hints' },
+  { id: 'hintsPosition', label: 'Color Hints', type: 'select', options: HINT_POSITION_OPTIONS, key: 'hintsPosition', config: 'portal', section: 'portal', category: 'hints' },
+  { id: 'textScale', label: 'Text Scale', type: 'select', options: TEXT_SCALE_OPTIONS, key: 'textScale', config: 'features', section: 'global', category: 'appearance',
     description: 'Scale all text for improved TV legibility while maintaining relative sizing' },
-  { id: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS, key: 'focusOutlineMode', config: 'features', section: 'features' },
-  { id: 'focusTransitionMode', label: 'Focus Transition Style', type: 'select', options: FOCUS_TRANSITION_MODE_OPTIONS, key: 'focusTransitionMode', config: 'features', section: 'features' },
-  { id: 'focusTransitionSpeed', label: 'Focus Transition Speed', type: 'select', options: FOCUS_TRANSITION_SPEED_OPTIONS, key: 'focusTransitionSpeed', config: 'features', section: 'features' },
-  { id: 'uaMode', label: 'User Agent Mode', type: 'select', options: UA_MODE_OPTIONS, key: 'uaMode', config: 'features', section: 'features' },
-  { id: 'tabindexInjection', label: 'Auto-focusable Elements', type: 'toggle', key: 'tabindexInjection', config: 'features', section: 'features',
+  { id: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS, key: 'focusOutlineMode', config: 'features', section: 'global', category: 'navigation' },
+  { id: 'focusTransitionMode', label: 'Focus Transition Style', type: 'select', options: FOCUS_TRANSITION_MODE_OPTIONS, key: 'focusTransitionMode', config: 'features', section: 'global', category: 'navigation' },
+  { id: 'focusTransitionSpeed', label: 'Focus Transition Speed', type: 'select', options: FOCUS_TRANSITION_SPEED_OPTIONS, key: 'focusTransitionSpeed', config: 'features', section: 'global', category: 'navigation' },
+  { id: 'navigationMode', label: 'Navigation Mode', type: 'select', options: NAVIGATION_MODE_OPTIONS, key: 'navigationMode', config: 'features', section: 'site', category: 'navigation' },
+  { id: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_OPTIONS, key: 'viewportMode', config: 'features', section: 'site', category: 'navigation' },
+  { id: 'uaMode', label: 'User Agent Mode', type: 'select', options: UA_MODE_OPTIONS, key: 'uaMode', config: 'features', section: 'site', category: 'compatibility' },
+  { id: 'tabindexInjection', label: 'Auto-focusable Elements', type: 'toggle', key: 'tabindexInjection', config: 'features', section: 'site', category: 'input',
     description: 'Automatically inject tabindex on interactive elements for remote control navigation' },
-  { id: 'scrollIntoView', label: 'Scroll into View on Focus', type: 'toggle', key: 'scrollIntoView', config: 'features', section: 'features',
+  { id: 'scrollIntoView', label: 'Scroll into View on Focus', type: 'toggle', key: 'scrollIntoView', config: 'features', section: 'site', category: 'input',
     description: 'Scroll container when focused element comes into viewport' },
-  { id: 'safeArea', label: 'TV Safe Area (5% inset)', type: 'toggle', key: 'safeArea', config: 'features', section: 'features',
-    description: 'Inset content 5% from edges to account for TV screen overscan' },
-  { id: 'gpuHints', label: 'GPU Acceleration', type: 'toggle', key: 'gpuHints', config: 'features', section: 'features',
-    description: 'Apply GPU hints to improve animation performance on constrained hardware' },
-  { id: 'cssReset', label: 'CSS Normalization', type: 'toggle', key: 'cssReset', config: 'features', section: 'features',
-    description: 'Apply baseline CSS resets for consistent display across Tizen browsers' },
-  { id: 'hideScrollbars', label: 'Hide Scrollbars', type: 'toggle', key: 'hideScrollbars', config: 'features', section: 'features',
-    description: 'Hide native scrollbars for a cleaner TV interface' },
-  { id: 'wrapTextInputs', label: 'Protect Text Inputs', type: 'toggle', key: 'wrapTextInputs', config: 'features', section: 'features',
+  { id: 'wrapTextInputs', label: 'Protect Text Inputs', type: 'toggle', key: 'wrapTextInputs', config: 'features', section: 'site', category: 'input',
     description: 'Protect text input fields from accidental remote button presses during editing' },
+  { id: 'safeArea', label: 'TV Safe Area (5% inset)', type: 'toggle', key: 'safeArea', config: 'features', section: 'site', category: 'layout',
+    description: 'Inset content 5% from edges to account for TV screen overscan' },
+  { id: 'cssReset', label: 'CSS Normalization', type: 'toggle', key: 'cssReset', config: 'features', section: 'site', category: 'layout',
+    description: 'Apply baseline CSS resets for consistent display across Tizen browsers' },
+  { id: 'hideScrollbars', label: 'Hide Scrollbars', type: 'toggle', key: 'hideScrollbars', config: 'features', section: 'site', category: 'layout',
+    description: 'Hide native scrollbars for a cleaner TV interface' },
+  { id: 'gpuHints', label: 'GPU Acceleration', type: 'toggle', key: 'gpuHints', config: 'features', section: 'site', category: 'performance',
+    description: 'Apply GPU hints to improve animation performance on constrained hardware' },
 ];
 
 var SECTION_DEFS = [
-  { id: 'appearance', label: 'Appearance', defaultCollapsed: true },
-  { id: 'portal', label: 'Portal', defaultCollapsed: true },
-  { id: 'features', label: 'Site Features', defaultCollapsed: true },
+  { id: 'global', label: 'Global Preferences', defaultCollapsed: true },
+  { id: 'portal', label: 'Portal Preferences', defaultCollapsed: true },
+  { id: 'site', label: 'Site Preferences', defaultCollapsed: true },
   { id: 'userscripts', label: 'User Scripts', defaultCollapsed: true },
 ];
+
+var CATEGORY_LABELS = {
+  appearance: 'Appearance',
+  navigation: 'Navigation',
+  input: 'Input',
+  layout: 'Layout',
+  performance: 'Performance',
+  compatibility: 'Compatibility',
+  hints: 'HUD & Hints',
+};
+
+var SECTION_CATEGORY_ORDER = {
+  global: ['appearance', 'navigation'],
+  portal: ['appearance', 'hints'],
+  site: ['navigation', 'compatibility', 'input', 'layout', 'performance'],
+};
 
 /**
  * Initialize preferences UI
@@ -355,7 +371,7 @@ export function showPreferences() {
   // Load current settings
   prefsState.settings = {
     portalConfig: TizenPortal.config.get('tp_portal') || getDefaultPortalConfig(),
-    featuresConfig: TizenPortal.config.get('tp_features') || getDefaultFeaturesConfig(),
+    featuresConfig: featureLoader.getConfig ? featureLoader.getConfig() : (TizenPortal.config.get('tp_features') || getDefaultFeaturesConfig()),
   };
 
   // Normalize theme value if needed
@@ -442,6 +458,9 @@ function getDefaultFeaturesConfig() {
   return {
     focusStyling: true,
     focusOutlineMode: 'on',
+    focusTransitions: true,
+    focusTransitionMode: 'slide',
+    focusTransitionSpeed: 'medium',
     tabindexInjection: true,
     scrollIntoView: true,
     safeArea: false,
@@ -451,6 +470,8 @@ function getDefaultFeaturesConfig() {
     wrapTextInputs: true,
     viewportMode: 'locked',
     uaMode: 'tizen',
+    navigationFix: true,
+    textScale: 'off',
   };
 }
 
@@ -496,7 +517,7 @@ function getVisibleRowsWithSections() {
 
   for (var i = 0; i < rows.length; i++) {
     var row = rows[i];
-    var section = row.section || 'features';
+    var section = row.section || 'global';
     if (!grouped[section]) grouped[section] = [];
     grouped[section].push(row);
   }
@@ -513,8 +534,40 @@ function getVisibleRowsWithSections() {
     }
 
     var sectionRows = grouped[def.id] || [];
-    for (var k = 0; k < sectionRows.length; k++) {
-      ordered.push(sectionRows[k]);
+    if (def.id === 'userscripts') {
+      for (var k = 0; k < sectionRows.length; k++) {
+        ordered.push(sectionRows[k]);
+      }
+    } else {
+      var withCategories = buildSectionRows(def.id, sectionRows);
+      for (var m = 0; m < withCategories.length; m++) {
+        ordered.push(withCategories[m]);
+      }
+    }
+  }
+
+  return ordered;
+}
+
+function buildSectionRows(sectionId, sectionRows) {
+  var categoryOrder = SECTION_CATEGORY_ORDER[sectionId] || [];
+  var categories = {};
+  for (var i = 0; i < sectionRows.length; i++) {
+    var row = sectionRows[i];
+    var category = row.category || 'appearance';
+    if (!categories[category]) categories[category] = [];
+    categories[category].push(row);
+  }
+
+  var ordered = [];
+  var order = categoryOrder.length ? categoryOrder : Object.keys(categories);
+  for (var j = 0; j < order.length; j++) {
+    var key = order[j];
+    var rows = categories[key];
+    if (!rows || !rows.length) continue;
+    ordered.push({ type: 'category', label: getPreferenceCategoryLabel(key), category: key, section: sectionId });
+    for (var k = 0; k < rows.length; k++) {
+      ordered.push(rows[k]);
     }
   }
 
@@ -561,6 +614,10 @@ function getCategoryLabel(category) {
   return labels[category] || category;
 }
 
+function getPreferenceCategoryLabel(category) {
+  return CATEGORY_LABELS[category] || category;
+}
+
 function isUserscriptEnabled(scriptId) {
   var cfg = Userscripts.getUserscriptsConfig();
   return cfg.enabled[scriptId] === true;
@@ -596,6 +653,12 @@ function renderPreferencesUI() {
             '<span class="tp-prefs-section-summary">' + escapeHtml(summary) + '</span>' +
             '<span class="tp-prefs-section-indicator">' + indicator + '</span>' +
           '</div>' +
+        '</div>';
+    } else if (row.type === 'category') {
+      html += '' +
+        '<div class="tp-prefs-row tp-prefs-category" data-index="' + i + '" data-type="category" tabindex="-1">' +
+          '<div class="tp-prefs-label" style="font-weight: bold; color: #8ab4f8;">' + escapeHtml(row.label) + '</div>' +
+          '<div class="tp-prefs-value"></div>' +
         '</div>';
     } else if (row.type === 'userscript-category') {
       html += '' +
@@ -657,51 +720,49 @@ function renderPreferencesUI() {
 }
 
 function getPreferencesSectionSummary(sectionId) {
-  if (sectionId === 'appearance') {
-    var theme = normalizeThemeValue(prefsState.settings.portalConfig.theme || 'dark');
-    var themeLabel = getOptionLabel(THEME_OPTIONS, theme) || theme;
-    if (theme === 'custom') {
-      var c1 = prefsState.settings.portalConfig.customColor1 || '#0d1117';
-      var c2 = prefsState.settings.portalConfig.customColor2 || '#161b22';
-      return 'Theme: ' + themeLabel + ' • Gradient 1: ' + c1 + ' • Gradient 2: ' + c2;
-    }
-    if (theme === 'backdrop') {
-      var bg = prefsState.settings.portalConfig.backgroundImage || 'none';
-      return 'Theme: ' + themeLabel + ' • Backdrop: ' + shortenUrl(bg);
-    }
-    return 'Theme: ' + themeLabel;
-  }
-
-  if (sectionId === 'portal') {
-    var hud = normalizeHudPosition(prefsState.settings.portalConfig.hudPosition || 'off');
-    var hudLabel = getOptionLabel(HUD_OPTIONS, hud) || hud;
-    var hintsPosition = normalizeHintsPosition(prefsState.settings.portalConfig.hintsPosition || 'bottom-left');
-    var hintsLabel = getOptionLabel(HINT_POSITION_OPTIONS, hintsPosition) || hintsPosition;
-    return 'Debug HUD: ' + hudLabel + ' • Hints: ' + hintsLabel;
-  }
-
-  if (sectionId === 'features') {
-    var viewport = getOptionLabel(VIEWPORT_OPTIONS, prefsState.settings.featuresConfig.viewportMode || 'locked');
-    var focus = getOptionLabel(FOCUS_OUTLINE_OPTIONS, prefsState.settings.featuresConfig.focusOutlineMode || 'on');
-    var ua = getOptionLabel(UA_MODE_OPTIONS, prefsState.settings.featuresConfig.uaMode || 'tizen');
-    var transition = getOptionLabel(FOCUS_TRANSITION_MODE_OPTIONS, prefsState.settings.featuresConfig.focusTransitionMode || 'slide');
-    var speed = getOptionLabel(FOCUS_TRANSITION_SPEED_OPTIONS, prefsState.settings.featuresConfig.focusTransitionSpeed || 'medium');
-    return 'Focus: ' + focus + ' • Transition: ' + transition + ' / ' + speed + ' • Viewport: ' + viewport;
-  }
-
   if (sectionId === 'userscripts') {
-    var cfg = Userscripts.getUserscriptsConfig();
-    var enabledCount = 0;
-    for (var scriptId in cfg.enabled) {
-      if (cfg.enabled[scriptId] === true) {
-        enabledCount++;
-      }
+    var scripts = UserscriptRegistry.getAllUserscripts();
+    if (!scripts.length) return 'No scripts registered';
+    var scriptParts = [];
+    for (var s = 0; s < scripts.length; s++) {
+      var script = scripts[s];
+      var enabled = isUserscriptEnabled(script.id);
+      scriptParts.push(script.name + ': ' + (enabled ? 'On' : 'Off'));
     }
-    var totalCount = UserscriptRegistry.getAllUserscripts().length;
-    return 'Enabled: ' + enabledCount + ' of ' + totalCount;
+    return scriptParts.join(' • ');
   }
 
-  return '';
+  var rows = getVisibleRows();
+  var summaryParts = [];
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    if (row.section !== sectionId) continue;
+    var value = getValue(row);
+    var display = formatSummaryValue(row, value);
+    summaryParts.push(row.label + ': ' + display);
+  }
+
+  return summaryParts.join(' • ');
+}
+
+function formatSummaryValue(row, value) {
+  if (row.type === 'toggle') {
+    return value ? 'On' : 'Off';
+  }
+  if (row.type === 'select' && row.options) {
+    var label = getOptionLabel(row.options, value);
+    return label || (value || '(not set)');
+  }
+  if (row.type === 'color') {
+    return value || '(not set)';
+  }
+  if (row.type === 'text') {
+    if (row.id === 'backgroundImage') {
+      return shortenUrl(value || '');
+    }
+    return value || '(not set)';
+  }
+  return value || '(not set)';
 }
 
 function getOptionLabel(options, value) {
@@ -870,6 +931,11 @@ function activatePreferenceRow(rowEl) {
 
   if (row.type === 'userscript-category') {
     // Category headers are not interactive
+    return;
+  }
+
+  if (row.type === 'category') {
+    // Section category headers are not interactive
     return;
   }
 
@@ -1200,7 +1266,7 @@ function savePreferencesAuto(reason) {
   applyPortalPreferences(prefsState.settings.portalConfig);
 
   // Apply feature changes immediately (text scale, focus styling, etc.)
-  featureLoader.applyFeatures(document);
+  featureLoader.applyFeatures(document, prefsState.settings.featuresConfig);
 
   if (window.TizenPortal && window.TizenPortal.showToast) {
     TizenPortal.showToast('Saved');

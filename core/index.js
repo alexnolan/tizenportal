@@ -277,6 +277,7 @@ function buildFeatureOverrides(card) {
     'focusTransitionMode',
     'focusTransitionSpeed',
     'navigationFix',
+    'textScale',
   ];
 
   for (var i = 0; i < keys.length; i++) {
@@ -444,6 +445,7 @@ function saveLastCard(card) {
       focusTransitionMode: card.hasOwnProperty('focusTransitionMode') ? card.focusTransitionMode : null,
       focusTransitionSpeed: card.hasOwnProperty('focusTransitionSpeed') ? card.focusTransitionSpeed : null,
       navigationFix: card.hasOwnProperty('navigationFix') ? card.navigationFix : null,
+      textScale: card.hasOwnProperty('textScale') ? card.textScale : null,
       icon: card.icon || null,
       bundleOptions: card.bundleOptions || {},
       bundleOptionData: card.bundleOptionData || {},
@@ -1091,6 +1093,7 @@ function getCardFromHash() {
       focusTransitionMode: payload.focusTransitionMode || null,
       focusTransitionSpeed: payload.focusTransitionSpeed || null,
       navigationFix: payload.hasOwnProperty('navigationFix') ? payload.navigationFix : null,
+      textScale: payload.textScale || null,
       bundleOptions: payload.bundleOptions || {},
       bundleOptionData: payload.bundleOptionData || {},
       userscriptToggles: payload.userscriptToggles || {},
@@ -1165,6 +1168,7 @@ function normalizePayload(payload) {
   if (typeof payload.focusTransitionMode === 'string') normalized.focusTransitionMode = payload.focusTransitionMode;
   if (typeof payload.focusTransitionSpeed === 'string') normalized.focusTransitionSpeed = payload.focusTransitionSpeed;
   if (typeof payload.navigationFix === 'boolean') normalized.navigationFix = payload.navigationFix;
+  if (typeof payload.textScale === 'string') normalized.textScale = payload.textScale;
 
   if (payload.bundleOptions && typeof payload.bundleOptions === 'object' && !Array.isArray(payload.bundleOptions)) {
     normalized.bundleOptions = payload.bundleOptions;
@@ -1236,6 +1240,7 @@ function getCardFromQuery() {
       focusTransitionMode: payload.focusTransitionMode || null,
       focusTransitionSpeed: payload.focusTransitionSpeed || null,
       navigationFix: payload.hasOwnProperty('navigationFix') ? payload.navigationFix : null,
+      textScale: payload.textScale || null,
       bundleOptions: payload.bundleOptions || {},
       bundleOptionData: payload.bundleOptionData || {},
       userscriptToggles: payload.userscriptToggles || {},
@@ -2053,6 +2058,7 @@ function loadSite(card) {
       focusTransitionMode: card.focusTransitionMode || null,
       focusTransitionSpeed: card.focusTransitionSpeed || null,
       navigationFix: card.hasOwnProperty('navigationFix') ? card.navigationFix : null,
+      textScale: card.hasOwnProperty('textScale') ? card.textScale : null,
       bundleOptions: card.bundleOptions || {},
       bundleOptionData: card.bundleOptionData || {},
       userscriptToggles: card.userscriptToggles || {},

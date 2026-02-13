@@ -499,7 +499,7 @@ function initializeNavigationMode(mode, options) {
 
 **Global Configuration:**
 - [ ] Open Preferences
-- [ ] Navigate to Site Features
+- [ ] Navigate to Site Preferences → Navigation
 - [ ] Change Navigation Mode
 - [ ] Verify auto-save
 - [ ] Check localStorage

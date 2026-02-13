@@ -79,6 +79,14 @@ var FOCUS_TRANSITION_SPEED_OPTIONS = [
   { value: 'slow', label: 'Slow (400ms)' },
 ];
 
+var TEXT_SCALE_OPTIONS = [
+  { value: null, label: 'Global (default)' },
+  { value: 'off', label: 'Off (Original Size)' },
+  { value: 'small', label: 'Small (+10%)' },
+  { value: 'medium', label: 'Medium (+25%)' },
+  { value: 'large', label: 'Large (+50%)' },
+];
+
 var UA_MODE_OPTIONS = [
   { value: null, label: 'Global (default)' },
   { value: 'tizen', label: 'Tizen TV' },
@@ -158,6 +166,7 @@ var FIELDS = [
   { name: '__section_options', label: 'Site Options', type: 'section', sectionId: 'options' },
   { name: 'navigationMode', label: 'Navigation Mode', type: 'select', options: NAVIGATION_MODE_OPTIONS, section: 'options' },
   { name: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_MODE_OPTIONS, section: 'options' },
+  { name: 'textScale', label: 'Text Scale', type: 'select', options: TEXT_SCALE_OPTIONS, section: 'options' },
   { name: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS, section: 'options' },
   { name: 'focusTransitionMode', label: 'Focus Transition Style', type: 'select', options: FOCUS_TRANSITION_MODE_OPTIONS, section: 'options' },
   { name: 'focusTransitionSpeed', label: 'Focus Transition Speed', type: 'select', options: FOCUS_TRANSITION_SPEED_OPTIONS, section: 'options' },

@@ -71,14 +71,31 @@ export default {
   apply: function(doc, level) {
     if (!doc) return;
     
+    if (window.TizenPortal) {
+      window.TizenPortal.log('[TextScale] Applying level: ' + level);
+    } else {
+      console.log('[TextScale] Applying level:', level);
+    }
+    
     // Remove existing style first
     this.remove(doc);
     
     // Get CSS for this level
     var css = this.getCSS(level || 'off');
     
+    if (window.TizenPortal) {
+      window.TizenPortal.log('[TextScale] CSS generated, length: ' + css.length);
+    } else {
+      console.log('[TextScale] CSS generated, length:', css.length);
+    }
+    
     // If no CSS (level is 'off'), don't inject anything
-    if (!css) return;
+    if (!css) {
+      if (window.TizenPortal) {
+        window.TizenPortal.log('[TextScale] No CSS (off mode), returning');
+      }
+      return;
+    }
     
     try {
       var style = doc.createElement('style');
@@ -88,10 +105,21 @@ export default {
       var head = doc.head || doc.documentElement;
       if (head) {
         head.appendChild(style);
+        if (window.TizenPortal) {
+          window.TizenPortal.log('[TextScale] Style injected into document');
+        } else {
+          console.log('[TextScale] Style injected into document');
+        }
+      } else {
+        if (window.TizenPortal) {
+          window.TizenPortal.warn('[TextScale] No head element found');
+        }
       }
     } catch (err) {
       if (window.TizenPortal) {
-        TizenPortal.warn('Text Scale: Failed to apply:', err.message);
+        window.TizenPortal.warn('[TextScale] Failed to apply:', err.message);
+      } else {
+        console.warn('[TextScale] Failed to apply:', err.message);
       }
     }
   },
@@ -103,14 +131,25 @@ export default {
   remove: function(doc) {
     if (!doc) return;
     
+    if (window.TizenPortal) {
+      window.TizenPortal.log('[TextScale] Removing');
+    } else {
+      console.log('[TextScale] Removing');
+    }
+    
     try {
       var style = doc.getElementById('tp-text-scale');
       if (style && style.parentNode) {
         style.parentNode.removeChild(style);
+        if (window.TizenPortal) {
+          window.TizenPortal.log('[TextScale] Removed');
+        }
       }
     } catch (err) {
       if (window.TizenPortal) {
-        TizenPortal.warn('Text Scale: Failed to remove:', err.message);
+        window.TizenPortal.warn('[TextScale] Failed to remove:', err.message);
+      } else {
+        console.warn('[TextScale] Failed to remove:', err.message);
       }
     }
   },

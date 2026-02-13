@@ -103,6 +103,12 @@ function applyFeatures(doc, overrides) {
     });
   }
 
+  if (window.TizenPortal) {
+    window.TizenPortal.log('[Features] Effective config: ' + JSON.stringify(effectiveConfig));
+  } else {
+    console.log('[Features] Effective config:', effectiveConfig);
+  }
+
   var focusMode = effectiveConfig.focusOutlineMode || (effectiveConfig.focusStyling ? 'on' : 'off');
   if (effectiveConfig.focusStyling === false) {
     focusMode = 'off';
@@ -111,18 +117,22 @@ function applyFeatures(doc, overrides) {
   try {
     // Apply scroll-into-view (doesn't need document)
     if (effectiveConfig.scrollIntoView && features.scrollIntoView) {
+      if (window.TizenPortal) window.TizenPortal.log('[Features] Applying scrollIntoView');
       features.scrollIntoView.apply();
     }
     
     // Apply document-based features
     if (effectiveConfig.cssReset && features.cssReset) {
+      if (window.TizenPortal) window.TizenPortal.log('[Features] Applying cssReset');
       features.cssReset.apply(doc, { hideScrollbars: effectiveConfig.hideScrollbars === true });
     }
     
     if (features.focusStyling) {
       if (focusMode === 'off') {
+        if (window.TizenPortal) window.TizenPortal.log('[Features] Removing focusStyling');
         features.focusStyling.remove(doc);
       } else {
+        if (window.TizenPortal) window.TizenPortal.log('[Features] Applying focusStyling: ' + focusMode);
         features.focusStyling.apply(doc, focusMode);
       }
     }
@@ -131,47 +141,57 @@ function applyFeatures(doc, overrides) {
       var transitionMode = effectiveConfig.focusTransitionMode || 'slide';
       var transitionSpeed = effectiveConfig.focusTransitionSpeed || 'medium';
       if (effectiveConfig.focusTransitions === false || transitionMode === 'off') {
+        if (window.TizenPortal) window.TizenPortal.log('[Features] Removing focusTransitions');
         features.focusTransitions.remove(doc);
       } else {
+        if (window.TizenPortal) window.TizenPortal.log('[Features] Applying focusTransitions: ' + transitionMode + ' / ' + transitionSpeed);
         features.focusTransitions.apply(doc, transitionMode, transitionSpeed);
       }
     }
     
     if (effectiveConfig.gpuHints && features.gpuHints) {
+      if (window.TizenPortal) window.TizenPortal.log('[Features] Applying gpuHints');
       features.gpuHints.apply(doc);
     }
     
     if (effectiveConfig.safeArea && features.safeArea) {
+      if (window.TizenPortal) window.TizenPortal.log('[Features] Applying safeArea');
       features.safeArea.apply(doc);
     }
     
     if (effectiveConfig.tabindexInjection && features.tabindexInjection) {
+      if (window.TizenPortal) window.TizenPortal.log('[Features] Applying tabindexInjection');
       features.tabindexInjection.apply(doc);
     }
     
     if (features.navigationFix) {
       if (effectiveConfig.navigationFix) {
+        if (window.TizenPortal) window.TizenPortal.log('[Features] Applying navigationFix');
         features.navigationFix.apply(doc);
       } else if (effectiveConfig.navigationFix === false) {
+        if (window.TizenPortal) window.TizenPortal.log('[Features] Removing navigationFix');
         features.navigationFix.remove(doc);
       }
     }
     
     if (features.textScale) {
       var textScaleLevel = effectiveConfig.textScale || 'off';
+      if (window.TizenPortal) window.TizenPortal.log('[Features] Applying textScale: ' + textScaleLevel);
       if (textScaleLevel === 'off') {
+        if (window.TizenPortal) window.TizenPortal.log('[Features] Removing textScale');
         features.textScale.remove(doc);
       } else {
+        if (window.TizenPortal) window.TizenPortal.log('[Features] Applying textScale level: ' + textScaleLevel);
         features.textScale.apply(doc, textScaleLevel);
       }
     }
     
     if (window.TizenPortal) {
-      TizenPortal.log('Features: Applied');
+      window.TizenPortal.log('[Features] All features applied successfully');
     }
   } catch (err) {
     if (window.TizenPortal) {
-      TizenPortal.warn('Features: Failed to apply:', err.message);
+      window.TizenPortal.warn('[Features] Failed to apply:', err.message);
     } else {
       console.warn('TizenPortal Features: Failed to apply:', err.message);
     }

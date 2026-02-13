@@ -257,6 +257,7 @@ function resolveUserAgentMode(card) {
 function getCardOverrideValue(card, key) {
   if (!card) return null;
   if (card.hasOwnProperty(key) && card[key] !== null && card[key] !== undefined) {
+    log('[Feature] Card override for ' + key + ': ' + card[key]);
     return card[key];
   }
   
@@ -265,12 +266,14 @@ function getCardOverrideValue(card, key) {
   try {
     var globalConfig = configGet('tp_features') || {};
     if (globalConfig.hasOwnProperty(key)) {
+      log('[Feature] Global override for ' + key + ': ' + globalConfig[key]);
       return globalConfig[key];
     }
   } catch (err) {
-    // Silently ignore if config not available
+    warn('[Feature] Error reading global config for ' + key + ': ' + err.message);
   }
   
+  log('[Feature] No override for ' + key);
   return null;
 }
 
@@ -292,6 +295,8 @@ function buildFeatureOverrides(card) {
     'textScale',
   ];
 
+  log('[Feature] Building overrides for card: ' + (card ? (card.title || card.url) : 'null'));
+  
   for (var i = 0; i < keys.length; i++) {
     var key = keys[i];
     var value = getCardOverrideValue(card, key);
@@ -300,6 +305,7 @@ function buildFeatureOverrides(card) {
     }
   }
 
+  log('[Feature] Built overrides: ' + JSON.stringify(overrides));
   return overrides;
 }
 
@@ -396,6 +402,8 @@ function applyViewportMode(mode) {
 }
 
 function applyGlobalFeaturesForCard(card, bundle) {
+  log('[Feature] Applying global features for: ' + (card ? (card.title || card.url) : 'unknown'));
+  
   var focusMode = resolveFocusOutlineMode(card, bundle);
   var viewportMode = resolveViewportMode(card, bundle);
   var overrides = buildFeatureOverrides(card);
@@ -404,11 +412,13 @@ function applyGlobalFeaturesForCard(card, bundle) {
   // Apply bundle manifest feature overrides
   // Priority: card overrides > bundle defaults > global config
   if (bundle && bundle.manifest && bundle.manifest.features) {
+    log('[Feature] Bundle ' + (bundle.name || 'unknown') + ' defines features: ' + JSON.stringify(bundle.manifest.features));
     var bundleFeatures = bundle.manifest.features;
     for (var key in bundleFeatures) {
       if (bundleFeatures.hasOwnProperty(key)) {
         // Only apply if card hasn't already overridden it
         if (!overrides.hasOwnProperty(key)) {
+          log('[Feature] Applying bundle feature ' + key + ': ' + bundleFeatures[key]);
           overrides[key] = bundleFeatures[key];
         }
       }
@@ -418,8 +428,11 @@ function applyGlobalFeaturesForCard(card, bundle) {
   // Set focusOutlineMode after bundle features (already resolved with priority)
   overrides.focusOutlineMode = focusMode;
 
+  log('[Feature] Final overrides to apply: ' + JSON.stringify(overrides));
+  
   try {
     featureLoader.applyFeatures(document, overrides);
+    log('[Feature] Features applied successfully');
   } catch (e) {
     error('Failed to apply features: ' + e.message);
   }

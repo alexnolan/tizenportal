@@ -791,6 +791,13 @@ async function initPortalPage() {
   initAddressBar();
   log('Address bar initialized');
 
+  // Apply global feature settings to portal page (textScale, focusTransitions, etc.)
+  try {
+    log('Applying global features to portal page');
+    featureLoader.applyFeatures(document);
+  } catch (e) {
+    warn('Failed to apply features to portal: ' + e.message);
+  }
 
   // Initialize and render portal UI (card grid)
   initPortal();

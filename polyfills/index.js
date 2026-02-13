@@ -6,6 +6,8 @@
  * NOT bundled statically based on target version.
  */
 
+import { polyfillCSSCompatibility, isCSSCompatibilityActive } from './css-compatibility.js';
+
 /**
  * List of loaded polyfills
  */
@@ -497,6 +499,9 @@ function polyfillResizeObserver() {
  */
 export function initPolyfills() {
   loaded = [];
+
+  // CSS Compatibility (Chrome 47 clamp() polyfill + TV readability baseline)
+  if (polyfillCSSCompatibility()) loaded.push('CSS-Compatibility');
 
   // DOM APIs
   if (polyfillDOMRect()) loaded.push('DOMRect');

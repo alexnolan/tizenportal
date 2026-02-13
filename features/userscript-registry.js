@@ -33,16 +33,8 @@ var CATEGORIES = {
  */
 var USERSCRIPTS = [
   // ACCESSIBILITY CATEGORY
-  {
-    id: 'readability-booster',
-    name: 'TV Readability Booster',
-    category: CATEGORIES.ACCESSIBILITY,
-    description: 'Optimizes text and interactive elements for TV viewing distance',
-    defaultEnabled: true,
-    source: 'inline',
-    provides: ['text-enhancement', 'readability'],
-    inline: "(function(){var s=document.createElement('style');s.id='tp-readability';s.textContent='body,p,span,div,li,td,th,a,h1,h2,h3,h4,h5,h6{font-size:24px!important;line-height:1.8!important;letter-spacing:0.02em!important}p,li,td,th{max-width:1200px!important}a{text-decoration:underline!important;outline:2px solid cyan!important;padding:4px!important}button,input,select,textarea{min-height:44px!important;font-size:20px!important;padding:8px 12px!important}';document.head.appendChild(s);userscript.cleanup=function(){var el=document.getElementById('tp-readability');if(el)el.remove();}})();",
-  },
+  // NOTE: readability-booster moved to core polyfills (css-compatibility.js)
+  // as it compensates for Chrome 47 lack of clamp() support
   {
     id: 'subtitle-enhancer',
     name: 'Subtitle Size Enhancer',

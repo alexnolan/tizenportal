@@ -7,6 +7,7 @@
 
 import { isValidHexColor, isValidHttpUrl, escapeHtml } from '../core/utils.js';
 import Userscripts from '../features/userscripts.js';
+import featureLoader from '../features/index.js';
 
 var UserscriptRegistry = Userscripts.UserscriptRegistry;
 
@@ -1197,6 +1198,9 @@ function savePreferencesAuto(reason) {
 
   // Apply portal preferences immediately
   applyPortalPreferences(prefsState.settings.portalConfig);
+
+  // Apply feature changes immediately (text scale, focus styling, etc.)
+  featureLoader.applyFeatures(document);
 
   if (window.TizenPortal && window.TizenPortal.showToast) {
     TizenPortal.showToast('Saved');

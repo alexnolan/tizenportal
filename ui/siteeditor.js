@@ -143,37 +143,34 @@ var FEATURE_OVERRIDE_DEFS = [
 ];
 
 var SECTION_DEFS = [
-  { id: 'bundle', label: 'Bundle', defaultCollapsed: true },
-  { id: 'bundleOptions', label: 'Bundle Options', defaultCollapsed: true },
-  { id: 'options', label: 'Site Options', defaultCollapsed: true },
-  { id: 'features', label: 'Site Features', defaultCollapsed: true },
-  { id: 'userscripts', label: 'User Scripts', defaultCollapsed: true },
+  { id: 'bundle', label: '📦 Bundle', defaultCollapsed: true },
+  { id: 'globalOverrides', label: '🌐 Global Overrides', defaultCollapsed: true },
+  { id: 'siteOverrides', label: '🖥 Site Overrides', defaultCollapsed: true },
+  { id: 'userscripts', label: '📜 User Scripts', defaultCollapsed: true },
 ];
 
 var sectionCollapsed = {
   bundle: true,
-  bundleOptions: true,
-  options: true,
-  features: true,
+  globalOverrides: true,
+  siteOverrides: true,
 };
 
 var FIELDS = [
   { name: '__details', label: 'Site Details', type: 'details' },
-  { name: '__section_bundle', label: 'Bundle', type: 'section', sectionId: 'bundle' },
+  { name: '__section_bundle', label: '📦 Bundle', type: 'section', sectionId: 'bundle' },
   { name: 'featureBundle', label: 'Site-specific Bundle', type: 'bundle', required: false, section: 'bundle' },
-  { name: '__section_bundleOptions', label: 'Bundle Options', type: 'section', sectionId: 'bundleOptions' },
-  { name: '__bundleOptions', label: 'Bundle Options', type: 'bundleOptions', section: 'bundleOptions' },
-  { name: '__section_options', label: 'Site Options', type: 'section', sectionId: 'options' },
-  { name: 'navigationMode', label: 'Navigation Mode', type: 'select', options: NAVIGATION_MODE_OPTIONS, section: 'options' },
-  { name: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_MODE_OPTIONS, section: 'options' },
-  { name: 'textScale', label: 'Text Scale', type: 'select', options: TEXT_SCALE_OPTIONS, section: 'options' },
-  { name: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS, section: 'options' },
-  { name: 'focusTransitionMode', label: 'Focus Transition Style', type: 'select', options: FOCUS_TRANSITION_MODE_OPTIONS, section: 'options' },
-  { name: 'focusTransitionSpeed', label: 'Focus Transition Speed', type: 'select', options: FOCUS_TRANSITION_SPEED_OPTIONS, section: 'options' },
-  { name: 'userAgent', label: 'User Agent Mode', type: 'select', options: UA_MODE_OPTIONS, section: 'options' },
-  { name: '__section_features', label: 'Site Features', type: 'section', sectionId: 'features' },
-  { name: '__features', label: 'Site Features', type: 'featureOverrides', section: 'features' },
-  { name: '__section_userscripts', label: 'User Scripts', type: 'section', sectionId: 'userscripts' },
+  { name: '__section_globalOverrides', label: '🌐 Global Overrides', type: 'section', sectionId: 'globalOverrides' },
+  { name: '__bundleOptions', label: 'Bundle Options', type: 'bundleOptions', section: 'globalOverrides' },
+  { name: '__section_siteOverrides', label: '🖥 Site Overrides', type: 'section', sectionId: 'siteOverrides' },
+  { name: 'navigationMode', label: 'Navigation Mode', type: 'select', options: NAVIGATION_MODE_OPTIONS, section: 'siteOverrides' },
+  { name: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_MODE_OPTIONS, section: 'siteOverrides' },
+  { name: 'textScale', label: 'Text Scale', type: 'select', options: TEXT_SCALE_OPTIONS, section: 'siteOverrides' },
+  { name: 'focusOutlineMode', label: 'Focus Outline', type: 'select', options: FOCUS_OUTLINE_OPTIONS, section: 'siteOverrides' },
+  { name: 'focusTransitionMode', label: 'Focus Transition Style', type: 'select', options: FOCUS_TRANSITION_MODE_OPTIONS, section: 'siteOverrides' },
+  { name: 'focusTransitionSpeed', label: 'Focus Transition Speed', type: 'select', options: FOCUS_TRANSITION_SPEED_OPTIONS, section: 'siteOverrides' },
+  { name: 'userAgent', label: 'User Agent Mode', type: 'select', options: UA_MODE_OPTIONS, section: 'siteOverrides' },
+  { name: '__features', label: 'Feature Toggles', type: 'featureOverrides', section: 'siteOverrides' },
+  { name: '__section_userscripts', label: '📜 User Scripts', type: 'section', sectionId: 'userscripts' },
   { name: '__userscripts', label: 'User Scripts', type: 'userscripts', section: 'userscripts' },
 ];
 
@@ -940,8 +937,16 @@ function purgeSiteData() {
 }
 
 /**
- * Render the fields
+ * Check if bundle has any options to configure
  */
+function bundleHasOptions() {
+  var bundleName = state.card ? state.card.featureBundle : null;
+  if (!bundleName) return false;
+  var bundle = getBundle(bundleName);
+  var manifest = bundle && bundle.manifest;
+  return !!(manifest && manifest.options && manifest.options.length);
+}
+
 function renderFields() {
   var container = document.getElementById('tp-editor-fields');
   if (!container) return;
@@ -958,6 +963,15 @@ function renderFields() {
 
   for (var i = 0; i < FIELDS.length; i++) {
     var field = FIELDS[i];
+    
+    // Skip bundleOptions section and its content if bundle has no options
+    if ((field.type === 'section' && field.sectionId === 'globalOverrides' && !bundleHasOptions())) {
+      continue;
+    }
+    if (field.section === 'globalOverrides' && !bundleHasOptions()) {
+      continue;
+    }
+    
     if (field.type === 'section') {
       html += renderSectionRow(field);
       continue;
@@ -1031,22 +1045,18 @@ function getSectionSummary(sectionId) {
     return 'Bundle: ' + displayName;
   }
 
-  if (sectionId === 'options') {
+  if (sectionId === 'globalOverrides') {
+    var bundleOptionSummary = getBundleOptionsSummary();
+    return bundleOptionSummary || 'None';
+  }
+
+  if (sectionId === 'siteOverrides') {
     var viewport = getOptionLabel(VIEWPORT_MODE_OPTIONS, state.card.viewportMode);
     var focus = getOptionLabel(FOCUS_OUTLINE_OPTIONS, state.card.focusOutlineMode);
     var transition = getOptionLabel(FOCUS_TRANSITION_MODE_OPTIONS, state.card.focusTransitionMode);
     var transitionSpeed = getOptionLabel(FOCUS_TRANSITION_SPEED_OPTIONS, state.card.focusTransitionSpeed);
     var ua = getOptionLabel(UA_MODE_OPTIONS, state.card.userAgent);
     return 'Viewport: ' + viewport + ' • Focus: ' + focus + ' • Transition: ' + transition + ' • Speed: ' + transitionSpeed + ' • UA: ' + ua;
-  }
-
-  if (sectionId === 'bundleOptions') {
-    var bundleOptionSummary = getBundleOptionsSummary();
-    return bundleOptionSummary || 'None';
-  }
-
-  if (sectionId === 'features') {
-    return getFeatureOverridesSummary();
   }
 
   if (sectionId === 'userscripts') {

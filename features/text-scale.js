@@ -33,15 +33,11 @@ export default {
       return '';
     }
     
-    // Apply relative scaling to all text elements
-    // Uses CSS transform for better compatibility with Chrome 47
-    // Also increases line-height and letter-spacing proportionally
+    // Apply scaling only to html root element - cascades naturally to all descendants
+    // Avoid cascading multiplication by NOT setting font-size on child elements
     var css = [
       '/* TizenPortal Text Scale (' + level + ') */',
       'html {',
-      '  font-size: ' + (scale * 100) + '% !important;',
-      '}',
-      'body, p, span, div, li, td, th, a, h1, h2, h3, h4, h5, h6, label {',
       '  font-size: ' + (scale * 100) + '% !important;',
       '}',
       '',
@@ -53,11 +49,6 @@ export default {
       '/* Letter spacing for large text */',
       'p, li, td, th, span {',
       '  letter-spacing: ' + ((scale - 1) * 0.02) + 'em !important;',
-      '}',
-      '',
-      '/* Keep form controls readable */',
-      'button, input, select, textarea {',
-      '  font-size: ' + (scale * 100) + '% !important;',
       '}',
     ];
     

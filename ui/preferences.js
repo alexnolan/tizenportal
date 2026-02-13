@@ -224,13 +224,13 @@ var SECTION_DEFS = [
 ];
 
 var CATEGORY_LABELS = {
-  appearance: 'Appearance',
-  navigation: 'Navigation',
-  input: 'Input',
-  layout: 'Layout',
-  performance: 'Performance',
-  compatibility: 'Compatibility',
-  hints: 'HUD & Hints',
+  appearance: '🎨 Appearance',
+  navigation: '🧭 Navigation',
+  input: '⌨️ Input',
+  layout: '📐 Layout',
+  performance: '⚡ Performance',
+  compatibility: '🔧 Compatibility',
+  hints: '💡 HUD & Hints',
 };
 
 var SECTION_CATEGORY_ORDER = {

@@ -82,8 +82,9 @@ function applyCSSCompatibility() {
 }
 
 /**
- * Polyfill CSS compatibility (auto-detects if needed)
- * Always returns true for Chrome 47-69 as clamp() is never supported
+ * Polyfill CSS compatibility (auto-detects if needed).
+ * Returns true on Chrome 47-69 where clamp() is not supported.
+ * Uses feature detection to skip on modern browsers that support clamp().
  */
 export function polyfillCSSCompatibility() {
   // Feature detection: Check if CSS.supports exists and if clamp() is supported

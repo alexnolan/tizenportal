@@ -6,7 +6,7 @@
  * NOT bundled statically based on target version.
  */
 
-import { polyfillCSSCompatibility, isCSSCompatibilityActive } from './css-compatibility.js';
+import { polyfillCSSCompatibility } from './css-compatibility.js';
 
 /**
  * List of loaded polyfills

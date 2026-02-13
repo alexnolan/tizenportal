@@ -34,7 +34,7 @@ var CATEGORIES = {
 var USERSCRIPTS = [
   // ACCESSIBILITY CATEGORY
   // NOTE: readability-booster moved to core polyfills (css-compatibility.js)
-  // as it compensates for Chrome 47 lack of clamp() support
+  // as it compensates for Chrome 47 lack of clamp() support; registry now contains 18 predefined userscripts
   {
     id: 'subtitle-enhancer',
     name: 'Subtitle Size Enhancer',

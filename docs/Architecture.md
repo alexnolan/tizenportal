@@ -1,7 +1,7 @@
 # TizenPortal Architecture Specification
 
-> **Version:** 3.0  
-> **Date:** February 7, 2026  
+> **Version:** 3.1  
+> **Date:** February 13, 2026  
 > **Status:** Universal Runtime  
 
 ---
@@ -157,7 +157,8 @@ tizenportal/
 │
 └── polyfills/                # Platform polyfills
     ├── index.js              # Polyfill loader
-    └── domrect-polyfill.js   # DOMRect (from TizenTube)
+    ├── domrect-polyfill.js   # DOMRect (from TizenTube)
+    └── css-compatibility.js  # CSS clamp() and TV readability
 ```
 
 ---
@@ -227,10 +228,10 @@ export default {
 ```
 
 **Categories:**
-- `accessibility` - ♿ Accessibility features (4 scripts)
-- `reading` - 📖 Reading enhancements (6 scripts)
+- `accessibility` - ♿ Accessibility features (2 scripts)
+- `reading` - 📖 Reading enhancements (5 scripts)
 - `video` - 🎬 Video controls (4 scripts)
-- `navigation` - 🧭 Navigation helpers (4 scripts)
+- `navigation` - 🧭 Navigation helpers (5 scripts)
 - `privacy` - 🔒 Privacy tools (2 scripts)
 
 **Userscript Interface:**

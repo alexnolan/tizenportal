@@ -30,9 +30,9 @@ To install a specific version:
 alexnolan/tizenportal@<version-tag>
 ```
 
-To install the latest version:
+Example:
 ```
-alexnolan/tizenportal@latest
+alexnolan/tizenportal@1026
 ```
 
 ## Version Notes

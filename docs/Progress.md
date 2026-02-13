@@ -1,6 +1,6 @@
 # TizenPortal Progress Tracker
 
-> **Last Updated:** February 10, 2026  
+> **Last Updated:** February 13, 2026  
 > **Architecture:** Universal Runtime
 >
 > **Current Version:** See [package.json](../package.json) or [CHANGELOG](CHANGELOG.md)
@@ -14,7 +14,7 @@
 | Universal Runtime | ✅ Complete | Single runtime on all pages |
 | Portal Launcher | ✅ Working | Grid with cards |
 | Bundle Injection | ✅ Working | Payload via hash |
-| Bundle Registry | ✅ Working | 4 bundles: default, audiobookshelf, adblock, userscript-sandbox |
+| Bundle Registry | ✅ Working | 3 bundles: default, audiobookshelf, adblock |
 | Userscript System | ✅ Working | Global and per-site custom scripts |
 | Version System | ✅ Working | Centralized in package.json |
 | Spatial Navigation | ✅ Working | W3C polyfill integrated, cross-origin safe |

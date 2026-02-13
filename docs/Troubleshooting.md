@@ -42,12 +42,13 @@ Before diving into specific issues, try these quick fixes:
 
 1. **Check the module name** — Ensure you typed it correctly:
    ```
-   alexnolan/tizenportal@latest
-   ```
-   Or specify a version from [CHANGELOG](CHANGELOG.md):
-   ```
    alexnolan/tizenportal@<version-tag>
    ```
+   Example (for version 1026):
+   ```
+   alexnolan/tizenportal@1026
+   ```
+   See [CHANGELOG](CHANGELOG.md) for available versions.
 
 2. **Check your internet connection** — TizenBrew needs to download from GitHub
 

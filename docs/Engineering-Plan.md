@@ -1,7 +1,7 @@
 # TizenPortal Engineering Plan
 
-> **Version:** 5.0  
-> **Date:** February 10, 2026  
+> **Version:** 5.1  
+> **Date:** February 13, 2026  
 > **Status:** Universal Runtime
 
 ---
@@ -17,7 +17,7 @@ TizenPortal operates as a **TizenBrew Module** (`packageType: "mods"`) that prov
 - Full browser chrome (address bar, diagnostics)
 - Spatial navigation with cross-origin safety
 - Userscript system (global and per-site)
-- 4 bundles (default, audiobookshelf, adblock, userscript-sandbox)
+- 3 bundles (default, audiobookshelf, adblock)
 - All color button functions operational
 
 ---
@@ -313,8 +313,8 @@ npm run build
 
 # 3. Commit and tag
 git add .
-git commit -m "Bump to vXXXX"
-git tag XXXX
+git commit -m "Bump to v<NEW_VERSION>"
+git tag <NEW_VERSION>
 git push origin master --tags
 ```
 

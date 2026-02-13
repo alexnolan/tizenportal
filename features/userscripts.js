@@ -106,6 +106,19 @@ function getUserscriptsConfig() {
     changed = true;
   }
 
+  // Check for new defaultEnabled scripts not in config
+  var allScripts = UserscriptRegistry.getAllUserscripts();
+  for (var i = 0; i < allScripts.length; i++) {
+    var script = allScripts[i];
+    if (script.defaultEnabled && !cfg.enabled.hasOwnProperty(script.id)) {
+      cfg.enabled[script.id] = true;
+      changed = true;
+      if (window.TizenPortal && window.TizenPortal.log) {
+        window.TizenPortal.log('[Userscripts] Auto-enabled default script: ' + script.name);
+      }
+    }
+  }
+
   if (changed) {
     configSet('tp_userscripts_v2', cfg);
   }

@@ -145,7 +145,7 @@ var FEATURE_OVERRIDE_DEFS = [
 var SECTION_DEFS = [
   { id: 'bundle', label: '📦 Bundle', defaultCollapsed: true },
   { id: 'bundleOptions', label: '⚙️ Bundle Options', defaultCollapsed: true },
-  { id: 'siteOverrides', label: '🖥 Site Overrides', defaultCollapsed: true },
+  { id: 'siteOverrides', label: '⚙️ Global Overrides', defaultCollapsed: true },
   { id: 'userscripts', label: '📜 User Scripts', defaultCollapsed: true },
 ];
 
@@ -161,7 +161,7 @@ var FIELDS = [
   { name: 'featureBundle', label: 'Site-specific Bundle', type: 'bundle', required: false, section: 'bundle' },
   { name: '__section_bundleOptions', label: '⚙️ Bundle Options', type: 'section', sectionId: 'bundleOptions' },
   { name: '__bundleOptions', label: 'Bundle Options', type: 'bundleOptions', section: 'bundleOptions' },
-  { name: '__section_siteOverrides', label: '🖥 Site Overrides', type: 'section', sectionId: 'siteOverrides' },
+  { name: '__section_siteOverrides', label: '⚙️ Global Overrides', type: 'section', sectionId: 'siteOverrides' },
   { name: 'navigationMode', label: 'Navigation Mode', type: 'select', options: NAVIGATION_MODE_OPTIONS, section: 'siteOverrides' },
   { name: 'viewportMode', label: 'Viewport Lock Mode', type: 'select', options: VIEWPORT_MODE_OPTIONS, section: 'siteOverrides' },
   { name: 'textScale', label: 'Text Scale', type: 'select', options: TEXT_SCALE_OPTIONS, section: 'siteOverrides' },

@@ -100,22 +100,38 @@ var FEATURE_TOGGLE_OPTIONS = [
 ];
 
 var FEATURE_CATEGORIES = [
-  { id: 'navigation', label: '🧭 Navigation' },
-  { id: 'display', label: '🎨 Display' },
-  { id: 'input', label: '⌨️ Input' },
+  { id: 'focus', label: '🎯 Focus & Navigation' },
+  { id: 'display', label: '🎨 Display & Layout' },
+  { id: 'input', label: '⌨️ Input Protection' },
   { id: 'performance', label: '⚡ Performance' },
 ];
 
 var FEATURE_OVERRIDE_DEFS = [
-  { key: 'tabindexInjection', label: 'Auto-focusable Elements', category: 'navigation' },
-  { key: 'scrollIntoView', label: 'Scroll-into-view on Focus', category: 'navigation' },
-  { key: 'navigationFix', label: 'Navigation Fixes', category: 'navigation' },
-  { key: 'focusTransitions', label: 'Focus Transitions', category: 'display' },
-  { key: 'safeArea', label: 'TV Safe Area (5% inset)', category: 'display' },
-  { key: 'cssReset', label: 'CSS Normalization', category: 'display' },
-  { key: 'hideScrollbars', label: 'Hide Scrollbars', category: 'display' },
-  { key: 'wrapTextInputs', label: 'Protect Text Inputs (TV Keyboard)', category: 'input' },
-  { key: 'gpuHints', label: 'GPU Acceleration Hints', category: 'performance' },
+  // Focus & Navigation category
+  { key: 'tabindexInjection', label: 'Auto-focusable Elements', category: 'focus', 
+    description: 'Automatically inject tabindex on interactive elements for remote control navigation' },
+  { key: 'scrollIntoView', label: 'Scroll into View on Focus', category: 'focus',
+    description: 'Scroll container when focused element comes into viewport' },
+  { key: 'navigationFix', label: 'Navigation Fixes', category: 'focus',
+    description: 'Apply site-specific navigation workarounds for better D-pad control' },
+  { key: 'focusTransitions', label: 'Focus Transition Animations', category: 'focus',
+    description: 'Enable smooth animations when focus moves between elements (slide, scale, glow)' },
+  
+  // Display & Layout category
+  { key: 'safeArea', label: 'TV Safe Area (5% inset)', category: 'display',
+    description: 'Inset content 5% from edges to account for TV screen overscan' },
+  { key: 'cssReset', label: 'CSS Normalization', category: 'display',
+    description: 'Apply baseline CSS resets for consistent display across Tizen browsers' },
+  { key: 'hideScrollbars', label: 'Hide Scrollbars', category: 'display',
+    description: 'Hide native scrollbars for a cleaner TV interface' },
+  
+  // Input Protection category
+  { key: 'wrapTextInputs', label: 'Protect Text Inputs', category: 'input',
+    description: 'Protect text input fields from accidental remote button presses during editing' },
+  
+  // Performance category
+  { key: 'gpuHints', label: 'GPU Acceleration', category: 'performance',
+    description: 'Apply GPU hints to improve animation performance on constrained hardware' },
 ];
 
 var SECTION_DEFS = [
@@ -1195,14 +1211,23 @@ function getGlobalFeaturesConfig() {
 
 function getFeatureOverridesSummary() {
   if (!state.card) return 'None';
-  var count = 0;
+  
+  var overrides = [];
+  var globalFeatures = getGlobalFeaturesConfig();
+  
   for (var i = 0; i < FEATURE_OVERRIDE_DEFS.length; i++) {
-    var key = FEATURE_OVERRIDE_DEFS[i].key;
-    if (state.card.hasOwnProperty(key) && state.card[key] !== null && state.card[key] !== undefined) {
-      count++;
+    var def = FEATURE_OVERRIDE_DEFS[i];
+    if (state.card.hasOwnProperty(def.key) && state.card[def.key] !== null && state.card[def.key] !== undefined) {
+      var status = state.card[def.key] === true ? '✓' : '○';
+      overrides.push(status + ' ' + def.label);
     }
   }
-  return count ? (count + ' override' + (count === 1 ? '' : 's')) : 'None';
+  
+  if (!overrides.length) return 'None';
+  if (overrides.length <= 2) return overrides.join(' • ');
+  
+  // Show first 2 and count for others
+  return overrides.slice(0, 2).join(' • ') + ' + ' + (overrides.length - 2) + ' more';
 }
 
 function renderFeatureOverridesField() {
@@ -1223,28 +1248,26 @@ function renderFeatureOverridesField() {
 
       var statusText = '';
       if (hasOverride) {
-        statusText = effectiveEnabled ? '✓ Enabled (site override)' : '○ Disabled (site override)';
+        statusText = effectiveEnabled ? '✓ Enabled (override)' : '○ Disabled (override)';
       } else {
         statusText = globalEnabled ? '✓ Enabled (global)' : '○ Disabled (global)';
       }
 
       html += '' +
         '<div class="tp-userscript-line tp-feature-row" data-feature-key="' + def.key + '" tabindex="0">' +
-          '<div class="tp-userscript-label">' + escapeHtml(def.label) + '</div>' +
+          '<div class="tp-userscript-label">' +
+            '<div style="font-weight: 500;">' + escapeHtml(def.label) + '</div>' +
+            '<div style="font-size: 12px; color: #666; margin-top: 2px;">' + escapeHtml(def.description || '') + '</div>' +
+          '</div>' +
           '<div class="tp-userscript-status">' + statusText + '</div>' +
           '<div class="tp-userscript-actions">' +
             '<button type="button" class="tp-userscript-btn tp-feature-btn" data-feature-action="toggle" data-feature-key="' + def.key + '" tabindex="0">' +
-              (hasOverride ? 'Reset to Global' : (globalEnabled ? 'Disable for Site' : 'Enable for Site')) +
+              (hasOverride ? 'Reset' : (globalEnabled ? 'Disable' : 'Enable')) +
             '</button>' +
           '</div>' +
         '</div>';
     }
   }
-
-  html += '<div class="tp-field-row" style="margin-top: 12px; color: #8ab4f8; font-size: 14px;" tabindex="-1">' +
-    '<div class="tp-field-label">💡 Tip</div>' +
-    '<div class="tp-field-value">Global defaults live in Preferences. Use site overrides here when a site needs different behavior.</div>' +
-  '</div>';
 
   html += '</div>';
   return html;

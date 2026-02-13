@@ -187,13 +187,20 @@ var PREFERENCE_ROWS = [
   { id: 'focusTransitionMode', label: 'Focus Transition Style', type: 'select', options: FOCUS_TRANSITION_MODE_OPTIONS, key: 'focusTransitionMode', config: 'features', section: 'features' },
   { id: 'focusTransitionSpeed', label: 'Focus Transition Speed', type: 'select', options: FOCUS_TRANSITION_SPEED_OPTIONS, key: 'focusTransitionSpeed', config: 'features', section: 'features' },
   { id: 'uaMode', label: 'User Agent Mode', type: 'select', options: UA_MODE_OPTIONS, key: 'uaMode', config: 'features', section: 'features' },
-  { id: 'tabindexInjection', label: 'Auto-focusable Elements', type: 'toggle', key: 'tabindexInjection', config: 'features', section: 'features' },
-  { id: 'scrollIntoView', label: 'Scroll-into-view on Focus', type: 'toggle', key: 'scrollIntoView', config: 'features', section: 'features' },
-  { id: 'safeArea', label: 'TV Safe Area (5% inset)', type: 'toggle', key: 'safeArea', config: 'features', section: 'features' },
-  { id: 'gpuHints', label: 'GPU Acceleration Hints', type: 'toggle', key: 'gpuHints', config: 'features', section: 'features' },
-  { id: 'cssReset', label: 'CSS Normalization', type: 'toggle', key: 'cssReset', config: 'features', section: 'features' },
-  { id: 'hideScrollbars', label: 'Hide Scrollbars', type: 'toggle', key: 'hideScrollbars', config: 'features', section: 'features' },
-  { id: 'wrapTextInputs', label: 'Protect Text Inputs (TV Keyboard)', type: 'toggle', key: 'wrapTextInputs', config: 'features', section: 'features' },
+  { id: 'tabindexInjection', label: 'Auto-focusable Elements', type: 'toggle', key: 'tabindexInjection', config: 'features', section: 'features',
+    description: 'Automatically inject tabindex on interactive elements for remote control navigation' },
+  { id: 'scrollIntoView', label: 'Scroll into View on Focus', type: 'toggle', key: 'scrollIntoView', config: 'features', section: 'features',
+    description: 'Scroll container when focused element comes into viewport' },
+  { id: 'safeArea', label: 'TV Safe Area (5% inset)', type: 'toggle', key: 'safeArea', config: 'features', section: 'features',
+    description: 'Inset content 5% from edges to account for TV screen overscan' },
+  { id: 'gpuHints', label: 'GPU Acceleration', type: 'toggle', key: 'gpuHints', config: 'features', section: 'features',
+    description: 'Apply GPU hints to improve animation performance on constrained hardware' },
+  { id: 'cssReset', label: 'CSS Normalization', type: 'toggle', key: 'cssReset', config: 'features', section: 'features',
+    description: 'Apply baseline CSS resets for consistent display across Tizen browsers' },
+  { id: 'hideScrollbars', label: 'Hide Scrollbars', type: 'toggle', key: 'hideScrollbars', config: 'features', section: 'features',
+    description: 'Hide native scrollbars for a cleaner TV interface' },
+  { id: 'wrapTextInputs', label: 'Protect Text Inputs', type: 'toggle', key: 'wrapTextInputs', config: 'features', section: 'features',
+    description: 'Protect text input fields from accidental remote button presses during editing' },
 ];
 
 var SECTION_DEFS = [
@@ -664,14 +671,9 @@ function getPreferencesSectionSummary(sectionId) {
     var viewport = getOptionLabel(VIEWPORT_OPTIONS, prefsState.settings.featuresConfig.viewportMode || 'locked');
     var focus = getOptionLabel(FOCUS_OUTLINE_OPTIONS, prefsState.settings.featuresConfig.focusOutlineMode || 'on');
     var ua = getOptionLabel(UA_MODE_OPTIONS, prefsState.settings.featuresConfig.uaMode || 'tizen');
-    var safeArea = prefsState.settings.featuresConfig.safeArea ? 'On' : 'Off';
-    var scroll = prefsState.settings.featuresConfig.scrollIntoView ? 'On' : 'Off';
-    var tabindex = prefsState.settings.featuresConfig.tabindexInjection ? 'On' : 'Off';
-    var gpu = prefsState.settings.featuresConfig.gpuHints ? 'On' : 'Off';
-    var cssReset = prefsState.settings.featuresConfig.cssReset ? 'On' : 'Off';
-    var hideScroll = prefsState.settings.featuresConfig.hideScrollbars ? 'On' : 'Off';
-    var wrapInputs = prefsState.settings.featuresConfig.wrapTextInputs ? 'On' : 'Off';
-    return 'Viewport: ' + viewport + ' • Focus: ' + focus + ' • UA: ' + ua + ' • Auto-focus: ' + tabindex + ' • Scroll: ' + scroll + ' • Safe Area: ' + safeArea + ' • GPU: ' + gpu + ' • CSS Reset: ' + cssReset + ' • Hide Scrollbars: ' + hideScroll + ' • TV Keyboard: ' + wrapInputs;
+    var transition = getOptionLabel(FOCUS_TRANSITION_MODE_OPTIONS, prefsState.settings.featuresConfig.focusTransitionMode || 'slide');
+    var speed = getOptionLabel(FOCUS_TRANSITION_SPEED_OPTIONS, prefsState.settings.featuresConfig.focusTransitionSpeed || 'medium');
+    return 'Focus: ' + focus + ' • Transition: ' + transition + ' / ' + speed + ' • Viewport: ' + viewport;
   }
 
   if (sectionId === 'userscripts') {

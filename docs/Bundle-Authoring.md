@@ -1,8 +1,8 @@
 # TizenPortal Bundle Authoring Guide
 
-> **Version:** 3.0  
-> **Date:** January 31, 2026  
-> **Status:** Universal Runtime  
+> **Version:** 4.0  
+> **Date:** February 14, 2026  
+> **Status:** Declarative-First Architecture  
 
 ---
 
@@ -30,13 +30,27 @@
 
 A **bundle** is a collection of CSS and JavaScript that fixes or enhances a specific website for Tizen TV browsing. Bundles are **compiled into the runtime** and activated based on the card's configuration.
 
+### Modern Declarative Approach
+
+**TizenPortal v1.0+ uses a declarative-first architecture.** Instead of writing imperative DOM manipulation code, you declare what you want and the core handles the implementation:
+
+- ✅ **Declarative element registration** - Register selectors and operations, core observes DOM automatically
+- ✅ **Declarative card registration** - Register card selectors, core processes them
+- ✅ **Declarative manifest options** - Configure navigation mode, viewport, features via manifest.json
+
+**Benefits:**
+- 40-60% less code in bundles
+- No manual DOM observation needed
+- Automatic handling of dynamic content
+- Consistent patterns across all bundles
+
 ### What Bundles Can Do
 
+- **Declare** element manipulations (focusable, styles, classes, attributes)
+- **Declare** card interactions (single/multi-action cards)
 - Inject CSS to fix layout issues
-- Add keyboard/remote navigation support
-- Make elements focusable with proper indicators
-- Handle key events for site-specific actions
-- Lock viewport to prevent responsive breakpoints
+- Handle custom key events for site-specific actions
+- Configure via manifest (navigation mode, viewport lock, etc.)
 - Log to the diagnostics panel
 
 ### What Bundles Cannot Do
@@ -53,6 +67,7 @@ Bundles are compiled into `tizenportal.js` via Rollup. When a user navigates to 
 2. Runtime looks up bundle in compiled registry
 3. Bundle CSS injected via `<style>` element
 4. Bundle lifecycle hooks called
+5. Element and card registrations automatically processed
 
 ---
 
@@ -280,7 +295,7 @@ See [Manifest Schema](Manifest-Schema.md) for all available fields.
 
 ### Step 3: Write main.js
 
-Implement lifecycle hooks:
+Implement lifecycle hooks using the **declarative-first approach**:
 
 ```js
 import myStyles from './style.css';
@@ -302,17 +317,45 @@ export default {
       ? options.enableFeatureX 
       : true; // Use manifest default
     
+    // 1. Register element manipulations (declarative)
+    window.TizenPortal.elements.register({
+      selector: 'nav a, #menu a',
+      operation: 'focusable',
+      nav: 'vertical'
+    });
+    
+    window.TizenPortal.elements.register({
+      selector: 'button',
+      operation: 'focusable'
+    });
+    
+    // 2. Register cards if needed
+    window.TizenPortal.cards.register({
+      selector: '.media-item',
+      type: 'single'
+    });
+    
+    // 3. Custom bundle-specific logic (if needed)
     if (featureX) {
-      // Initialize feature X
+      // Initialize feature X with custom logic
+      this.initializeFeatureX();
     }
     
-    // Your initialization code here
+    // Core automatically:
+    // - Observes DOM for dynamic content
+    // - Processes registrations
+    // - Cleans up on deactivation
   },
   
   onDeactivate(window, card) {
     console.log('[my-site] Bundle deactivated');
-    // Cleanup code here
+    // Registrations automatically cleared
+    // Only cleanup custom bundle-specific code here
   },
+  
+  initializeFeatureX: function() {
+    // Custom bundle logic
+  }
 };
 ```
 
@@ -655,9 +698,84 @@ Before marking your bundle complete, verify:
 
 ## 5. Using Core Utilities
 
-**Best Practice:** Import from core modules instead of reimplementing common patterns.
+**Best Practice:** Use declarative registration APIs instead of imperative DOM manipulation.
 
-### Focus Utilities
+### Declarative Element Registration (Preferred)
+
+The primary way to manipulate elements in modern bundles:
+
+```js
+export default {
+  name: 'my-bundle',
+  
+  onActivate(window, card) {
+    // Make navigation elements focusable
+    window.TizenPortal.elements.register({
+      selector: 'nav a',
+      operation: 'focusable',
+      nav: 'vertical'
+    });
+    
+    // Hide mobile-only elements
+    window.TizenPortal.elements.register({
+      selector: '.mobile-only',
+      operation: 'hide'
+    });
+    
+    // Style toolbar for TV
+    window.TizenPortal.elements.register({
+      selector: '#toolbar',
+      operation: 'style',
+      styles: {
+        position: 'fixed',
+        top: '0',
+        right: '320px'
+      },
+      important: true
+    });
+    
+    // Core automatically observes DOM and processes elements
+    // No manual observation needed!
+  },
+  
+  onDeactivate(window, card) {
+    // Element registrations automatically cleared by core
+  }
+};
+```
+
+See [Section 8.5: Element Registration](#85-element-registration-declarative-manipulation) for complete documentation.
+
+### Declarative Card Registration
+
+For sites with multi-element cards (media items, books, etc.):
+
+```js
+onActivate(window, card) {
+  // Register cards for multi-element interaction
+  window.TizenPortal.cards.register({
+    selector: '.media-card',
+    type: 'multi'  // or 'single', or omit for auto-detect
+  });
+  
+  // Core automatically processes cards and observes DOM
+}
+
+onDeactivate(window, card) {
+  // Card registrations automatically cleared by core
+}
+```
+
+**Card Types:**
+- **`single`**: Cards with one focusable element (Enter activates immediately)
+- **`multi`**: Cards with multiple elements (Enter enters card, Back exits)
+- **Auto-detect**: Omit `type` to detect based on focusable children count
+
+See [API Reference - Cards API](Api-Reference.md#5a-cards-api) for complete documentation.
+
+### Focus Utilities (For Special Cases)
+
+Use these for cases that can't be handled declaratively:
 
 ```js
 import { 
@@ -665,8 +783,6 @@ import {
   disableScrollIntoView,
   setInitialFocus,
   lockViewport,
-  observeDOM,
-  stopObservingDOM,
 } from '../../focus/manager.js';
 
 export default {
@@ -679,23 +795,37 @@ export default {
       marginBottom: 100,
     });
     
-    // Lock viewport to 1920px
+    // Lock viewport to 1920px (or use manifest.json "viewportLock": true)
     lockViewport();
     
     // Set initial focus on first card
     setInitialFocus(['.card', '.item', 'a']);
-    
-    // Watch for DOM changes (SPAs)
-    observeDOM(function() {
-      // Re-process focusable elements when DOM changes
-    });
   },
   
   onDeactivate(window, card) {
     disableScrollIntoView();
-    stopObservingDOM();
   },
 };
+```
+
+### Manual DOM Observation (Rarely Needed)
+
+**Note:** Element and card registrations automatically observe DOM. Only use manual observation for custom bundle-specific logic:
+
+```js
+import { observeDOM, stopObservingDOM } from '../../focus/manager.js';
+
+onActivate(window, card) {
+  // Only for bundle-specific logic that can't use declarative APIs
+  var stopObserver = observeDOM(function() {
+    // Custom bundle logic here
+    updateCustomState();
+  });
+}
+
+onDeactivate(window, card) {
+  stopObservingDOM();
+}
 ```
 
 ### Text Input Wrapping
@@ -704,7 +834,7 @@ export default {
 import { wrapTextInputs } from '../../input/text-input.js';
 
 onActivate(window, card) {
-  // Make text inputs TV-friendly
+  // Make text inputs TV-friendly (or enable globally via features)
   wrapTextInputs();
 }
 ```
@@ -724,38 +854,6 @@ onActivate(window, card) {
   });
 }
 ```
-
-### Card Registration
-
-For sites with multi-element cards (media items, books, etc.):
-
-```js
-onActivate(window, card) {
-  // Register cards for multi-element interaction
-  window.TizenPortal.cards.register({
-    selector: '.media-card',
-    type: 'multi'  // or 'single', or omit for auto-detect
-  });
-  
-  // Process cards after a short delay for dynamic content
-  setTimeout(function() {
-    var count = window.TizenPortal.cards.process();
-    console.log('Processed', count, 'cards');
-  }, 500);
-}
-
-onDeactivate(window, card) {
-  // Clean up card registrations
-  window.TizenPortal.cards.clear();
-}
-```
-
-**Card Types:**
-- **`single`**: Cards with one focusable element (Enter activates immediately)
-- **`multi`**: Cards with multiple elements (Enter enters card, Back exits)
-- **Auto-detect**: Omit `type` to detect based on focusable children count
-
-See [API Reference - Cards API](Api-Reference.md#5a-cards-api) for complete documentation.
 
 ### Geometry Utilities
 
@@ -1285,12 +1383,75 @@ export default {
 
 ## 9. Focus Management
 
-### Making Elements Focusable
+**Modern Approach:** Use element registration (declarative) instead of imperative DOM manipulation.
+
+### Making Elements Focusable (Declarative - Preferred)
 
 ```js
+// ✅ Declarative - Recommended
+onActivate(window, card) {
+  window.TizenPortal.elements.register({
+    selector: '.card',
+    operation: 'focusable',
+    nav: 'vertical'  // Optional navigation direction
+  });
+  
+  // Automatically processes existing and future elements
+  // No manual loops or observation needed
+}
+```
+
+### Making Elements Focusable (Imperative - Legacy)
+
+Only use imperative code for complex bundle-specific logic that can't be expressed declaratively:
+
+```js
+// ❌ Imperative - Only for special cases
 document.querySelectorAll('.card').forEach(function(el) {
   if (!el.hasAttribute('tabindex')) {
     el.setAttribute('tabindex', '0');
+  }
+});
+```
+
+### Navigation Direction
+
+```js
+// Vertical navigation (up/down)
+window.TizenPortal.elements.register({
+  selector: 'nav a',
+  operation: 'focusable',
+  nav: 'vertical'
+});
+
+// Horizontal navigation (left/right)
+window.TizenPortal.elements.register({
+  selector: '#toolbar button',
+  operation: 'focusable',
+  nav: 'horizontal'
+});
+```
+
+### Adding CSS Classes
+
+```js
+// Add utility classes for styling
+window.TizenPortal.elements.register({
+  selector: '.card',
+  operation: 'class',
+  classes: ['tp-card', 'tp-focusable']
+});
+```
+
+### Conditional Registration
+
+```js
+// Only apply to visible elements
+window.TizenPortal.elements.register({
+  selector: '.dynamic-content',
+  operation: 'focusable',
+  condition: function(element) {
+    return element.offsetParent !== null;  // Is visible
   }
 });
 ```
@@ -1322,6 +1483,8 @@ enableScrollIntoView({
   behavior: 'smooth' // or 'auto'
 });
 ```
+
+**See [Section 8.5: Element Registration](#85-element-registration-declarative-manipulation) for complete API documentation including all operations (focusable, class, attribute, style, hide, show, remove) and advanced patterns.**
 
 ---
 

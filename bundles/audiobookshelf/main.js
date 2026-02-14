@@ -729,10 +729,15 @@ export default {
       }
     });
     
+    // Player interactive elements (buttons, links, controls)
+    var playerInteractiveSelector = [
+      SELECTORS.playerContainer + ' button',
+      SELECTORS.playerContainer + ' a',
+      SELECTORS.playerContainer + ' [role="button"]'
+    ].join(', ');
+    
     elements.register({
-      selector: SELECTORS.playerContainer + ' button, ' + 
-                SELECTORS.playerContainer + ' a, ' + 
-                SELECTORS.playerContainer + ' [role="button"]',
+      selector: playerInteractiveSelector,
       operation: 'focusable',
       container: SELECTORS.playerContainer,
       condition: function(el) {

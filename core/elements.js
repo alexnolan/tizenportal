@@ -430,16 +430,16 @@ function applyStyle(element, config) {
     if (styles.hasOwnProperty(key)) {
       var value = styles[key];
       
-      // Convert camelCase to kebab-case
+      // Convert camelCase to kebab-case for CSS properties
       var cssProperty = key.replace(/([A-Z])/g, function(match) {
         return '-' + match.toLowerCase();
       });
       
-      // Apply style
+      // Apply style with setProperty for both cases to ensure consistency
       if (important) {
         element.style.setProperty(cssProperty, value, 'important');
       } else {
-        element.style[key] = value;
+        element.style.setProperty(cssProperty, value);
       }
     }
   }

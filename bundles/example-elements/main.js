@@ -66,9 +66,9 @@ export default {
     // Set HTML attributes for accessibility and behavior
     // ========================================================================
     
-    // Add ARIA labels to icon-only buttons
+    // Add ARIA labels to icon-only buttons (buttons without visible text)
     window.TizenPortal.elements.register({
-      selector: 'button[aria-label=""]',
+      selector: 'button:not([aria-label]), button.icon-only',
       operation: 'attribute',
       attributes: {
         'aria-label': 'Action button',

@@ -8,13 +8,22 @@
 
 ## 📋 Overview
 
-This directory contains a comprehensive feasibility study for extending TizenPortal's declarative element registration pattern beyond cards to general DOM manipulation.
+This directory contains a comprehensive feasibility study for extending TizenPortal's **declarative-first architecture** to element manipulation, completing the vision of making bundles primarily declarative configuration.
 
-**Current State:** TizenPortal has a successful card registration system (`TizenPortal.cards.register()`) that allows bundles to declaratively specify focusable elements. Bundles currently use 85% imperative code for other manipulations.
+**Architectural Context:** TizenPortal already has several proven declarative systems:
+- ✅ Card registration (`TizenPortal.cards.register()`)
+- ✅ Bundle options (manifest.json → automatic UI)
+- ✅ Navigation mode configuration (manifest.json)
+- ✅ Viewport locking (manifest.json)
+- ✅ Feature overrides (manifest.json)
 
-**Proposed Enhancement:** Extend the declarative pattern to cover common bundle operations (styling, hiding/showing, attributes, classes) through a new `TizenPortal.elements.register()` API.
+**Current State:** Despite these successes, bundles still use 85% imperative code for element manipulation (Audiobookshelf: 1,638 lines JS with ~30 `setAttribute` calls, ~15 `classList` operations).
+
+**Proposed Enhancement:** Extend the declarative pattern to cover common element operations through a new `TizenPortal.elements.register()` API, minimizing imperative code to only bundle-specific logic.
 
 **Expected Impact:** 40-60% reduction in bundle code complexity, faster bundle development, fewer bugs.
+
+**Ultimate Vision:** Bundles become primarily declarative configuration with minimal imperative code reserved for highly custom, bundle-specific logic that cannot be efficiently abstracted into core.
 
 ---
 

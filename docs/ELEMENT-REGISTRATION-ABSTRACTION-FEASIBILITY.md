@@ -1,6 +1,6 @@
 # Element Registration Abstraction - Feasibility Study
 
-> **Version:** 1.0  
+> **Version:** 1.1  
 > **Date:** February 14, 2026  
 > **Status:** Architectural Enhancement Proposal  
 > **Issue:** #[Further abstraction of element registration]
@@ -22,6 +22,32 @@ This feasibility study evaluates extending TizenPortal's declarative card regist
 
 ---
 
+## Architectural Vision: Declarative-First Bundles
+
+This feasibility study is part of a **broader architectural direction** toward making bundles as declarative as possible. TizenPortal already demonstrates this pattern in multiple areas:
+
+**Existing Declarative Systems:**
+- ✅ **Card registration** - Bundles declare selectors, core handles focus/styling
+- ✅ **Bundle options** - Declared in `manifest.json`, rendered as UI automatically
+- ✅ **Navigation mode** - Declarative preference in manifest
+- ✅ **Viewport locking** - Boolean flag instead of imperative code
+- ✅ **Feature overrides** - Declarative feature configuration
+
+**Proposed Extension:**
+- 🔄 **Element manipulation** - This feasibility study's focus
+
+**Ultimate Goal:**
+Bundles should be **primarily declarative configuration** with minimal imperative code reserved only for highly custom, bundle-specific logic that cannot be efficiently abstracted into core. This approach:
+- Reduces bundle complexity and development time
+- Improves maintainability through centralized behavior
+- Ensures consistency across the bundle ecosystem
+- Lowers the barrier to entry for new bundle authors
+- Enables future enhancements to benefit all bundles automatically
+
+This study focuses on element manipulation as the next logical step in this architectural evolution.
+
+---
+
 ## Table of Contents
 
 1. [Background](#1-background)
@@ -39,9 +65,13 @@ This feasibility study evaluates extending TizenPortal's declarative card regist
 
 ## 1. Background
 
-### 1.1 Card Registration System Success
+### 1.1 Declarative Architecture Successes
 
-TizenPortal's card registration system (`core/cards.js`) has proven highly successful:
+TizenPortal has successfully implemented several declarative systems that serve as proven patterns for this proposal:
+
+#### A. Card Registration System
+
+The card registration system (`core/cards.js`) demonstrates the power of declarative configuration:
 
 ```javascript
 // Declarative - Bundle specifies what
@@ -58,12 +88,54 @@ TizenPortal.cards.register({
 // - Handles dynamic content
 ```
 
-**Benefits Achieved:**
-- **Separation of concerns:** Bundles declare UI patterns, core handles mechanics
-- **Consistency:** Unified focus styling across all registered cards
-- **Maintainability:** Style changes applied centrally, not per-bundle
+#### B. Bundle Options System
+
+Bundle options are declared in `manifest.json` and automatically rendered as UI:
+
+```json
+{
+  "options": [
+    {
+      "key": "strict",
+      "label": "Strict Mode",
+      "type": "toggle",
+      "default": false,
+      "description": "Enable stricter behavior"
+    }
+  ]
+}
+```
+
+No imperative UI code needed - the core handles:
+- Form generation and rendering
+- Value persistence to localStorage
+- Type validation and coercion
+- Bundle option passing to lifecycle hooks
+
+#### C. Navigation and Viewport Configuration
+
+Bundles declare preferences rather than implementing behavior:
+
+```json
+{
+  "navigationMode": "directional",
+  "viewportLock": true,
+  "features": {
+    "tabindexInjection": true,
+    "scrollIntoView": true
+  }
+}
+```
+
+**Benefits Achieved Across All Systems:**
+- **Separation of concerns:** Bundles declare needs, core handles implementation
+- **Consistency:** Unified behavior across all bundles
+- **Maintainability:** Changes to core automatically benefit all bundles
 - **Reduced errors:** Less imperative code means fewer bundle bugs
-- **Developer experience:** Bundle authors can't "break" the system
+- **Developer experience:** Lower barrier to entry, can't "break" the system
+- **Centralized evolution:** New features added to core, not per-bundle
+
+**Key Insight:** This proposal extends these proven declarative patterns to element manipulation, completing the vision of declarative-first bundles.
 
 ### 1.2 Current Bundle Complexity
 
@@ -431,6 +503,85 @@ window.TizenPortal = {
 // Mark processed elements to avoid duplicate work
 element.setAttribute('data-tp-processed-' + operation, 'true');
 ```
+
+### 5.5 Declarative vs Imperative: When to Use Each
+
+This proposal aims to make bundles **primarily declarative**, but imperative code still has its place. The following guidelines help determine when each approach is appropriate:
+
+#### Use Declarative Registration When:
+
+✅ **Pattern is common across bundles**
+- Example: Making elements focusable (most bundles need this)
+- Benefit: Abstraction benefits multiple bundles
+
+✅ **Behavior is consistent and predictable**
+- Example: Adding CSS classes, setting attributes
+- Benefit: Core can handle edge cases uniformly
+
+✅ **No bundle-specific logic required**
+- Example: Hiding elements matching a selector
+- Benefit: Pure configuration, no code needed
+
+✅ **Performance is not bundle-specific**
+- Example: MutationObserver debouncing
+- Benefit: Core can optimize globally
+
+#### Use Imperative Code When:
+
+⚠️ **Logic is highly specific to one bundle**
+- Example: Audiobookshelf's audio player state management
+- Reason: Too specific to abstract efficiently into core
+
+⚠️ **Complex state management required**
+- Example: Multi-step workflows, stateful interactions
+- Reason: Declarative config would become overly complex
+
+⚠️ **Dynamic computed values needed**
+- Example: Calculations based on runtime conditions
+- Reason: Better expressed as functions than config
+
+⚠️ **Event handlers with custom behavior**
+- Example: Click handlers that trigger bundle-specific actions
+- Reason: Business logic belongs in bundle, not core
+
+⚠️ **Performance-critical bundle-specific code**
+- Example: Throttling specific to media playback
+- Reason: Bundle knows its performance characteristics best
+
+#### Hybrid Approach Example:
+
+```javascript
+// Declarative: Common pattern (element manipulation)
+TizenPortal.elements.register({
+  selector: '.media-card',
+  operation: 'focusable',
+  nav: 'horizontal'
+});
+
+// Imperative: Bundle-specific logic (state management)
+var audioState = { playing: false, currentTime: 0 };
+var audioElement = document.querySelector('audio');
+
+audioElement.addEventListener('play', function() {
+  audioState.playing = true;
+  updatePlayerUI();
+});
+
+audioElement.addEventListener('timeupdate', function() {
+  audioState.currentTime = audioElement.currentTime;
+  if (audioState.currentTime % 30 < 0.1) {
+    saveProgress(); // Bundle-specific persistence logic
+  }
+});
+```
+
+#### Design Principle:
+
+**"Declare the what, code the why"**
+- Declarative: What elements need to change (selectors, attributes, styles)
+- Imperative: Why specific behavior is needed (bundle logic, state, workflows)
+
+This balance keeps bundles maintainable while preserving the flexibility needed for site-specific customization.
 
 ---
 
@@ -941,7 +1092,13 @@ console.log('Element processing took', (perfEnd - perfStart).toFixed(2), 'ms');
 
 ## Conclusion
 
-The proposed element registration abstraction is **architecturally sound, technically feasible, and high value** for TizenPortal. It extends a proven pattern (card registration) to broader use cases, reducing bundle complexity by 40-60% while maintaining full backward compatibility.
+The proposed element registration abstraction is **architecturally sound, technically feasible, and high value** for TizenPortal. It represents the next logical step in the project's **declarative-first architecture**, extending proven patterns to element manipulation.
+
+**Architectural Alignment:** This proposal completes TizenPortal's vision of declarative bundles:
+- Builds on existing declarative systems (card registration, bundle options, manifest configuration)
+- Reduces bundle complexity by 40-60% while maintaining backward compatibility
+- Reserves imperative code for bundle-specific logic where it truly adds value
+- Enables future enhancements to benefit all bundles automatically
 
 **Recommendation:** ✅ **Proceed with phased implementation**, starting with high-value operations (`focusable`, `class`, `attribute`) and validating the approach through Audiobookshelf bundle migration.
 
@@ -949,8 +1106,14 @@ The proposed element registration abstraction is **architecturally sound, techni
 1. Start small with MVP operations
 2. Prove value through concrete bundle migration
 3. Maintain strict backward compatibility
-4. Document patterns thoroughly
+4. Document patterns thoroughly (including when to use declarative vs imperative)
 5. Test rigorously on target hardware
+
+**Long-term Vision:** This is not just about reducing lines of code - it's about establishing a **sustainable bundle architecture** where:
+- New bundle authors can be productive quickly
+- Common patterns are abstracted and tested once
+- Bundle-specific innovation remains possible through imperative code
+- The ecosystem evolves together through core improvements
 
 **Expected Timeline:** 10-12 weeks for full implementation, 6-12 months for ecosystem adoption.
 

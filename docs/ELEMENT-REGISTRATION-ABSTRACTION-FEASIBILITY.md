@@ -3,7 +3,7 @@
 > **Version:** 1.1  
 > **Date:** February 14, 2026  
 > **Status:** Architectural Enhancement Proposal  
-> **Issue:** #[Further abstraction of element registration]
+> **Issue:** [#43](https://github.com/axelnanol/tizenportal/issues/43) - Further abstraction of element registration
 
 ---
 
@@ -15,10 +15,10 @@ This feasibility study evaluates extending TizenPortal's declarative card regist
 - ✅ **Feasible and architecturally sound** - Follows proven patterns already in TizenPortal
 - ✅ **High value for bundle authors** - Reduces code complexity by 40-60%
 - ✅ **Maintains backward compatibility** - Existing bundles continue working
-- ⚠️ **Moderate implementation effort** - Estimated 2-3 development phases
+- ⚠️ **Moderate implementation effort** - 5-phase rollout (80-120 hours over 10-12 weeks)
 - ⚠️ **Requires comprehensive testing** - Manual testing on real Tizen hardware
 
-**Recommendation:** Proceed with phased implementation starting with CSS manipulation abstractions.
+**Recommendation:** Proceed with phased implementation starting with foundation work and focusable/class/attribute operations.
 
 ---
 
@@ -967,12 +967,20 @@ TizenPortal.elements.register({
   z-index: 100 !important;
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
   padding: 0 16px !important;
   margin: 0 !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+}
+
+/* Child elements with spacing (gap fallback for Chrome 47) */
+#toolbar > * {
+  margin-right: 8px !important;
+}
+
+#toolbar > *:last-child {
+  margin-right: 0 !important;
 }
 
 #toolbar,
@@ -1005,12 +1013,30 @@ TizenPortal.elements.register({
     zIndex: '100',
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
     padding: '0 16px',
     margin: '0',
     background: 'transparent',
     border: 'none',
     boxShadow: 'none'
+  },
+  important: true
+});
+
+// Child spacing (gap not supported in Chrome 47)
+TizenPortal.elements.register({
+  selector: '#toolbar > *',
+  operation: 'style',
+  styles: {
+    marginRight: '8px'
+  },
+  important: true
+});
+
+TizenPortal.elements.register({
+  selector: '#toolbar > *:last-child',
+  operation: 'style',
+  styles: {
+    marginRight: '0'
   },
   important: true
 });

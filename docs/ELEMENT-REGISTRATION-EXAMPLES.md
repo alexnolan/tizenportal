@@ -319,12 +319,20 @@ TizenPortal.elements.register({
   z-index: 100 !important;
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
   padding: 0 16px !important;
   margin: 0 !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+}
+
+/* Child spacing (gap not supported in Chrome 47) */
+#toolbar > * {
+  margin-right: 8px !important;
+}
+
+#toolbar > *:last-child {
+  margin-right: 0 !important;
 }
 
 #toolbar,
@@ -371,12 +379,30 @@ TizenPortal.elements.register({
     zIndex: '100',
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
     padding: '0 16px',
     margin: '0',
     background: 'transparent',
     border: 'none',
     boxShadow: 'none'
+  },
+  important: true
+});
+
+// Child spacing (gap not supported in Chrome 47)
+TizenPortal.elements.register({
+  selector: '#toolbar > *',
+  operation: 'style',
+  styles: {
+    marginRight: '8px'
+  },
+  important: true
+});
+
+TizenPortal.elements.register({
+  selector: '#toolbar > *:last-child',
+  operation: 'style',
+  styles: {
+    marginRight: '0'
   },
   important: true
 });
@@ -836,6 +862,8 @@ TizenPortal.elements.register({
 ## 6. Testing Examples
 
 ### 6.1 Unit Test Structure
+
+> **Note:** The following test examples are pseudocode illustrations. TizenPortal currently has no automated test runner - all testing is done manually on Tizen hardware. These examples show what a test structure *could* look like if automated testing were implemented.
 
 ```javascript
 // Test registration API

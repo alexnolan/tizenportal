@@ -39,7 +39,7 @@ A **bundle** is a collection of CSS and JavaScript that fixes or enhances a spec
 - ✅ **Declarative manifest options** - Configure navigation mode, viewport, features via manifest.json
 
 **Benefits:**
-- 40-60% less code in bundles
+- Often reduces repetitive DOM manipulation code
 - No manual DOM observation needed
 - Automatic handling of dynamic content
 - Consistent patterns across all bundles
@@ -1016,7 +1016,7 @@ onActivate(window, card) {
 
 ## 8.5. Element Registration (Declarative Manipulation)
 
-**New in v1050+**: The element registration system provides a declarative way to manipulate DOM elements, reducing bundle code complexity by 40-60%.
+**New in v1050+**: The element registration system provides a declarative way to manipulate DOM elements, significantly reducing bundle code complexity.
 
 ### Why Use Element Registration?
 
@@ -1217,7 +1217,7 @@ TizenPortal.elements.register({
   selector: '.frequent-updates',
   operation: 'class',
   classes: ['styled'],
-  debounce: 500  // Wait 500ms after last DOM change
+  debounceMs: 500  // Wait 500ms after last DOM change
 });
 ```
 

@@ -739,7 +739,7 @@ export default {
     // GENERIC PAGE CONTENT - Links and buttons (excluding specific areas)
     // ========================================================================
     elements.register({
-      selector: SELECTORS.pageWrapper + ' a[href]:not([tabindex])',
+      selector: 'a[href]:not([tabindex])',
       operation: 'focusable',
       container: SELECTORS.pageWrapper,
       condition: function(el) {
@@ -751,7 +751,7 @@ export default {
     });
     
     elements.register({
-      selector: SELECTORS.pageWrapper + ' button:not([tabindex])',
+      selector: 'button:not([tabindex])',
       operation: 'focusable',
       container: SELECTORS.pageWrapper,
       condition: function(el) {
@@ -766,16 +766,14 @@ export default {
     // TABLE ROWS - Clickable rows
     // ========================================================================
     elements.register({
-      selector: SELECTORS.pageWrapper + ' tr[class*="cursor-pointer"], ' +
-                SELECTORS.pageWrapper + ' tr.hover\\:bg-',
+      selector: 'tr[class*="cursor-pointer"], tr.hover\\:bg-',
       operation: 'focusable',
       container: SELECTORS.pageWrapper
     });
     
     // Also mark table rows as single-action cards
     elements.register({
-      selector: SELECTORS.pageWrapper + ' tr[class*="cursor-pointer"], ' +
-                SELECTORS.pageWrapper + ' tr.hover\\:bg-',
+      selector: 'tr[class*="cursor-pointer"], tr.hover\\:bg-',
       operation: 'attribute',
       container: SELECTORS.pageWrapper,
       attributes: {
@@ -892,7 +890,7 @@ export default {
     // ========================================================================
     // Mark buttons for horizontal navigation within player
     elements.register({
-      selector: SELECTORS.playerContainer + ' button',
+      selector: 'button',
       operation: 'attribute',
       container: SELECTORS.playerContainer,
       attributes: {

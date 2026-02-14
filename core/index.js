@@ -75,7 +75,6 @@ import {
 import {
   registerElements, unregisterElements, clearRegistrations as clearElementRegistrations,
   getRegistrations as getElementRegistrations, processElements,
-  startObserver as startElementObserver, stopObserver as stopElementObserver,
   initElements, shutdownElements
 } from './elements.js';
 import {

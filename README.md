@@ -16,7 +16,7 @@ A TV-friendly launcher with customizable themes to manage your sites in one plac
 
 ### 🔧 Site Enhancement
 Runs as a TizenBrew module to inject fixes into any site.
-- **Declarative bundle system** - Bundles are primarily configuration (40-60% less code than imperative approaches)
+- **Declarative bundle system** - Bundles are primarily configuration, which can significantly reduce repetitive DOM manipulation code
 - Bundle CSS/JS applied automatically
 - Element registration API for focusable elements, styling, and DOM manipulation
 - Card registration for multi-element interactive cards

@@ -16,8 +16,8 @@ export var bundles = {
 };
 
 export var bundleMeta = {
-  'adblock': { jsBytes: 34567, cssBytes: 7584 },
-  'audiobookshelf': { jsBytes: 53631, cssBytes: 76330 },
+  'adblock': { jsBytes: 34544, cssBytes: 7584 },
+  'audiobookshelf': { jsBytes: 53410, cssBytes: 76330 },
   'default': { jsBytes: 1949, cssBytes: 116 },
   'example-elements': { jsBytes: 6861, cssBytes: 884 }
 };

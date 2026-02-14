@@ -83,12 +83,12 @@ export function registerElements(config) {
   // Validate required fields
   if (!config || !config.selector) {
     console.warn('TizenPortal [Elements]: Invalid registration - selector required');
-    return false;
+    return null;
   }
   
   if (!config.operation) {
     console.warn('TizenPortal [Elements]: Invalid registration - operation required');
-    return false;
+    return null;
   }
   
   // Validate operation type
@@ -206,6 +206,11 @@ export function unregisterElements(id) {
 
   if (removedCount > 0) {
     console.log('TizenPortal [Elements]: Unregistered registration', id);
+    
+    // Stop observer if no registrations remain
+    if (registrations.length === 0) {
+      stopObserver();
+    }
   } else {
     console.warn('TizenPortal [Elements]: No registration found for id', id);
   }
@@ -217,6 +222,10 @@ export function unregisterElements(id) {
 export function clearRegistrations() {
   var count = registrations.length;
   registrations = [];
+  
+  // Stop observing when no registrations remain
+  stopObserver();
+  
   console.log('TizenPortal [Elements]: Cleared', count, 'registration(s)');
 }
 
@@ -534,8 +543,16 @@ export function startObserver() {
   }
   
   observer = new MutationObserver(function(mutations) {
-    // Debounce processing
-    scheduleProcessing(100);
+    // Use configured debounce or default 100ms
+    // Find smallest debounceMs from all registrations
+    var minDebounce = 100;
+    for (var i = 0; i < registrations.length; i++) {
+      var reg = registrations[i];
+      if (reg && typeof reg.debounceMs === 'number' && reg.debounceMs < minDebounce) {
+        minDebounce = reg.debounceMs;
+      }
+    }
+    scheduleProcessing(minDebounce);
   });
   
   observer.observe(document.body, {

@@ -405,29 +405,27 @@ export default {
       selectors = AD_SELECTORS.concat(STRICT_AD_SELECTORS);
     }
     
-    // Register removal for each ad selector
-    for (var i = 0; i < selectors.length; i++) {
-      elements.register({
-        selector: selectors[i],
-        operation: 'remove',
-        condition: function(el) {
-          // Check if safe to remove and not allowlisted
-          return self.isSafeToRemove(el);
-        }
-      });
-    }
+    // Register removal using a single combined selector
+    var adSelectorString = selectors.join(', ');
+    elements.register({
+      selector: adSelectorString,
+      operation: 'remove',
+      condition: function(el) {
+        // Check if safe to remove and not allowlisted
+        return self.isSafeToRemove(el);
+      }
+    });
     
     // Register cookie banner removal if enabled
     if (state.hideCookieBanners || state.strict) {
-      for (var j = 0; j < COOKIE_SELECTORS.length; j++) {
-        elements.register({
-          selector: COOKIE_SELECTORS[j],
-          operation: 'remove',
-          condition: function(el) {
-            return self.isSafeToRemove(el);
-          }
-        });
-      }
+      var cookieSelectorString = COOKIE_SELECTORS.join(', ');
+      elements.register({
+        selector: cookieSelectorString,
+        operation: 'remove',
+        condition: function(el) {
+          return self.isSafeToRemove(el);
+        }
+      });
     }
     
     console.log('TizenPortal [AdBlock]: Registered', selectors.length, 'ad removal patterns');

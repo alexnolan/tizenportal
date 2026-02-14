@@ -304,6 +304,9 @@ export default {
    */
   onActivate: function(win, card) {
     console.log('TizenPortal [AdBlock]: Activated');
+    
+    // Register element manipulations for ad removal
+    this.registerAdRemoval();
   },
 
   /**
@@ -377,6 +380,57 @@ export default {
       }
     }
     return false;
+  },
+
+  // ========================================================================
+  // ELEMENT REGISTRATION
+  // ========================================================================
+
+  /**
+   * Register ad removal using declarative element registration
+   * Replaces the imperative removeAds() function
+   */
+  registerAdRemoval: function() {
+    if (!window.TizenPortal || !window.TizenPortal.elements) {
+      console.warn('TizenPortal [AdBlock]: Element registration API not available');
+      return;
+    }
+    
+    var elements = window.TizenPortal.elements;
+    var self = this;
+    
+    // Get selectors based on strict mode
+    var selectors = AD_SELECTORS;
+    if (state.strict) {
+      selectors = AD_SELECTORS.concat(STRICT_AD_SELECTORS);
+    }
+    
+    // Register removal for each ad selector
+    for (var i = 0; i < selectors.length; i++) {
+      elements.register({
+        selector: selectors[i],
+        operation: 'remove',
+        condition: function(el) {
+          // Check if safe to remove and not allowlisted
+          return self.isSafeToRemove(el);
+        }
+      });
+    }
+    
+    // Register cookie banner removal if enabled
+    if (state.hideCookieBanners || state.strict) {
+      for (var j = 0; j < COOKIE_SELECTORS.length; j++) {
+        elements.register({
+          selector: COOKIE_SELECTORS[j],
+          operation: 'remove',
+          condition: function(el) {
+            return self.isSafeToRemove(el);
+          }
+        });
+      }
+    }
+    
+    console.log('TizenPortal [AdBlock]: Registered', selectors.length, 'ad removal patterns');
   },
 
   /**

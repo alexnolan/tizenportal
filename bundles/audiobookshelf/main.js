@@ -336,14 +336,8 @@ export default {
     this.registerCardSelectors();
     
     // CORE: Register element manipulations using declarative API
-    // This replaces many imperative patterns from setupOtherFocusables()
+    // This replaces all imperative DOM manipulation patterns
     this.registerElementManipulations();
-    
-    // ABS-SPECIFIC: Set up non-card focusables (siderail, appbar, etc.)
-    this.setupOtherFocusables();
-    
-    // ABS-SPECIFIC: Apply spacing classes to containers
-    this.applySpacingClasses();
     
     // Global features handle text input wrapping and scroll-into-view.
     
@@ -351,14 +345,10 @@ export default {
     stopObserver = observeDOM(function() {
       try {
         // Re-run setup when DOM changes (new cards loaded, etc.)
-        // Card selectors are auto-processed by core observer
-        self.setupOtherFocusables();
-        self.applySpacingClasses();
+        // Card selectors and element registrations are auto-processed by core observers
         // Global features handle text input wrapping.
         // Monitor audio element when DOM changes (player may have been created)
         self.monitorAudioElement();
-        // Setup player controls for navigation
-        self.setupPlayerControls();
         // Handle color hints visibility based on player state
         self.updateColorHintsVisibility();
       } catch (err) {
@@ -793,210 +783,222 @@ export default {
       }
     });
     
+    // ========================================================================
+    // ITEM DETAIL PAGE - Icon buttons and links
+    // ========================================================================
+    // Icon buttons (Play, Queue, Edit, Finished, More)
+    elements.register({
+      selector: '.icon-btn, [class*="icon-btn"], button.mx-0\\.5',
+      operation: 'focusable',
+      condition: function(el) {
+        return window.location.pathname.indexOf('/item/') !== -1 && !el.disabled;
+      }
+    });
+    
+    // ui-btn components (Play button, Read button)
+    elements.register({
+      selector: '#item-page-wrapper button, #page-wrapper .flex.items-center button',
+      operation: 'focusable',
+      condition: function(el) {
+        return window.location.pathname.indexOf('/item/') !== -1 && !el.disabled;
+      }
+    });
+    
+    // Links to series/author
+    elements.register({
+      selector: '#item-page-wrapper a[href], #page-wrapper .grow a[href]',
+      operation: 'focusable',
+      condition: function(el) {
+        return window.location.pathname.indexOf('/item/') !== -1;
+      }
+    });
+    
+    // ========================================================================
+    // LOGIN PAGE - Form elements
+    // ========================================================================
+    elements.register({
+      selector: SELECTORS.loginUsername + ', ' + SELECTORS.loginPassword,
+      operation: 'focusable',
+      condition: function(el) {
+        return window.location.pathname.indexOf('/login') !== -1;
+      }
+    });
+    
+    elements.register({
+      selector: SELECTORS.loginSubmit,
+      operation: 'focusable',
+      condition: function(el) {
+        return window.location.pathname.indexOf('/login') !== -1;
+      }
+    });
+    
+    elements.register({
+      selector: SELECTORS.loginOpenID,
+      operation: 'focusable',
+      condition: function(el) {
+        return window.location.pathname.indexOf('/login') !== -1;
+      }
+    });
+    
+    // ========================================================================
+    // MODALS - All interactive elements when modal is visible
+    // ========================================================================
+    elements.register({
+      selector: SELECTORS.modal + ' button, ' + 
+                SELECTORS.modal + ' a, ' + 
+                SELECTORS.modal + ' input, ' + 
+                SELECTORS.modal + ' select',
+      operation: 'focusable',
+      condition: function(el) {
+        // Only make focusable if modal is visible
+        var modal = el.closest(SELECTORS.modal);
+        return modal && modal.offsetParent !== null;
+      }
+    });
+    
+    // ========================================================================
+    // SPACING CLASSES - Apply to containers for spatial navigation
+    // ========================================================================
+    // Bookshelf rows (horizontal scroll containers)
+    elements.register({
+      selector: SELECTORS.bookshelfRow,
+      operation: 'class',
+      classes: [SPACING_CLASS]
+    });
+    
+    // Siderail navigation container
+    elements.register({
+      selector: '#siderail-buttons-container',
+      operation: 'class',
+      classes: [SPACING_CLASS]
+    });
+    
+    // Top appbar
+    elements.register({
+      selector: SELECTORS.appbar,
+      operation: 'class',
+      classes: [SPACING_CLASS]
+    });
+    
+    // Player container
+    elements.register({
+      selector: SELECTORS.playerContainer,
+      operation: 'class',
+      classes: [SPACING_CLASS]
+    });
+    
+    // ========================================================================
+    // PLAYER CONTROLS - Additional setup for navigation
+    // ========================================================================
+    // Mark buttons for horizontal navigation within player
+    elements.register({
+      selector: SELECTORS.playerContainer + ' button',
+      operation: 'attribute',
+      container: SELECTORS.playerContainer,
+      attributes: {
+        'data-tp-nav-item': 'true'
+      },
+      condition: function(el) {
+        return !el.disabled && el.getAttribute('aria-hidden') !== 'true';
+      }
+    });
+    
+    // ========================================================================
+    // DETAIL PAGES - Page-specific elements
+    // ========================================================================
+    // Item/Collection/Playlist detail pages - Play buttons
+    elements.register({
+      selector: '.bg-success',
+      operation: 'focusable',
+      condition: function(el) {
+        var path = window.location.pathname || '';
+        return (path.indexOf('/item/') !== -1 || 
+                path.indexOf('/collection/') !== -1 || 
+                path.indexOf('/playlist/') !== -1);
+      }
+    });
+    
+    // Chapter rows on item detail page
+    elements.register({
+      selector: '[class*="chapters"] > div > div, .chapter-row',
+      operation: 'focusable',
+      condition: function(el) {
+        return window.location.pathname.indexOf('/item/') !== -1;
+      }
+    });
+    
+    // Book rows in collection page
+    elements.register({
+      selector: '[class*="collection"] > div, .collection-book-row, .w-full.flex.items-center',
+      operation: 'focusable',
+      condition: function(el) {
+        return window.location.pathname.indexOf('/collection/') !== -1 && 
+               el.querySelector('.covers-book-cover, [class*="book-cover"]');
+      }
+    });
+    
+    // Playlist item rows
+    elements.register({
+      selector: '[class*="playlist"] .w-full.flex, .playlist-item-row',
+      operation: 'focusable',
+      condition: function(el) {
+        return window.location.pathname.indexOf('/playlist/') !== -1 && 
+               el.querySelector('.covers-book-cover, [class*="book-cover"], [class*="preview-cover"]');
+      }
+    });
+    
     console.log('TizenPortal [ABS]: Element manipulations registered');
   },
-
-  /**
-   * Set up focusable elements with page-specific conditional logic
-   * 
-   * NOTE: Most generic patterns are now handled by registerElementManipulations()
-   * This function only handles page-specific elements that require runtime conditions:
-   * - Item detail page buttons and links
-   * - Login page form elements
-   * - Context-dependent elements
-   * 
-   * Everything else is handled declaratively by element registration.
-   */
-  setupOtherFocusables: function() {
-    var count = 0;
-    
-    try {
-      // ========================================================================
-      // ITEM DETAIL PAGE - Icon buttons (edit, finished, etc.)
-      // These are inside ui-tooltip wrappers and use ui-icon-btn components
-      // ========================================================================
-      if (window.location.pathname.indexOf('/item/') !== -1) {
-        // Icon buttons row (Play, Queue, Edit, Finished, More)
-        var iconBtns = document.querySelectorAll('.icon-btn, [class*="icon-btn"], button.mx-0\\.5');
-        for (var ib = 0; ib < iconBtns.length; ib++) {
-          var btn = iconBtns[ib];
-          if (btn.getAttribute('tabindex') !== '0' && !btn.disabled) {
-            btn.setAttribute('tabindex', '0');
-            count++;
-          }
-        }
-        
-        // ui-btn components (Play button, Read button)
-        var uiBtns = document.querySelectorAll('#item-page-wrapper button, #page-wrapper .flex.items-center button');
-        for (var ub = 0; ub < uiBtns.length; ub++) {
-          var uiBtn = uiBtns[ub];
-          if (uiBtn.getAttribute('tabindex') !== '0' && !uiBtn.disabled) {
-            uiBtn.setAttribute('tabindex', '0');
-            count++;
-          }
-        }
-        
-        // Links to series/author
-        var detailLinks = document.querySelectorAll('#item-page-wrapper a[href], #page-wrapper .grow a[href]');
-        for (var dl = 0; dl < detailLinks.length; dl++) {
-          var link = detailLinks[dl];
-          if (link.getAttribute('tabindex') !== '0') {
-            link.setAttribute('tabindex', '0');
-            count++;
-          }
-        }
-      }
-      
-      // ========================================================================
-      // LOGIN PAGE (special handling)
-      // ========================================================================
-      if (window.location.pathname.indexOf('/login') !== -1) {
-        // Login form inputs
-        var loginInputs = document.querySelectorAll(SELECTORS.loginUsername + ', ' + SELECTORS.loginPassword);
-        for (var li = 0; li < loginInputs.length; li++) {
-          var input = loginInputs[li];
-          if (input.getAttribute('tabindex') !== '0') {
-            input.setAttribute('tabindex', '0');
-            count++;
-          }
-        }
-        
-        // Login submit button
-        var submitBtns = document.querySelectorAll(SELECTORS.loginSubmit);
-        for (var sb = 0; sb < submitBtns.length; sb++) {
-          if (submitBtns[sb].getAttribute('tabindex') !== '0') {
-            submitBtns[sb].setAttribute('tabindex', '0');
-            count++;
-          }
-        }
-        
-        // OpenID login link
-        var openIdLinks = document.querySelectorAll(SELECTORS.loginOpenID);
-        for (var oi = 0; oi < openIdLinks.length; oi++) {
-          if (openIdLinks[oi].getAttribute('tabindex') !== '0') {
-            openIdLinks[oi].setAttribute('tabindex', '0');
-            count++;
-          }
-        }
-      }
-      
-      // ========================================================================
-      // MODALS (when visible)
-      // ========================================================================
-      var modals = document.querySelectorAll(SELECTORS.modal);
-      for (var md = 0; md < modals.length; md++) {
-        var modal = modals[md];
-        if (modal.offsetParent !== null) { // Modal is visible
-          var modalBtns = modal.querySelectorAll('button, a, input, select');
-          for (var mb = 0; mb < modalBtns.length; mb++) {
-            if (modalBtns[mb].getAttribute('tabindex') !== '0') {
-              modalBtns[mb].setAttribute('tabindex', '0');
-              count++;
-            }
-          }
-        }
-      }
-      
-      if (count > 0) {
-        console.log('TizenPortal [ABS]: Made', count, 'elements focusable');
-      }
-    } catch (err) {
-      console.warn('TizenPortal [ABS]: Error setting up focusables:', err.message);
-    }
-  },
   
   /**
-   * Apply spacing classes to containers for spatial navigation
-   * 
-   * The SPACING_CLASS ensures minimum gaps between focusable elements
-   * so spatial navigation doesn't get confused by overlapping hitboxes.
+   * DEPRECATED: Apply spacing classes to containers
+   * This function is no longer needed - spacing is handled by element registration
    */
   applySpacingClasses: function() {
-    var count = 0;
-    
-    try {
-      // Bookshelf rows (horizontal scroll containers)
-      var rows = document.querySelectorAll(SELECTORS.bookshelfRow);
-      for (var i = 0; i < rows.length; i++) {
-        if (!rows[i].classList.contains(SPACING_CLASS)) {
-          rows[i].classList.add(SPACING_CLASS);
-          count++;
-        }
-      }
-      
-      // Siderail navigation container
-      var siderail = document.querySelector('#siderail-buttons-container');
-      if (siderail && !siderail.classList.contains(SPACING_CLASS)) {
-        siderail.classList.add(SPACING_CLASS);
-        count++;
-      }
-      
-      // Top appbar
-      var appbar = document.querySelector(SELECTORS.appbar);
-      if (appbar && !appbar.classList.contains(SPACING_CLASS)) {
-        appbar.classList.add(SPACING_CLASS);
-        count++;
-      }
-      
-      if (count > 0) {
-        console.log('TizenPortal [ABS]: Applied spacing class to', count, 'containers');
-      }
-    } catch (err) {
-      console.warn('TizenPortal [ABS]: Error applying spacing classes:', err.message);
-    }
+    // Spacing now handled by registerElementManipulations()
+    // This function kept for compatibility but does nothing
   },
   
   /**
-   * Setup player controls with proper spacing for spatial navigation
-   * 
-   * The media player has several buttons that need consistent spacing
-   * and data attributes for spatial navigation to work correctly.
+   * DEPRECATED: Setup player controls
+   * This function is no longer needed - player setup is handled by element registration
    */
   setupPlayerControls: function() {
-    try {
-      var playerContainer = document.querySelector(SELECTORS.playerContainer);
-      if (!playerContainer) return;
-      
-      // Mark container for horizontal navigation
-      if (!playerContainer.hasAttribute('data-tp-nav')) {
-        playerContainer.setAttribute('data-tp-nav', 'horizontal');
-      }
-      
-      // Apply spacing class to player container
-      if (!playerContainer.classList.contains(SPACING_CLASS)) {
-        playerContainer.classList.add(SPACING_CLASS);
-      }
-      
-      // Setup all buttons in the player
-      var buttons = playerContainer.querySelectorAll('button');
-      var count = 0;
-      
-      for (var i = 0; i < buttons.length; i++) {
-        var btn = buttons[i];
-        
-        // Skip disabled or hidden buttons
-        if (btn.disabled || btn.getAttribute('aria-hidden') === 'true') {
-          continue;
-        }
-        
-        // Make focusable
-        if (btn.getAttribute('tabindex') !== '0') {
-          btn.setAttribute('tabindex', '0');
-          count++;
-        }
-        
-        // Mark for horizontal navigation within player
-        if (!btn.hasAttribute('data-tp-nav-item')) {
-          btn.setAttribute('data-tp-nav-item', 'true');
-        }
-      }
-      
-      if (count > 0) {
-        console.log('TizenPortal [ABS]: Set up', count, 'player control buttons');
-      }
-    } catch (err) {
-      console.warn('TizenPortal [ABS]: Error setting up player controls:', err.message);
-    }
+    // Player controls now handled by registerElementManipulations()
+    // This function kept for compatibility but does nothing
+  },
+  
+  /**
+   * DEPRECATED: Setup detail page focusables
+   * This function is no longer needed - detail page setup is handled by element registration
+   */
+  setupDetailPageFocusables: function() {
+    // Detail page setup now handled by registerElementManipulations()
+    // This function kept for compatibility but does nothing
+  },
+  
+  /**
+   * DEPRECATED: Setup item detail page
+   * This function is no longer needed - handled by element registration
+   */
+  setupItemDetailPage: function() {
+    // Now handled by registerElementManipulations()
+  },
+  
+  /**
+   * DEPRECATED: Setup collection page
+   * This function is no longer needed - handled by element registration
+   */
+  setupCollectionPage: function() {
+    // Now handled by registerElementManipulations()
+  },
+  
+  /**
+   * DEPRECATED: Setup playlist page
+   * This function is no longer needed - handled by element registration
+   */
+  setupPlaylistPage: function() {
+    // Now handled by registerElementManipulations()
   },
   
   /**
@@ -1325,13 +1327,8 @@ export default {
               window.TizenPortal.cards.process();
             }
             
-            // Re-run other focusables
-            self.setupOtherFocusables();
-            self.applySpacingClasses();
+            // Element registrations are automatically reapplied by core observers
             // Global features handle text input wrapping.
-            
-            // Setup detail page elements if on item/collection/playlist page
-            self.setupDetailPageFocusables();
         
             // Set initial focus on new page
             setInitialFocus(getInitialFocusSelectors(), 100);
@@ -1374,126 +1371,28 @@ export default {
    * These pages have different layouts than the main bookshelf grid
    */
   setupDetailPageFocusables: function() {
-    var path = window.location.pathname || '';
-    
-    // Item detail page (/item/...)
-    if (path.indexOf('/item/') !== -1) {
-      this.setupItemDetailPage();
-    }
-    
-    // Collection page (/collection/...)
-    if (path.indexOf('/collection/') !== -1) {
-      this.setupCollectionPage();
-    }
-    
-    // Playlist page (/playlist/...)
-    if (path.indexOf('/playlist/') !== -1) {
-      this.setupPlaylistPage();
-    }
+    // Now handled by registerElementManipulations()
   },
   
   /**
    * Setup focusable elements on item detail page
    */
   setupItemDetailPage: function() {
-    // Make play button focusable
-    var playBtn = document.querySelector('#page-wrapper .bg-success, #item-page-wrapper .bg-success');
-    if (playBtn && playBtn.tagName !== 'BUTTON') {
-      playBtn = playBtn.closest('button') || playBtn;
-    }
-    if (playBtn) {
-      playBtn.setAttribute('tabindex', '0');
-      playBtn.setAttribute('data-tp-focusable', 'true');
-    }
-    
-    // Make all action buttons focusable
-    var actionBtns = document.querySelectorAll('#page-wrapper button, #item-page-wrapper button');
-    for (var i = 0; i < actionBtns.length; i++) {
-      actionBtns[i].setAttribute('tabindex', '0');
-    }
-    
-    // Make chapter rows focusable for navigation
-    var chapterRows = document.querySelectorAll('[class*="chapters"] > div > div, .chapter-row');
-    for (var j = 0; j < chapterRows.length; j++) {
-      if (!chapterRows[j].hasAttribute('tabindex')) {
-        chapterRows[j].setAttribute('tabindex', '0');
-        chapterRows[j].setAttribute('data-tp-focusable', 'true');
-      }
-    }
-    
-    // Make links focusable
-    var links = document.querySelectorAll('#page-wrapper a[href], #item-page-wrapper a[href]');
-    for (var k = 0; k < links.length; k++) {
-      if (!links[k].hasAttribute('tabindex')) {
-        links[k].setAttribute('tabindex', '0');
-      }
-    }
-    
-    console.log('TizenPortal [ABS]: Setup item detail page focusables');
+    // Now handled by registerElementManipulations()
   },
   
   /**
    * Setup focusable elements on collection page
    */
   setupCollectionPage: function() {
-    // Make play all button focusable
-    var playAllBtn = document.querySelector('.bg-success');
-    if (playAllBtn) {
-      if (playAllBtn.tagName !== 'BUTTON') {
-        playAllBtn = playAllBtn.closest('button') || playAllBtn;
-      }
-      playAllBtn.setAttribute('tabindex', '0');
-      playAllBtn.setAttribute('data-tp-focusable', 'true');
-    }
-    
-    // Make book rows in the collection table focusable
-    var bookRows = document.querySelectorAll('[class*="collection"] > div, .collection-book-row, .w-full.flex.items-center');
-    for (var i = 0; i < bookRows.length; i++) {
-      var row = bookRows[i];
-      // Only rows with book covers
-      if (row.querySelector('.covers-book-cover, [class*="book-cover"]')) {
-        row.setAttribute('tabindex', '0');
-        row.setAttribute('data-tp-focusable', 'true');
-        row.style.cursor = 'pointer';
-      }
-    }
-    
-    console.log('TizenPortal [ABS]: Setup collection page focusables');
+    // Now handled by registerElementManipulations()
   },
   
   /**
    * Setup focusable elements on playlist page
    */
   setupPlaylistPage: function() {
-    // Make play all button focusable
-    var playAllBtn = document.querySelector('.bg-success');
-    if (playAllBtn) {
-      if (playAllBtn.tagName !== 'BUTTON') {
-        playAllBtn = playAllBtn.closest('button') || playAllBtn;
-      }
-      playAllBtn.setAttribute('tabindex', '0');
-      playAllBtn.setAttribute('data-tp-focusable', 'true');
-    }
-    
-    // Make playlist item rows focusable
-    var itemRows = document.querySelectorAll('[class*="playlist"] .w-full.flex, .playlist-item-row');
-    for (var i = 0; i < itemRows.length; i++) {
-      var row = itemRows[i];
-      // Only rows with covers
-      if (row.querySelector('.covers-book-cover, [class*="book-cover"], [class*="preview-cover"]')) {
-        row.setAttribute('tabindex', '0');
-        row.setAttribute('data-tp-focusable', 'true');
-        row.style.cursor = 'pointer';
-      }
-    }
-    
-    // Make edit/delete buttons focusable
-    var actionBtns = document.querySelectorAll('#page-wrapper button, .ui-icon-btn');
-    for (var j = 0; j < actionBtns.length; j++) {
-      actionBtns[j].setAttribute('tabindex', '0');
-    }
-    
-    console.log('TizenPortal [ABS]: Setup playlist page focusables');
+    // Now handled by registerElementManipulations()
   },
   
   // ==========================================================================

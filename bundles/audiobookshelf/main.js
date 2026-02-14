@@ -564,6 +564,19 @@ export default {
   /**
    * Register card selectors with the core card system
    * 
+   * WHAT GOES IN CARD REGISTRATION:
+   * - Visual card elements (books, series, collections, authors, playlists)
+   * - Primary navigation items (siderail links)
+   * - Any element that represents a distinct "item" with card-like behavior
+   * 
+   * WHAT STAYS IN setupOtherFocusables():
+   * - UI chrome (appbar buttons, search inputs)
+   * - Transient elements (dropdown menus, modal buttons)
+   * - Context-specific elements (player controls, table rows)
+   * - Generic fallback (remaining unprocessed links/buttons)
+   * 
+   * NOTE: setupOtherFocusables uses :not([tabindex]) to avoid duplicates
+   * 
    * This replaces the manual tabindex/data-tp-card setup.
    * Core handles observing DOM and processing new elements.
    */
@@ -627,8 +640,15 @@ export default {
   /**
    * Set up focusable elements that are NOT cards
    * 
-   * This handles siderail navigation, appbar, table rows, etc.
-   * Card elements are handled by the core card registration system.
+   * IMPORTANT: Card elements are handled by registerCardSelectors() above.
+   * This function handles everything else:
+   * - UI chrome (appbar, search)
+   * - Transient UI (dropdowns, menus, modals)
+   * - Context-specific elements (player controls, item detail buttons)
+   * - Table rows and list items
+   * - Generic fallback for remaining links/buttons
+   * 
+   * Uses :not([tabindex]) to avoid processing elements already handled by card registration.
    */
   setupOtherFocusables: function() {
     var count = 0;
